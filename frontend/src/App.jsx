@@ -1,34 +1,59 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+import HomePage from './components/HomePage'
+import BackendTest from './components/BackendTest'
 import './App.css'
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [showBackendTest, setShowBackendTest] = useState(false)
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
+    <div className="App">
+      {/* Development Tools Toggle */}
+      <div style={{
+        position: 'fixed',
+        top: '20px',
+        right: '20px',
+        zIndex: 1000
+      }}>
+        <button
+          onClick={() => setShowBackendTest(!showBackendTest)}
+          style={{
+            backgroundColor: showBackendTest ? '#dc3545' : '#28a745',
+            color: 'white',
+            border: 'none',
+            padding: '10px 15px',
+            borderRadius: '5px',
+            cursor: 'pointer',
+            fontSize: '12px',
+            boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
+          }}
+        >
+          {showBackendTest ? '❌ Hide Dev Tools' : '🔧 Show Dev Tools'}
         </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
       </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+
+      {/* Backend Test Panel (Development Only) */}
+      {showBackendTest && (
+        <div style={{
+          position: 'fixed',
+          top: '70px',
+          right: '20px',
+          width: '400px',
+          maxHeight: '80vh',
+          overflow: 'auto',
+          backgroundColor: 'white',
+          borderRadius: '10px',
+          boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
+          zIndex: 999,
+          border: '2px solid #dee2e6'
+        }}>
+          <BackendTest />
+        </div>
+      )}
+
+      {/* Main Application */}
+      <HomePage />
+    </div>
   )
 }
 
