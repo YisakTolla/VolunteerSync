@@ -1,29 +1,33 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import './Login.css';
 
-const Login = ({ initialState, onBackToHome }) => {
-  const [isSignUp, setIsSignUp] = useState(initialState?.mode === 'signup' || false);
+const Login = ({ onBackToHome }) => {
+  const location = useLocation();
+  const navigationState = location.state;
+
+  const [isSignUp, setIsSignUp] = useState(navigationState?.mode === 'signup' || false);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     confirmPassword: '',
     firstName: '',
     lastName: '',
-    userType: initialState?.userType || 'volunteer'
+    userType: navigationState?.userType || 'volunteer'
   });
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  // Update form when initial state changes
+  // Update form when navigation state changes
   useEffect(() => {
-    if (initialState) {
-      setIsSignUp(initialState.mode === 'signup');
+    if (navigationState) {
+      setIsSignUp(navigationState.mode === 'signup');
       setFormData(prev => ({
         ...prev,
-        userType: initialState.userType || 'volunteer'
+        userType: navigationState.userType || 'volunteer'
       }));
     }
-  }, [initialState]);
+  }, [navigationState]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;

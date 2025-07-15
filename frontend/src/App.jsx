@@ -1,32 +1,24 @@
 import { useState } from 'react';
+import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Home from './components/Home';
 import Login from './components/Login';
+import HowItWorks from './components/HowItWorks';
 import Footer from './components/Footer';
 import BackendTest from './components/BackendTest';
 
-function App() {
+// Main App Content Component
+function AppContent() {
   const [showBackendTest, setShowBackendTest] = useState(false);
-  const [currentPage, setCurrentPage] = useState('home');
-  const [loginState, setLoginState] = useState(null);
+  const location = useLocation();
 
-  const handleNavigateToLogin = (state) => {
-    setLoginState(state);
-    setCurrentPage('login');
-  };
-
-  const handleBackToHome = () => {
-    setCurrentPage('home');
-    setLoginState(null);
-  };
+  // Determine if footer should show
+  const showFooter = location.pathname === '/' || location.pathname === '/how-it-works';
 
   return (
     <div className="App">
       {/* Navigation */}
-      <Navbar 
-        onNavigateToLogin={handleNavigateToLogin} 
-        onNavigateToHome={handleBackToHome}
-      />
+      <Navbar />
 
       {/* Development Tools Toggle */}
       <button
@@ -54,22 +46,27 @@ function App() {
         </div>
       )}
 
-      {/* Main Application */}
+      {/* Main Application Routes */}
       <main>
-        {currentPage === 'home' && (
-          <Home onNavigateToLogin={handleNavigateToLogin} />
-        )}
-        {currentPage === 'login' && (
-          <Login 
-            initialState={loginState} 
-            onBackToHome={handleBackToHome}
-          />
-        )}
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/how-it-works" element={<HowItWorks />} />
+        </Routes>
       </main>
 
-      {/* Footer - only show on home page */}
-      {currentPage === 'home' && <Footer />}
+      {/* Footer - show on specific pages */}
+      {showFooter && <Footer />}
     </div>
+  );
+}
+
+// Main App Component with Router
+function App() {
+  return (
+    <Router>
+      <AppContent />
+    </Router>
   );
 }
 

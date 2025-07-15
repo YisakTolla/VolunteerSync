@@ -1,21 +1,23 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './Navbar.css';
 
-const Navbar = ({ onNavigateToLogin, onNavigateToHome }) => {
+const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const navigate = useNavigate();
 
   const handleJoinNow = () => {
-    onNavigateToLogin({ mode: 'signup' });
+    navigate('/login', { state: { mode: 'signup' } });
   };
 
   const handleLogoClick = () => {
-    if (onNavigateToHome) {
-      onNavigateToHome();
-    } else {
-      // Fallback for when on home page - scroll to top
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
+    navigate('/');
+  };
+
+  const handleHowItWorksClick = () => {
+    navigate('/how-it-works');
+    setMobileMenuOpen(false);
   };
 
   useEffect(() => {
@@ -48,7 +50,7 @@ const Navbar = ({ onNavigateToLogin, onNavigateToHome }) => {
         <div className="navbar-menu">
           <button 
             className="navbar-link" 
-            onClick={() => scrollToSection('features')}
+            onClick={handleHowItWorksClick}
           >
             How It Works
           </button>
@@ -82,7 +84,7 @@ const Navbar = ({ onNavigateToLogin, onNavigateToHome }) => {
       <div className={`navbar-mobile-menu ${mobileMenuOpen ? 'active' : ''}`}>
         <button 
           className="navbar-mobile-link" 
-          onClick={() => scrollToSection('features')}
+          onClick={handleHowItWorksClick}
         >
           How It Works
         </button>

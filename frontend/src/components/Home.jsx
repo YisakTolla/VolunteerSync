@@ -1,17 +1,20 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import './Home.css';
 
-const Home = ({ onNavigateToLogin }) => {
+const Home = () => {
+  const navigate = useNavigate();
+
   const handleVolunteerSignup = () => {
-    onNavigateToLogin({ userType: 'volunteer', mode: 'signup' });
+    navigate('/login', { state: { userType: 'volunteer', mode: 'signup' } });
   };
 
   const handleOrganizationSignup = () => {
-    onNavigateToLogin({ userType: 'organization', mode: 'signup' });
+    navigate('/login', { state: { userType: 'organization', mode: 'signup' } });
   };
 
   const handleJoinVolunteer = () => {
-    onNavigateToLogin({ userType: 'volunteer', mode: 'signup' });
+    navigate('/login', { state: { userType: 'volunteer', mode: 'signup' } });
   };
 
   const features = [
