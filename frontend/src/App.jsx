@@ -1,60 +1,76 @@
-import { useState } from 'react'
-import HomePage from './components/HomePage'
-import BackendTest from './components/BackendTest'
-import './App.css'
+import { useState } from 'react';
+import Navbar from './components/Navbar';
+import Home from './components/Home';
+import Login from './components/Login';
+import Footer from './components/Footer';
+import BackendTest from './components/BackendTest';
 
 function App() {
-  const [showBackendTest, setShowBackendTest] = useState(false)
+  const [showBackendTest, setShowBackendTest] = useState(false);
+  const [currentPage, setCurrentPage] = useState('home');
+  const [loginState, setLoginState] = useState(null);
+
+  const handleNavigateToLogin = (state) => {
+    setLoginState(state);
+    setCurrentPage('login');
+  };
+
+  const handleBackToHome = () => {
+    setCurrentPage('home');
+    setLoginState(null);
+  };
 
   return (
     <div className="App">
+      {/* Navigation */}
+      <Navbar 
+        onNavigateToLogin={handleNavigateToLogin} 
+        onNavigateToHome={handleBackToHome}
+      />
+
       {/* Development Tools Toggle */}
-      <div style={{
-        position: 'fixed',
-        top: '20px',
-        right: '20px',
-        zIndex: 1000
-      }}>
-        <button
-          onClick={() => setShowBackendTest(!showBackendTest)}
-          style={{
-            backgroundColor: showBackendTest ? '#dc3545' : '#28a745',
-            color: 'white',
-            border: 'none',
-            padding: '10px 15px',
-            borderRadius: '5px',
-            cursor: 'pointer',
-            fontSize: '12px',
-            boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
-          }}
-        >
-          {showBackendTest ? '❌ Hide Dev Tools' : '🔧 Show Dev Tools'}
-        </button>
-      </div>
+      <button
+        className={`dev-toggle-button ${showBackendTest ? 'active' : 'inactive'}`}
+        onClick={() => setShowBackendTest(!showBackendTest)}
+      >
+        {showBackendTest ? '❌ Hide Dev' : '🔧 Dev Tools'}
+      </button>
 
       {/* Backend Test Panel (Development Only) */}
       {showBackendTest && (
-        <div style={{
-          position: 'fixed',
-          top: '70px',
-          right: '20px',
-          width: '400px',
-          maxHeight: '80vh',
-          overflow: 'auto',
-          backgroundColor: 'white',
-          borderRadius: '10px',
-          boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
-          zIndex: 999,
-          border: '2px solid #dee2e6'
-        }}>
+        <div className="dev-panel">
+          <div className="dev-panel-header">
+            <h3 className="dev-panel-title">
+              🔧 Development Tools
+            </h3>
+            <button
+              className="dev-panel-close"
+              onClick={() => setShowBackendTest(false)}
+            >
+              ✕
+            </button>
+          </div>
           <BackendTest />
         </div>
       )}
 
       {/* Main Application */}
-      <HomePage />
+      <main>
+        {currentPage === 'home' && (
+          <Home onNavigateToLogin={handleNavigateToLogin} />
+        )}
+        {currentPage === 'login' && (
+          <Login 
+            initialState={loginState} 
+            onBackToHome={handleBackToHome}
+          />
+        )}
+      </main>
+
+      {/* Footer - only show on home page */}
+      {currentPage === 'home' && <Footer />}
     </div>
-  )
+  );
 }
 
-export default App
+export default App;
