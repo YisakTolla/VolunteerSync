@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { loginUser, registerUser, loginWithGoogle, registerWithGoogle, isLoggedIn } from '../services/authService';
 import './Login.css';
 
 const Login = ({ onBackToHome }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const navigationState = location.state;
 
   const [isSignUp, setIsSignUp] = useState(navigationState?.mode === 'signup' || false);
@@ -17,6 +19,71 @@ const Login = ({ onBackToHome }) => {
   });
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [googleLoaded, setGoogleLoaded] = useState(false);
+
+  const GOOGLE_CLIENT_ID = '511877812187-6jg8ojddjq5qp6ci4nqgk6jn4vuea87a.apps.googleusercontent.com';
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (isLoggedIn()) {
+      navigate('/dashboard');
+    }
+  }, [navigate]);
+
+  // Load Google OAuth script and initialize
+  useEffect(() => {
+    const loadGoogleScript = () => {
+      // Check if script is already loaded
+      if (window.google?.accounts?.id) {
+        initializeGoogle();
+        return;
+      }
+
+      // Check if script tag exists
+      const existingScript = document.querySelector('script[src*="accounts.google.com"]');
+      if (existingScript) {
+        existingScript.addEventListener('load', initializeGoogle);
+        return;
+      }
+
+      // Create and load the script
+      const script = document.createElement('script');
+      script.src = 'https://accounts.google.com/gsi/client';
+      script.async = true;
+      script.defer = true;
+      script.onload = initializeGoogle;
+      script.onerror = () => {
+        console.error('Failed to load Google OAuth script');
+        setGoogleLoaded(false);
+      };
+      document.head.appendChild(script);
+    };
+
+    const initializeGoogle = () => {
+      if (window.google?.accounts?.id) {
+        try {
+          window.google.accounts.id.initialize({
+            client_id: GOOGLE_CLIENT_ID,
+            callback: handleGoogleResponse,
+            auto_select: false,
+            cancel_on_tap_outside: true
+          });
+          setGoogleLoaded(true);
+          console.log('Google OAuth initialized successfully');
+        } catch (error) {
+          console.error('Failed to initialize Google OAuth:', error);
+          setGoogleLoaded(false);
+        }
+      } else {
+        console.error('Google accounts API not available');
+        setGoogleLoaded(false);
+      }
+    };
+
+    loadGoogleScript();
+  }, []);
 
   // Update form when navigation state changes
   useEffect(() => {
@@ -35,26 +102,136 @@ const Login = ({ onBackToHome }) => {
       ...prev,
       [name]: value
     }));
+    // Clear error when user starts typing
+    if (error) setError('');
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    
-    // Simulate API call
-    setTimeout(() => {
+    setError('');
+    setSuccess('');
+
+    try {
+      if (isSignUp) {
+        // Registration
+        if (formData.password !== formData.confirmPassword) {
+          setError('Passwords do not match');
+          setLoading(false);
+          return;
+        }
+
+        const registrationData = {
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          password: formData.password,
+          confirmPassword: formData.confirmPassword,
+          userType: formData.userType.toUpperCase() // Convert to VOLUNTEER or ORGANIZATION
+        };
+
+        const result = await registerUser(registrationData);
+        
+        if (result.success) {
+          setSuccess('Account created successfully! Redirecting...');
+          setTimeout(() => {
+            navigate('/dashboard');
+          }, 1500);
+        } else {
+          setError(result.message);
+        }
+      } else {
+        // Login
+        const result = await loginUser(formData.email, formData.password);
+        
+        if (result.success) {
+          navigate('/dashboard');
+        } else {
+          setError(result.message);
+        }
+      }
+    } catch (error) {
+      setError('Something went wrong. Please try again.');
+      console.error('Auth error:', error);
+    } finally {
       setLoading(false);
-      console.log('Form submitted:', formData);
-    }, 2000);
+    }
   };
 
-  const handleGoogleLogin = () => {
+  const handleGoogleLogin = async () => {
+    console.log('Google login clicked, googleLoaded:', googleLoaded);
+    
+    if (!googleLoaded) {
+      setError('Google OAuth is still loading. Please wait a moment and try again.');
+      return;
+    }
+
+    if (!window.google?.accounts?.id) {
+      setError('Google OAuth is not available. Please refresh the page and try again.');
+      return;
+    }
+
     setLoading(true);
-    // Simulate Google OAuth
-    setTimeout(() => {
+    setError('');
+    
+    try {
+      // Show Google sign-in prompt
+      window.google.accounts.id.prompt((notification) => {
+        console.log('Google prompt notification:', notification);
+        
+        if (notification.isNotDisplayed()) {
+          setError('Google sign-in popup was blocked. Please allow popups and try again.');
+          setLoading(false);
+        } else if (notification.isSkippedMoment()) {
+          setError('Google sign-in was cancelled. Please try again.');
+          setLoading(false);
+        }
+      });
+    } catch (error) {
+      console.error('Google OAuth error:', error);
+      setError('Google sign-in failed. Please try again.');
       setLoading(false);
-      console.log('Google login initiated');
-    }, 1500);
+    }
+  };
+
+  const handleGoogleResponse = async (response) => {
+    console.log('Google response received:', response);
+    
+    if (!response.credential) {
+      setError('Google authentication failed. Please try again.');
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    try {
+      let result;
+      
+      if (isSignUp) {
+        result = await registerWithGoogle(
+          response.credential, 
+          formData.userType.toUpperCase()
+        );
+      } else {
+        result = await loginWithGoogle(response.credential);
+      }
+      
+      if (result.success) {
+        setSuccess(`${isSignUp ? 'Account created' : 'Signed in'} successfully! Redirecting...`);
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 1500);
+      } else {
+        setError(result.message || 'Google authentication failed. Please try again.');
+      }
+    } catch (error) {
+      console.error('Google auth error:', error);
+      setError('Google authentication failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const toggleMode = () => {
@@ -67,6 +244,8 @@ const Login = ({ onBackToHome }) => {
       lastName: '',
       userType: 'volunteer'
     });
+    setError('');
+    setSuccess('');
   };
 
   return (
@@ -93,6 +272,33 @@ const Login = ({ onBackToHome }) => {
                 }
               </p>
             </div>
+
+            {/* Error/Success Messages */}
+            {error && (
+              <div className="error-message" style={{
+                backgroundColor: '#ffebee',
+                color: '#c62828',
+                padding: '12px',
+                borderRadius: '8px',
+                marginBottom: '16px',
+                fontSize: '14px'
+              }}>
+                {error}
+              </div>
+            )}
+
+            {success && (
+              <div className="success-message" style={{
+                backgroundColor: '#e8f5e8',
+                color: '#2e7d32',
+                padding: '12px',
+                borderRadius: '8px',
+                marginBottom: '16px',
+                fontSize: '14px'
+              }}>
+                {success}
+              </div>
+            )}
 
             {/* User Type Selection (Sign Up only) */}
             {isSignUp && (
@@ -124,7 +330,11 @@ const Login = ({ onBackToHome }) => {
               type="button"
               className="google-btn"
               onClick={handleGoogleLogin}
-              disabled={loading}
+              disabled={loading || !googleLoaded}
+              style={{
+                opacity: googleLoaded ? 1 : 0.6,
+                cursor: googleLoaded && !loading ? 'pointer' : 'not-allowed'
+              }}
             >
               <svg className="google-icon" viewBox="0 0 24 24" width="20" height="20">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -132,7 +342,7 @@ const Login = ({ onBackToHome }) => {
                 <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                 <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
               </svg>
-              {loading ? 'Connecting...' : `Continue with Google`}
+              {loading ? 'Connecting...' : googleLoaded ? 'Continue with Google' : 'Loading Google...'}
             </button>
 
             {/* Divider */}
@@ -156,6 +366,7 @@ const Login = ({ onBackToHome }) => {
                       onChange={handleInputChange}
                       required={isSignUp}
                       placeholder="Enter your first name"
+                      disabled={loading}
                     />
                   </div>
                   <div className="form-group">
@@ -169,6 +380,7 @@ const Login = ({ onBackToHome }) => {
                       onChange={handleInputChange}
                       required={isSignUp}
                       placeholder="Enter your last name"
+                      disabled={loading}
                     />
                   </div>
                 </div>
@@ -186,6 +398,7 @@ const Login = ({ onBackToHome }) => {
                   onChange={handleInputChange}
                   required
                   placeholder="Enter your email"
+                  disabled={loading}
                 />
               </div>
 
@@ -202,6 +415,8 @@ const Login = ({ onBackToHome }) => {
                     onChange={handleInputChange}
                     required
                     placeholder="Enter your password"
+                    disabled={loading}
+                    minLength="6"
                   />
                   <button
                     type="button"
@@ -226,6 +441,7 @@ const Login = ({ onBackToHome }) => {
                     onChange={handleInputChange}
                     required={isSignUp}
                     placeholder="Confirm your password"
+                    disabled={loading}
                   />
                 </div>
               )}
@@ -268,6 +484,7 @@ const Login = ({ onBackToHome }) => {
                   type="button"
                   className="toggle-mode-btn"
                   onClick={toggleMode}
+                  disabled={loading}
                 >
                   {isSignUp ? 'Sign In' : 'Sign Up'}
                 </button>

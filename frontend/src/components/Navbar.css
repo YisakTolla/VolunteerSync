@@ -13,6 +13,7 @@
   backdrop-filter: blur(12px);
   border-bottom: 1px solid transparent;
   transition: all var(--duration-200) var(--ease-out);
+  height: 64px !important; /* Fixed height */
 }
 
 .navbar-scrolled {
@@ -27,8 +28,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--spacing-4) var(--spacing-6);
-  height: 72px;
+  padding: var(--spacing-3) var(--spacing-6);
+  height: 64px;
 }
 
 /* ========================================
@@ -220,6 +221,332 @@
 }
 
 /* ========================================
+   USER PROFILE MENU - CORRECTED PFP SIZING
+   ======================================== */
+
+.user-menu-container {
+  position: relative;
+}
+
+.user-profile-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  background: none;
+  border: 1px solid var(--border-muted);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-2) var(--spacing-3);
+  cursor: pointer;
+  transition: all var(--duration-200) var(--ease-out);
+  max-width: 200px;
+  height: 40px; /* Consistent height */
+}
+
+.user-profile-btn:hover {
+  background: var(--background-muted);
+  border-color: var(--border-primary);
+}
+
+.user-profile-btn:focus {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* CORRECTED: Profile picture container - PROPER SIZE */
+.user-avatar {
+  width: 32px !important; /* Force correct size */
+  height: 32px !important; /* Force correct size */
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  border: 2px solid var(--border-muted); /* Subtle border */
+}
+
+/* CORRECTED: Profile picture image */
+.user-avatar-img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+
+/* CORRECTED: Profile picture placeholder */
+.user-avatar-placeholder {
+  width: 100% !important;
+  height: 100% !important;
+  background: linear-gradient(45deg, #10b981, #3b82f6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 0.75rem; /* Appropriate font size for 32px container */
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.user-name {
+  color: var(--text-primary);
+  font-weight: 500;
+  font-size: var(--font-size-sm);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100px;
+}
+
+.dropdown-icon {
+  color: var(--text-secondary);
+  transition: transform var(--duration-200) var(--ease-out);
+  flex-shrink: 0;
+  font-size: 0.875rem;
+}
+
+.dropdown-icon.rotated {
+  transform: rotate(180deg);
+}
+
+/* ========================================
+   USER DROPDOWN MENU - CORRECTED PFP SIZING
+   ======================================== */
+
+.user-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: var(--white);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  min-width: 280px;
+  z-index: 50;
+  animation: dropdownFadeIn 0.2s ease-out;
+}
+
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.user-dropdown-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  padding: var(--spacing-4);
+  border-bottom: 1px solid var(--border-muted);
+}
+
+/* CORRECTED: Dropdown avatar sizing */
+.user-dropdown-avatar {
+  width: 48px !important;
+  height: 48px !important;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  border: 3px solid var(--border-muted);
+}
+
+/* CORRECTED: Dropdown avatar image */
+.user-dropdown-avatar img,
+.user-dropdown-avatar .user-avatar-img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+
+/* CORRECTED: Dropdown avatar placeholder */
+.user-dropdown-avatar .user-avatar-placeholder,
+.user-dropdown-avatar .avatar-placeholder {
+  width: 100% !important;
+  height: 100% !important;
+  background: linear-gradient(45deg, #10b981, #3b82f6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 1rem; /* Larger font for bigger avatar */
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.user-dropdown-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.user-dropdown-name {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+  margin-bottom: 2px;
+}
+
+.user-dropdown-email {
+  color: var(--text-secondary);
+  font-size: var(--font-size-xs);
+  margin-bottom: 4px;
+}
+
+.user-dropdown-type {
+  color: var(--accent-green);
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+}
+
+.user-dropdown-divider {
+  height: 1px;
+  background: var(--border-muted);
+  margin: var(--spacing-2) 0;
+}
+
+.user-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  width: 100%;
+  background: none;
+  border: none;
+  padding: var(--spacing-3) var(--spacing-4);
+  text-align: left;
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition: background-color var(--duration-150) var(--ease-out);
+}
+
+.user-dropdown-item:hover {
+  background: var(--background-muted);
+}
+
+.user-dropdown-item:first-child {
+  border-top-left-radius: var(--radius-lg);
+  border-top-right-radius: var(--radius-lg);
+}
+
+.user-dropdown-item:last-child {
+  border-bottom-left-radius: var(--radius-lg);
+  border-bottom-right-radius: var(--radius-lg);
+}
+
+.user-dropdown-item.logout {
+  color: var(--red-600);
+}
+
+.user-dropdown-item.logout:hover {
+  background: var(--red-50);
+}
+
+.dropdown-item-icon {
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+/* ========================================
+   MOBILE USER INFO - CORRECTED PFP SIZING
+   ======================================== */
+
+.mobile-user-info {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  padding: var(--spacing-4);
+  background: var(--background-muted);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--spacing-4);
+}
+
+/* CORRECTED: Mobile avatar sizing */
+.mobile-user-avatar {
+  width: 48px !important;
+  height: 48px !important;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  border: 3px solid var(--border-muted);
+}
+
+/* CORRECTED: Mobile avatar image */
+.mobile-user-avatar img,
+.mobile-user-avatar .user-avatar-img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+
+/* CORRECTED: Mobile avatar placeholder */
+.mobile-user-avatar .user-avatar-placeholder,
+.mobile-user-avatar .avatar-placeholder {
+  width: 100% !important;
+  height: 100% !important;
+  background: linear-gradient(45deg, #10b981, #3b82f6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 1rem;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.mobile-user-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.mobile-user-name {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: var(--font-size-base);
+  margin-bottom: 4px;
+}
+
+.mobile-user-type {
+  color: var(--accent-green);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+}
+
+.mobile-menu-divider {
+  height: 1px;
+  background: var(--border-muted);
+  margin: var(--spacing-4) 0;
+}
+
+.navbar-mobile-cta.logout {
+  background: var(--red-600);
+  color: var(--white);
+}
+
+.navbar-mobile-cta.logout:hover {
+  background: var(--red-700);
+}
+
+/* ========================================
    RESPONSIVE DESIGN
    ======================================== */
 
@@ -233,13 +560,26 @@
   }
   
   .navbar-container {
-    padding: var(--spacing-4);
+    padding: var(--spacing-3) var(--spacing-4);
+    height: 56px; /* Smaller on tablet */
+  }
+  
+  .navbar {
+    height: 56px !important;
+  }
+  
+  .user-dropdown {
+    left: 0;
+    right: 0;
+    min-width: auto;
+    margin: 0 var(--spacing-4);
   }
 }
 
 @media (max-width: 640px) {
   .navbar-container {
-    padding: var(--spacing-3);
+    padding: var(--spacing-2) var(--spacing-3);
+    height: 56px;
   }
   
   .navbar-logo-text {
@@ -249,4 +589,51 @@
   .navbar-mobile-menu {
     padding: var(--spacing-4);
   }
+  
+  .user-profile-btn {
+    padding: var(--spacing-1) var(--spacing-2);
+    height: 36px; /* Smaller on mobile */
+    max-width: 120px;
+  }
+  
+  .user-name {
+    display: none; /* Hide name on mobile */
+  }
+  
+  /* CORRECTED: Smaller avatar on mobile */
+  .user-avatar {
+    width: 28px !important;
+    height: 28px !important;
+    border-width: 1px; /* Thinner border on mobile */
+  }
+  
+  .user-avatar-placeholder {
+    font-size: 0.625rem !important; /* Smaller font on mobile */
+  }
+  
+  .mobile-user-info {
+    padding: var(--spacing-3);
+  }
+  
+  /* CORRECTED: Mobile avatar size adjustment */
+  .mobile-user-avatar {
+    width: 40px !important;
+    height: 40px !important;
+    border-width: 2px;
+  }
+  
+  .mobile-user-avatar .user-avatar-placeholder,
+  .mobile-user-avatar .avatar-placeholder {
+    font-size: 0.875rem !important;
+  }
+}
+
+/* ========================================
+   CSS VARIABLES (add these to your root if not already present)
+   ======================================== */
+
+:root {
+  --red-50: #fef2f2;
+  --red-600: #dc2626;
+  --red-700: #b91c1c;
 }
