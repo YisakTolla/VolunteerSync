@@ -9,6 +9,8 @@ import Footer from './components/Footer';
 import Organizations from './components/Organizations';
 import About from './components/About';
 import Events from './components/Events';
+import Profile from './components/Profile';
+import Settings from './components/Settings';
 
 function App() {
   return (
@@ -24,6 +26,8 @@ function App() {
           <Route path="/find-organizations" element = {<Organizations/>}/>
           <Route path="/find-events" element = {<Events/>}/>
           <Route path="/about" element = {<About/>}/>
+          <Route path="/profile" element = {<Profile/>}/>
+          <Route path="/settings" element = {<Settings/>}/>
 
           
           {/* Fallback route */}

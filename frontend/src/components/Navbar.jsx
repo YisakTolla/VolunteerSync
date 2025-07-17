@@ -84,6 +84,12 @@ const Navbar = () => {
     setMobileMenuOpen(false);
   };
 
+   const handleSettingsClick = () => {
+    navigate('/settings');
+    setUserMenuOpen(false);
+    setMobileMenuOpen(false);
+  };
+
   const handleProfile = () => {
     navigate('/profile');
     setUserMenuOpen(false);
@@ -311,7 +317,7 @@ const Navbar = () => {
                     <span className="dropdown-item-icon">👤</span>
                     Profile
                   </button>
-                  <button className="user-dropdown-item">
+                  <button className="user-dropdown-item" onClick={handleSettingsClick}>
                     <span className="dropdown-item-icon">⚙️</span>
                     Settings
                   </button>
@@ -400,7 +406,7 @@ const Navbar = () => {
           className="navbar-mobile-link" 
           onClick={handleOrganizationsClick}
         >
-          Organizations
+          Find Organizations
         </button>
         <button 
           className="navbar-mobile-link" 
@@ -414,16 +420,13 @@ const Navbar = () => {
         >
           About
         </button>
-        
+
         {loggedIn ? (
           <button className="navbar-mobile-cta logout" onClick={handleLogout}>
             🚪 Sign Out
           </button>
         ) : (
           <>
-            <button className="navbar-mobile-link" onClick={handleSignIn}>
-              Sign In
-            </button>
             <button className="navbar-mobile-cta" onClick={handleJoinNow}>
               Join Now
             </button>
