@@ -6,6 +6,9 @@ import Login from './components/Login';
 import Dashboard from './components/Dashboard';
 import HowItWorks from './components/HowItWorks';
 import Footer from './components/Footer';
+import Organizations from './components/Organizations';
+import About from './components/About';
+import Events from './components/Events';
 
 function App() {
   return (
@@ -18,6 +21,10 @@ function App() {
           <Route path="/login" element={<Login onBackToHome={() => window.location.href = '/'} />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/how-it-works" element={<HowItWorks />} />
+          <Route path="/find-organizations" element = {<Organizations/>}/>
+          <Route path="/find-events" element = {<Events/>}/>
+          <Route path="/about" element = {<About/>}/>
+
           
           {/* Fallback route */}
           <Route path="*" element={<Navigate to="/" />} />

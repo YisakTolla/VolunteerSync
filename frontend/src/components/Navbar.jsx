@@ -61,6 +61,23 @@ const Navbar = () => {
     setMobileMenuOpen(false);
   };
 
+  const handleOrganizationsClick = () => {
+    navigate('/find-organizations');
+    setMobileMenuOpen(false);
+  };
+
+  const handleFindEventsClick = () => {
+    // TODO: Navigate to events page when it's created
+    navigate('/find-events');
+    setMobileMenuOpen(false);
+  };
+
+  const handleAboutClick = () => {
+    // TODO: Navigate to about page when it's created
+    navigate('/about');
+    setMobileMenuOpen(false);
+  };
+
   const handleDashboard = () => {
     navigate('/dashboard');
     setUserMenuOpen(false);
@@ -112,20 +129,79 @@ const Navbar = () => {
   }, [userMenuOpen]);
 
   const getUserDisplayName = () => {
-    if (user?.firstName && user?.lastName) {
+    if (!user) return 'User';
+    
+    // For organizations, show organization name
+    if (user.userType === 'ORGANIZATION' && user.organizationName) {
+      return user.organizationName;
+    }
+    
+    // For volunteers, show first + last name
+    if (user.userType === 'VOLUNTEER' && user.firstName && user.lastName) {
       return `${user.firstName} ${user.lastName}`;
     }
-    return user?.email || 'User';
+    
+    // Fallback to email
+    return user.email || 'User';
   };
 
   const getUserInitials = () => {
-    if (user?.firstName && user?.lastName) {
+    if (!user) return 'U';
+    
+    // For organizations, use organization name initials
+    if (user.userType === 'ORGANIZATION' && user.organizationName) {
+      const words = user.organizationName.split(' ').filter(word => word.length > 0);
+      if (words.length >= 2) {
+        return `${words[0][0]}${words[1][0]}`.toUpperCase();
+      } else if (words.length === 1) {
+        return words[0].substring(0, 2).toUpperCase();
+      }
+    }
+    
+    // For volunteers, use first + last name initials
+    if (user.userType === 'VOLUNTEER' && user.firstName && user.lastName) {
       return `${user.firstName[0]}${user.lastName[0]}`.toUpperCase();
     }
-    if (user?.email) {
+    
+    // Fallback to email initial
+    if (user.email) {
       return user.email[0].toUpperCase();
     }
+    
     return 'U';
+  };
+
+  const getUserShortName = () => {
+    if (!user) return 'User';
+    
+    // For organizations, show shortened org name (first word or abbreviated)
+    if (user.userType === 'ORGANIZATION' && user.organizationName) {
+      const words = user.organizationName.split(' ');
+      if (words[0].length > 12) {
+        return words[0].substring(0, 12) + '...';
+      }
+      return words[0];
+    }
+    
+    // For volunteers, show first name
+    if (user.userType === 'VOLUNTEER' && user.firstName) {
+      return user.firstName;
+    }
+    
+    return user.email?.split('@')[0] || 'User';
+  };
+
+  const getUserTypeDisplay = () => {
+    if (!user) return '';
+    
+    switch (user.userType) {
+      case 'ORGANIZATION':
+        return '🏢 Organization';
+      case 'VOLUNTEER':
+        return '🙋‍♀️ Volunteer';
+      default:
+        return user.userType;
+    }
   };
 
   return (
@@ -147,12 +223,22 @@ const Navbar = () => {
           </button>
           <button 
             className="navbar-link" 
-            onClick={() => scrollToSection('organizations')}
+            onClick={handleOrganizationsClick}
           >
             Organizations
           </button>
-          <a href="#" className="navbar-link">Find Events</a>
-          <a href="#" className="navbar-link">About</a>
+          <button 
+            className="navbar-link" 
+            onClick={handleFindEventsClick}
+          >
+            Find Events
+          </button>
+          <button 
+            className="navbar-link" 
+            onClick={handleAboutClick}
+          >
+            About
+          </button>
           
           {loggedIn ? (
             // Logged in user menu
@@ -175,7 +261,7 @@ const Navbar = () => {
                     </div>
                   )}
                 </div>
-                <span className="user-name">{user?.firstName || 'User'}</span>
+                <span className="user-name">{getUserShortName()}</span>
                 <svg 
                   className={`dropdown-icon ${userMenuOpen ? 'rotated' : ''}`} 
                   width="16" 
@@ -210,7 +296,7 @@ const Navbar = () => {
                       <div className="user-dropdown-name">{getUserDisplayName()}</div>
                       <div className="user-dropdown-email">{user?.email}</div>
                       <div className="user-dropdown-type">
-                        {user?.userType === 'VOLUNTEER' ? '🙋‍♀️ Volunteer' : '🏢 Organization'}
+                        {getUserTypeDisplay()}
                       </div>
                     </div>
                   </div>
@@ -286,7 +372,7 @@ const Navbar = () => {
               <div className="mobile-user-details">
                 <div className="mobile-user-name">{getUserDisplayName()}</div>
                 <div className="mobile-user-type">
-                  {user?.userType === 'VOLUNTEER' ? '🙋‍♀️ Volunteer' : '🏢 Organization'}
+                  {getUserTypeDisplay()}
                 </div>
               </div>
             </div>
@@ -312,12 +398,22 @@ const Navbar = () => {
         </button>
         <button 
           className="navbar-mobile-link" 
-          onClick={() => scrollToSection('organizations')}
+          onClick={handleOrganizationsClick}
         >
           Organizations
         </button>
-        <a href="#" className="navbar-mobile-link">Find Events</a>
-        <a href="#" className="navbar-mobile-link">About</a>
+        <button 
+          className="navbar-mobile-link" 
+          onClick={handleFindEventsClick}
+        >
+          Find Events
+        </button>
+        <button 
+          className="navbar-mobile-link" 
+          onClick={handleAboutClick}
+        >
+          About
+        </button>
         
         {loggedIn ? (
           <button className="navbar-mobile-cta logout" onClick={handleLogout}>

@@ -12,11 +12,16 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
-    @Column(nullable = false)
+    // For volunteers - nullable for organizations
+    @Column(nullable = true)
     private String firstName;
     
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String lastName;
+    
+    // For organizations - nullable for volunteers
+    @Column(nullable = true)
+    private String organizationName;
     
     @Column(unique = true, nullable = false)
     private String email;
@@ -25,6 +30,7 @@ public class User {
     private String password; // null for OAuth users
     
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private UserType userType; // VOLUNTEER, ORGANIZATION
     
     @Column
@@ -42,13 +48,33 @@ public class User {
     // Default constructor
     public User() {}
     
-    // Constructor with all required fields
+    // Constructor for volunteers
     public User(String firstName, String lastName, String email, String password, UserType userType) {
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
         this.password = password;
         this.userType = userType;
+    }
+    
+    // Constructor for organizations
+    public User(String organizationName, String email, String password, UserType userType) {
+        this.organizationName = organizationName;
+        this.email = email;
+        this.password = password;
+        this.userType = userType;
+    }
+    
+    // Constructor with all fields (useful for flexibility)
+    public User(String firstName, String lastName, String organizationName, String email, 
+                String password, UserType userType, String googleId) {
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.organizationName = organizationName;
+        this.email = email;
+        this.password = password;
+        this.userType = userType;
+        this.googleId = googleId;
     }
     
     // Getters
@@ -62,6 +88,10 @@ public class User {
     
     public String getLastName() {
         return lastName;
+    }
+    
+    public String getOrganizationName() {
+        return organizationName;
     }
     
     public String getEmail() {
@@ -105,6 +135,10 @@ public class User {
         this.lastName = lastName;
     }
     
+    public void setOrganizationName(String organizationName) {
+        this.organizationName = organizationName;
+    }
+    
     public void setEmail(String email) {
         this.email = email;
     }
@@ -131,5 +165,79 @@ public class User {
     
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+    
+    // Helper methods
+    public boolean isVolunteer() {
+        return UserType.VOLUNTEER.equals(userType);
+    }
+    
+    public boolean isOrganization() {
+        return UserType.ORGANIZATION.equals(userType);
+    }
+    
+    // Get display name based on user type
+    public String getDisplayName() {
+        if (isOrganization() && organizationName != null) {
+            return organizationName;
+        } else if (isVolunteer() && firstName != null && lastName != null) {
+            return firstName + " " + lastName;
+        }
+        return email; // fallback to email if names are not available
+    }
+    
+    // Get full name for volunteers (returns null for organizations)
+    public String getFullName() {
+        if (isVolunteer() && firstName != null && lastName != null) {
+            return firstName + " " + lastName;
+        }
+        return null;
+    }
+    
+    // Validation helper - check if user has required fields for their type
+    public boolean hasValidFields() {
+        if (isVolunteer()) {
+            return firstName != null && !firstName.trim().isEmpty() && 
+                   lastName != null && !lastName.trim().isEmpty();
+        } else if (isOrganization()) {
+            return organizationName != null && !organizationName.trim().isEmpty();
+        }
+        return false;
+    }
+    
+    @Override
+    public String toString() {
+        if (isOrganization()) {
+            return "User{" +
+                    "id=" + id +
+                    ", organizationName='" + organizationName + '\'' +
+                    ", email='" + email + '\'' +
+                    ", userType=" + userType +
+                    ", createdAt=" + createdAt +
+                    '}';
+        } else {
+            return "User{" +
+                    "id=" + id +
+                    ", firstName='" + firstName + '\'' +
+                    ", lastName='" + lastName + '\'' +
+                    ", email='" + email + '\'' +
+                    ", userType=" + userType +
+                    ", createdAt=" + createdAt +
+                    '}';
+        }
+    }
+    
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        
+        User user = (User) o;
+        return email.equals(user.email);
+    }
+    
+    @Override
+    public int hashCode() {
+        return email.hashCode();
     }
 }

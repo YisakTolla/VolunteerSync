@@ -29,14 +29,25 @@ api.interceptors.request.use((config) => {
 
 export async function registerUser(userData) {
   try {
-    const response = await api.post('/auth/register', {
-      firstName: userData.firstName,
-      lastName: userData.lastName,
+    // Build request payload based on user type
+    let requestPayload = {
       email: userData.email,
       password: userData.password,
       confirmPassword: userData.confirmPassword,
       userType: userData.userType // "VOLUNTEER" or "ORGANIZATION"
-    });
+    };
+
+    // Add type-specific fields
+    if (userData.userType === 'VOLUNTEER') {
+      requestPayload.firstName = userData.firstName;
+      requestPayload.lastName = userData.lastName;
+    } else if (userData.userType === 'ORGANIZATION') {
+      requestPayload.organizationName = userData.organizationName;
+    }
+
+    console.log('Sending registration data:', requestPayload); // Debug log
+
+    const response = await api.post('/auth/register', requestPayload);
 
     // Save token and user data
     if (response.data.token) {
@@ -45,6 +56,7 @@ export async function registerUser(userData) {
       return { success: true, data: response.data };
     }
   } catch (error) {
+    console.error('Registration error:', error.response?.data); // Debug log
     return { 
       success: false, 
       message: error.response?.data?.message || 'Registration failed' 

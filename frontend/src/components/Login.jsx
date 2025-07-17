@@ -15,6 +15,7 @@ const Login = ({ onBackToHome }) => {
     confirmPassword: '',
     firstName: '',
     lastName: '',
+    organizationName: '',
     userType: navigationState?.userType || 'volunteer'
   });
   const [loading, setLoading] = useState(false);
@@ -106,6 +107,17 @@ const Login = ({ onBackToHome }) => {
     if (error) setError('');
   };
 
+  const handleUserTypeChange = (userType) => {
+    setFormData(prev => ({
+      ...prev,
+      userType,
+      // Clear name fields when switching user types
+      firstName: '',
+      lastName: '',
+      organizationName: ''
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -121,14 +133,26 @@ const Login = ({ onBackToHome }) => {
           return;
         }
 
-        const registrationData = {
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          email: formData.email,
-          password: formData.password,
-          confirmPassword: formData.confirmPassword,
-          userType: formData.userType.toUpperCase() // Convert to VOLUNTEER or ORGANIZATION
-        };
+        let registrationData;
+        
+        if (formData.userType === 'organization') {
+          registrationData = {
+            organizationName: formData.organizationName,
+            email: formData.email,
+            password: formData.password,
+            confirmPassword: formData.confirmPassword,
+            userType: formData.userType.toUpperCase()
+          };
+        } else {
+          registrationData = {
+            firstName: formData.firstName,
+            lastName: formData.lastName,
+            email: formData.email,
+            password: formData.password,
+            confirmPassword: formData.confirmPassword,
+            userType: formData.userType.toUpperCase()
+          };
+        }
 
         const result = await registerUser(registrationData);
         
@@ -242,6 +266,7 @@ const Login = ({ onBackToHome }) => {
       confirmPassword: '',
       firstName: '',
       lastName: '',
+      organizationName: '',
       userType: 'volunteer'
     });
     setError('');
@@ -308,7 +333,7 @@ const Login = ({ onBackToHome }) => {
                   <button
                     type="button"
                     className={`user-type-btn ${formData.userType === 'volunteer' ? 'active' : ''}`}
-                    onClick={() => setFormData(prev => ({ ...prev, userType: 'volunteer' }))}
+                    onClick={() => handleUserTypeChange('volunteer')}
                   >
                     <span className="user-type-icon">👥</span>
                     <span className="user-type-text">Volunteer</span>
@@ -316,7 +341,7 @@ const Login = ({ onBackToHome }) => {
                   <button
                     type="button"
                     className={`user-type-btn ${formData.userType === 'organization' ? 'active' : ''}`}
-                    onClick={() => setFormData(prev => ({ ...prev, userType: 'organization' }))}
+                    onClick={() => handleUserTypeChange('organization')}
                   >
                     <span className="user-type-icon">🏢</span>
                     <span className="user-type-text">Organization</span>
@@ -354,36 +379,57 @@ const Login = ({ onBackToHome }) => {
             <form className="login-form" onSubmit={handleSubmit}>
               {/* Name fields for Sign Up */}
               {isSignUp && (
-                <div className="form-row">
-                  <div className="form-group">
-                    <label className="form-label" htmlFor="firstName">First Name</label>
-                    <input
-                      type="text"
-                      id="firstName"
-                      name="firstName"
-                      className="form-input"
-                      value={formData.firstName}
-                      onChange={handleInputChange}
-                      required={isSignUp}
-                      placeholder="Enter your first name"
-                      disabled={loading}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label" htmlFor="lastName">Last Name</label>
-                    <input
-                      type="text"
-                      id="lastName"
-                      name="lastName"
-                      className="form-input"
-                      value={formData.lastName}
-                      onChange={handleInputChange}
-                      required={isSignUp}
-                      placeholder="Enter your last name"
-                      disabled={loading}
-                    />
-                  </div>
-                </div>
+                <>
+                  {formData.userType === 'organization' ? (
+                    // Organization Name field
+                    <div className="form-group">
+                      <label className="form-label" htmlFor="organizationName">Organization Name</label>
+                      <input
+                        type="text"
+                        id="organizationName"
+                        name="organizationName"
+                        className="form-input"
+                        value={formData.organizationName}
+                        onChange={handleInputChange}
+                        required={isSignUp}
+                        placeholder="Enter your organization name"
+                        disabled={loading}
+                      />
+                    </div>
+                  ) : (
+                    // First Name and Last Name fields for volunteers
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label className="form-label" htmlFor="firstName">First Name</label>
+                        <input
+                          type="text"
+                          id="firstName"
+                          name="firstName"
+                          className="form-input"
+                          value={formData.firstName}
+                          onChange={handleInputChange}
+                          required={isSignUp}
+                          placeholder="Enter your first name"
+                          disabled={loading}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label" htmlFor="lastName">Last Name</label>
+                        <input
+                          type="text"
+                          id="lastName"
+                          name="lastName"
+                          className="form-input"
+                          value={formData.lastName}
+                          onChange={handleInputChange}
+                          required={isSignUp}
+                          placeholder="Enter your last name"
+                          disabled={loading}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
 
               {/* Email */}

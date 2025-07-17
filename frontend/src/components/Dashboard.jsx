@@ -59,6 +59,80 @@ const Dashboard = () => {
     console.log('View profile clicked');
   };
 
+  // Helper functions for user display
+  const getUserDisplayName = () => {
+    if (!user) return 'User';
+    
+    // For organizations, show organization name
+    if (user.userType === 'ORGANIZATION' && user.organizationName) {
+      return user.organizationName;
+    }
+    
+    // For volunteers, show first + last name
+    if (user.userType === 'VOLUNTEER' && user.firstName && user.lastName) {
+      return `${user.firstName} ${user.lastName}`;
+    }
+    
+    // Fallback to email
+    return user.email || 'User';
+  };
+
+  const getUserWelcomeName = () => {
+    if (!user) return 'User';
+    
+    // For organizations, show organization name
+    if (user.userType === 'ORGANIZATION' && user.organizationName) {
+      return user.organizationName;
+    }
+    
+    // For volunteers, show first name only
+    if (user.userType === 'VOLUNTEER' && user.firstName) {
+      return user.firstName;
+    }
+    
+    // Fallback to email prefix
+    return user.email?.split('@')[0] || 'User';
+  };
+
+  const getUserInitials = () => {
+    if (!user) return 'U';
+    
+    // For organizations, use organization name initials
+    if (user.userType === 'ORGANIZATION' && user.organizationName) {
+      const words = user.organizationName.split(' ').filter(word => word.length > 0);
+      if (words.length >= 2) {
+        return `${words[0][0]}${words[1][0]}`.toUpperCase();
+      } else if (words.length === 1) {
+        return words[0].substring(0, 2).toUpperCase();
+      }
+    }
+    
+    // For volunteers, use first + last name initials
+    if (user.userType === 'VOLUNTEER' && user.firstName && user.lastName) {
+      return `${user.firstName[0]}${user.lastName[0]}`.toUpperCase();
+    }
+    
+    // Fallback to email initial
+    if (user.email) {
+      return user.email[0].toUpperCase();
+    }
+    
+    return 'U';
+  };
+
+  const getUserTypeDisplay = () => {
+    if (!user) return '';
+    
+    switch (user.userType) {
+      case 'ORGANIZATION':
+        return '🏢 Organization';
+      case 'VOLUNTEER':
+        return '🙋‍♀️ Volunteer';
+      default:
+        return user.userType;
+    }
+  };
+
   if (loading) {
     return (
       <div className="dashboard-loading">
@@ -111,26 +185,20 @@ const Dashboard = () => {
                   <img src={user.profilePicture} alt="Profile" />
                 ) : (
                   <div className="avatar-placeholder-large">
-                    {user.firstName?.[0]}{user.lastName?.[0]}
+                    {getUserInitials()}
                   </div>
                 )}
               </div>
               <div className="user-info">
-                <h1>Welcome back, {user.firstName}! 👋</h1>
+                <h1>Welcome back, {getUserWelcomeName()}! 👋</h1>
                 <p className="user-type">
-                  {user.userType === 'VOLUNTEER' ? '🙋‍♀️ Volunteer' : '🏢 Organization'} Account
+                  {getUserTypeDisplay()} Account
                 </p>
                 <p className="user-email">{user.email}</p>
               </div>
             </div>
             
             <div className="header-actions">
-              <button onClick={handleViewProfile} className="btn-secondary">
-                View Profile
-              </button>
-              <button onClick={handleEditProfile} className="btn-secondary">
-                Edit Profile
-              </button>
               <button onClick={handleLogout} className="btn-danger">
                 Sign Out
               </button>
@@ -306,6 +374,11 @@ const OrganizationDashboard = ({ user }) => {
     eventsThisMonth: 0
   });
 
+  // Get organization display name for messaging
+  const getOrgDisplayName = () => {
+    return user.organizationName || user.email?.split('@')[0] || 'Organization';
+  };
+
   return (
     <div className="organization-dashboard">
       {/* Quick Stats */}
@@ -343,10 +416,10 @@ const OrganizationDashboard = ({ user }) => {
       {/* Main Dashboard Grid */}
       <div className="dashboard-grid">
         {/* Create Event */}
-        <div className="dashboard-card featured">
+        <div className="dashboard-card">
           <div className="card-header">
             <h3>➕ Create New Event</h3>
-            <p>Post volunteer opportunities for your organization</p>
+            <p>Post volunteer opportunities for {getOrgDisplayName()}</p>
           </div>
           <div className="card-content">
             <div className="create-event-preview">
@@ -375,7 +448,7 @@ const OrganizationDashboard = ({ user }) => {
               <div className="empty-state">
                 <div className="empty-icon">📋</div>
                 <p>No pending applications</p>
-                <small>Applications will appear here when volunteers apply</small>
+                <small>Applications will appear here when volunteers apply to your events</small>
               </div>
             </div>
           </div>
@@ -400,6 +473,10 @@ const OrganizationDashboard = ({ user }) => {
                 <span className="metric-value">0</span>
                 <span className="metric-label">Applications Received</span>
               </div>
+              <div className="metric">
+                <span className="metric-value">0</span>
+                <span className="metric-label">Events Created</span>
+              </div>
             </div>
           </div>
           <div className="card-actions">
@@ -407,10 +484,10 @@ const OrganizationDashboard = ({ user }) => {
           </div>
         </div>
 
-        {/* My Events */}
+        {/* Organization Events */}
         <div className="dashboard-card">
           <div className="card-header">
-            <h3>📅 My Events</h3>
+            <h3>📅 {getOrgDisplayName()} Events</h3>
             <p>Manage your posted volunteer opportunities</p>
           </div>
           <div className="card-content">
@@ -418,12 +495,76 @@ const OrganizationDashboard = ({ user }) => {
               <div className="empty-state">
                 <div className="empty-icon">📅</div>
                 <p>No events created yet</p>
-                <small>Create your first event to get started</small>
+                <small>Create your first event to start attracting volunteers</small>
               </div>
             </div>
           </div>
           <div className="card-actions">
             <button className="btn-primary">Create First Event</button>
+          </div>
+        </div>
+
+        {/* Organization Profile */}
+        <div className="dashboard-card">
+          <div className="card-header">
+            <h3>🏢 Organization Profile</h3>
+            <p>Manage your organization's public profile</p>
+          </div>
+          <div className="card-content">
+            <div className="org-profile-preview">
+              <div className="org-info">
+                <h4>{user.organizationName || 'Organization Name'}</h4>
+                <p className="org-description">
+                  {user.description || 'Add a description to tell volunteers about your organization and mission.'}
+                </p>
+              </div>
+              <div className="profile-stats">
+                <div className="profile-stat">
+                  <span className="stat-number">0</span>
+                  <span className="stat-label">Profile Views</span>
+                </div>
+                <div className="profile-stat">
+                  <span className="stat-number">0</span>
+                  <span className="stat-label">Followers</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="card-actions">
+            <button className="btn-primary">Edit Profile</button>
+            <button className="btn-secondary">View Public Profile</button>
+          </div>
+        </div>
+
+        {/* Volunteer Management */}
+        <div className="dashboard-card">
+          <div className="card-header">
+            <h3>👥 Volunteer Management</h3>
+            <p>Manage relationships with your volunteers</p>
+          </div>
+          <div className="card-content">
+            <div className="volunteer-summary">
+              <div className="volunteer-metrics">
+                <div className="volunteer-metric">
+                  <span className="metric-value">{stats.totalVolunteers}</span>
+                  <span className="metric-label">Active Volunteers</span>
+                </div>
+                <div className="volunteer-metric">
+                  <span className="metric-value">0</span>
+                  <span className="metric-label">Regular Volunteers</span>
+                </div>
+              </div>
+              {stats.totalVolunteers === 0 && (
+                <div className="empty-state">
+                  <div className="empty-icon">👥</div>
+                  <p>No volunteers yet</p>
+                  <small>Create events to start building your volunteer community</small>
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="card-actions">
+            <button className="btn-primary">View All Volunteers</button>
           </div>
         </div>
       </div>
