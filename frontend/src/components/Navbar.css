@@ -9,8 +9,8 @@
   left: 0;
   right: 0;
   z-index: var(--z-50);
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(12px);
+  background: rgb(255, 255, 255);
+  /* backdrop-filter: blur(12px); */
   border-bottom: 1px solid transparent;
   transition: all var(--duration-200) var(--ease-out);
   height: 64px !important; /* Fixed height */

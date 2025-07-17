@@ -46,7 +46,6 @@ const Footer = () => {
                 <li><a href="#" className="footer-link">Find Events</a></li>
                 <li><a href="#" className="footer-link">Browse Organizations</a></li>
                 <li><a href="#" className="footer-link">Track Impact</a></li>
-                <li><a href="#" className="footer-link">Volunteer Stories</a></li>
                 <li><a href="#" className="footer-link">Getting Started</a></li>
               </ul>
             </div>
@@ -58,7 +57,6 @@ const Footer = () => {
                 <li><a href="#" className="footer-link">Manage Volunteers</a></li>
                 <li><a href="#" className="footer-link">Organization Dashboard</a></li>
                 <li><a href="#" className="footer-link">Success Stories</a></li>
-                <li><a href="#" className="footer-link">Best Practices</a></li>
               </ul>
             </div>
 
@@ -66,7 +64,6 @@ const Footer = () => {
               <h3 className="footer-column-title">Community</h3>
               <ul className="footer-column-links">
                 <li><a href="#" className="footer-link">Events Calendar</a></li>
-                <li><a href="#" className="footer-link">Local Chapters</a></li>
                 <li><a href="#" className="footer-link">Blog</a></li>
                 <li><a href="#" className="footer-link">Newsletter</a></li>
                 <li><a href="#" className="footer-link">Forums</a></li>
