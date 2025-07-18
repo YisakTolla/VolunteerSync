@@ -132,6 +132,11 @@ export async function loginWithGoogle(googleToken) {
 // UTILITY FUNCTIONS
 // ==========================================
 
+// Add the missing getToken function
+export function getToken() {
+  return localStorage.getItem('authToken');
+}
+
 export function getCurrentUser() {
   const user = localStorage.getItem('user');
   return user ? JSON.parse(user) : null;
@@ -147,16 +152,69 @@ export function logout() {
   // Don't redirect here, let the component handle it
 }
 
-export async function getUserProfile() {
+// ==========================================
+// USER PROFILE FUNCTIONS
+// ==========================================
+
+export const getUserProfile = async () => {
   try {
+    const token = getToken();
+    if (!token) {
+      console.log('No token found in localStorage');
+      return { success: false, message: 'No token found' };
+    }
+
+    console.log('Making request to:', `${API_BASE_URL}/auth/me`);
+    console.log('With token:', token ? `Token exists (length: ${token.length})` : 'No token');
+
+    // Use axios instead of fetch to be consistent with the rest of the service
     const response = await api.get('/auth/me');
-    return { success: true, data: response.data };
+
+    console.log('Response status:', response.status);
+    console.log('Response data:', response.data);
+    
+    // Add debugging
+    console.log('=== API RESPONSE DEBUG ===');
+    console.log('Full response:', response.data);
+    console.log('Success:', response.data.success);
+    console.log('Data:', response.data.data);
+    if (response.data.data) {
+      console.log('Organization name:', response.data.data.organizationName);
+      console.log('User type:', response.data.data.userType);
+      console.log('Email:', response.data.data.email);
+      console.log('First name:', response.data.data.firstName);
+      console.log('Last name:', response.data.data.lastName);
+    }
+    console.log('========================');
+
+    if (response.data.success && response.data.data) {
+      // Extract the actual user data from the ApiResponse wrapper
+      const userData = response.data.data;
+      
+      // Update localStorage with the latest user data
+      localStorage.setItem('user', JSON.stringify(userData));
+      
+      return {
+        success: true,
+        data: userData
+      };
+    } else {
+      return {
+        success: false,
+        message: response.data.message || 'Failed to get user profile'
+      };
+    }
   } catch (error) {
-    return { 
-      success: false, 
-      message: error.response?.data?.message || 'Failed to get profile' 
+    console.error('Error getting user profile:', error);
+    if (error.response) {
+      console.error('Error response:', error.response.data);
+      console.error('Error status:', error.response.status);
+    }
+    return {
+      success: false,
+      message: error.response?.data?.message || error.message || 'Network error'
     };
   }
-}
+};
 
 export default api;

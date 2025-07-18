@@ -35,8 +35,9 @@ public class AuthController {
             System.out.println("Last Name: " + request.getLastName());
             System.out.println("Email: " + request.getEmail());
             System.out.println("========================");
-            
-            // Basic validation - the @Valid annotation and custom validator handle detailed validation
+
+            // Basic validation - the @Valid annotation and custom validator handle detailed
+            // validation
             if (request.getEmail() == null || request.getPassword() == null || request.getUserType() == null) {
                 return ResponseEntity.badRequest()
                         .body(new ApiResponse(false, "Email, password, and user type are required"));
@@ -60,26 +61,26 @@ public class AuthController {
             // Type-specific validation
             if (userType == UserType.VOLUNTEER) {
                 if (request.getFirstName() == null || request.getFirstName().trim().isEmpty() ||
-                    request.getLastName() == null || request.getLastName().trim().isEmpty()) {
+                        request.getLastName() == null || request.getLastName().trim().isEmpty()) {
                     return ResponseEntity.badRequest()
                             .body(new ApiResponse(false, "First name and last name are required for volunteers"));
                 }
-                
+
                 // Ensure organization name is not provided for volunteers
                 if (request.getOrganizationName() != null && !request.getOrganizationName().trim().isEmpty()) {
                     return ResponseEntity.badRequest()
                             .body(new ApiResponse(false, "Organization name should not be provided for volunteers"));
                 }
-                
+
             } else if (userType == UserType.ORGANIZATION) {
                 if (request.getOrganizationName() == null || request.getOrganizationName().trim().isEmpty()) {
                     return ResponseEntity.badRequest()
                             .body(new ApiResponse(false, "Organization name is required for organizations"));
                 }
-                
+
                 // Ensure individual names are not provided for organizations
                 if ((request.getFirstName() != null && !request.getFirstName().trim().isEmpty()) ||
-                    (request.getLastName() != null && !request.getLastName().trim().isEmpty())) {
+                        (request.getLastName() != null && !request.getLastName().trim().isEmpty())) {
                     return ResponseEntity.badRequest()
                             .body(new ApiResponse(false, "Individual names should not be provided for organizations"));
                 }
@@ -127,7 +128,7 @@ public class AuthController {
 
             // Check if user exists
             User user = userService.findByEmail(tokenInfo.getEmail());
-            
+
             if (user == null) {
                 // Create new user based on type
                 user = userService.createGoogleUser(tokenInfo, userType);
@@ -135,9 +136,9 @@ public class AuthController {
                 // For existing users, verify they're trying to login with the correct type
                 if (!user.getUserType().equals(userType)) {
                     return ResponseEntity.badRequest()
-                            .body(new ApiResponse(false, 
-                                "Account exists with different user type. Please login as " + 
-                                user.getUserType().name().toLowerCase()));
+                            .body(new ApiResponse(false,
+                                    "Account exists with different user type. Please login as " +
+                                            user.getUserType().name().toLowerCase()));
                 }
             }
 
@@ -157,7 +158,7 @@ public class AuthController {
         try {
             // Authenticate user
             User user = userService.authenticateUser(request.getEmail(), request.getPassword());
-            
+
             if (user == null) {
                 return ResponseEntity.badRequest()
                         .body(new ApiResponse(false, "Invalid email or password"));
@@ -178,7 +179,7 @@ public class AuthController {
     public ResponseEntity<?> refreshToken(@RequestHeader("Authorization") String authHeader) {
         try {
             String token = jwtTokenUtil.extractTokenFromHeader(authHeader);
-            
+
             if (token == null || !jwtTokenUtil.validateToken(token)) {
                 return ResponseEntity.badRequest()
                         .body(new ApiResponse(false, "Invalid token"));
@@ -187,7 +188,7 @@ public class AuthController {
             String username = jwtTokenUtil.getUsernameFromToken(token);
             String newToken = jwtTokenUtil.generateToken(username);
 
-            return ResponseEntity.ok(new ApiResponse(true, "Token refreshed", 
+            return ResponseEntity.ok(new ApiResponse(true, "Token refreshed",
                     Map.of("token", newToken)));
 
         } catch (Exception e) {
@@ -199,24 +200,61 @@ public class AuthController {
     @GetMapping("/me")
     public ResponseEntity<?> getCurrentUser(@RequestHeader("Authorization") String authHeader) {
         try {
+            // Add extensive debugging
+            System.out.println("=== /ME ENDPOINT DEBUG ===");
+            System.out.println("Received Authorization header: " + authHeader);
+
             String token = jwtTokenUtil.extractTokenFromHeader(authHeader);
-            
-            if (token == null || !jwtTokenUtil.validateToken(token)) {
+            System.out.println("Extracted token: "
+                    + (token != null ? "Token exists (length: " + token.length() + ")" : "Token is null"));
+
+            if (token == null) {
+                System.out.println("ERROR: Token extraction failed");
+                return ResponseEntity.badRequest()
+                        .body(new ApiResponse(false, "No token provided"));
+            }
+
+            boolean isValid = jwtTokenUtil.validateToken(token);
+            System.out.println("Token validation result: " + isValid);
+
+            if (!isValid) {
+                System.out.println("ERROR: Token validation failed");
                 return ResponseEntity.badRequest()
                         .body(new ApiResponse(false, "Invalid token"));
             }
 
             String email = jwtTokenUtil.getUsernameFromToken(token);
+            System.out.println("Email extracted from token: " + email);
+
+            if (email == null) {
+                System.out.println("ERROR: Email extraction from token failed");
+                return ResponseEntity.badRequest()
+                        .body(new ApiResponse(false, "Cannot extract email from token"));
+            }
+
             User user = userService.findByEmail(email);
+            System.out.println("User found: " + (user != null ? "Yes" : "No"));
 
             if (user == null) {
+                System.out.println("ERROR: User not found for email: " + email);
                 return ResponseEntity.badRequest()
                         .body(new ApiResponse(false, "User not found"));
             }
 
+            System.out.println("User details:");
+            System.out.println("  ID: " + user.getId());
+            System.out.println("  Email: " + user.getEmail());
+            System.out.println("  User Type: " + user.getUserType());
+            System.out.println("  Organization Name: " + user.getOrganizationName());
+            System.out.println("  First Name: " + user.getFirstName());
+            System.out.println("  Last Name: " + user.getLastName());
+            System.out.println("========================");
+
             return ResponseEntity.ok(new ApiResponse(true, "User found", user));
 
         } catch (Exception e) {
+            System.out.println("ERROR in /me endpoint: " + e.getMessage());
+            e.printStackTrace();
             return ResponseEntity.badRequest()
                     .body(new ApiResponse(false, "Failed to get user: " + e.getMessage()));
         }
@@ -227,19 +265,19 @@ public class AuthController {
     public ResponseEntity<?> checkUserType(@RequestBody Map<String, String> request) {
         try {
             String email = request.get("email");
-            
+
             if (email == null || email.trim().isEmpty()) {
                 return ResponseEntity.badRequest()
                         .body(new ApiResponse(false, "Email is required"));
             }
 
             User user = userService.findByEmail(email);
-            
+
             if (user == null) {
-                return ResponseEntity.ok(new ApiResponse(true, "Email available", 
+                return ResponseEntity.ok(new ApiResponse(true, "Email available",
                         Map.of("exists", false)));
             } else {
-                return ResponseEntity.ok(new ApiResponse(true, "User found", 
+                return ResponseEntity.ok(new ApiResponse(true, "User found",
                         Map.of("exists", true, "userType", user.getUserType().name())));
             }
 

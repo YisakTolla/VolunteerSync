@@ -136,7 +136,7 @@ public class JwtTokenUtil {
             final Claims claims = getAllClaimsFromToken(token);
             Date now = new Date();
             Date expiryDate = new Date(now.getTime() + jwtExpirationInMs);
-            
+
             return Jwts.builder()
                     .claims(claims)
                     .issuedAt(now)
@@ -174,13 +174,13 @@ public class JwtTokenUtil {
             if (token == null || token.trim().isEmpty()) {
                 return false;
             }
-            
+
             // JWT should have 3 parts separated by dots
             String[] parts = token.split("\\.");
             if (parts.length != 3) {
                 return false;
             }
-            
+
             // Try to parse without verification (just format check)
             Jwts.parser()
                     .verifyWith(getSigningKey())
@@ -192,10 +192,9 @@ public class JwtTokenUtil {
         }
     }
 
-    // Extract token from Authorization header
     public String extractTokenFromHeader(String authHeader) {
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            return authHeader.substring(7);
+            return authHeader.substring(7); // Remove "Bearer " prefix
         }
         return null;
     }

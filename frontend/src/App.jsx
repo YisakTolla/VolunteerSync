@@ -26,7 +26,7 @@ function App() {
           <Route path="/find-organizations" element = {<Organizations/>}/>
           <Route path="/find-events" element = {<Events/>}/>
           <Route path="/about" element = {<About/>}/>
-          <Route path="/profile" element = {<Profile/>}/>
+          <Route path="/profile" element = {<Profile userType="organization" />  }/>
           <Route path="/settings" element = {<Settings/>}/>
 
           
