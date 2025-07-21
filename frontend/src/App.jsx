@@ -1,40 +1,60 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Home from './components/Home';
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
-import HowItWorks from './components/HowItWorks';
-import Footer from './components/Footer';
-import Organizations from './components/Organizations';
-import About from './components/About';
-import Events from './components/Events';
 import Profile from './components/Profile';
-import Settings from './components/Settings';
+import ProfileSetup from './components/ProfileSetup';
+import { ProtectedRoute, ProfileSetupRoute } from './components/ProfileSetupRoute';
 
 function App() {
   return (
     <Router>
       <div className="App">
-        <Navbar />
-        
         <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login onBackToHome={() => window.location.href = '/'} />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/how-it-works" element={<HowItWorks />} />
-          <Route path="/find-organizations" element = {<Organizations/>}/>
-          <Route path="/find-events" element = {<Events/>}/>
-          <Route path="/about" element = {<About/>}/>
-          <Route path="/profile" element = {<Profile userType="organization" />  }/>
-          <Route path="/settings" element = {<Settings/>}/>
-
+          {/* Public Routes */}
+          <Route 
+            path="/" 
+            element={
+              <>
+                <Navbar />
+                <Home />
+              </>
+            } 
+          />
+          <Route path="/login" element={<Login />} />
           
-          {/* Fallback route */}
-          <Route path="*" element={<Navigate to="/" />} />
+          {/* Profile Setup Route - Only for incomplete profiles */}
+          <Route 
+            path="/profile-setup" 
+            element={
+              <ProfileSetupRoute>
+                <ProfileSetup />
+              </ProfileSetupRoute>
+            } 
+          />
+          
+          {/* Protected Routes - Only for complete profiles */}
+          <Route 
+            path="/dashboard" 
+            element={
+              <ProtectedRoute>
+                <Navbar />
+                <Dashboard />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/profile" 
+            element={
+              <ProtectedRoute>
+                <Navbar />
+                <Profile />
+              </ProtectedRoute>
+            } 
+          />
         </Routes>
-        
-        <Footer />
       </div>
     </Router>
   );

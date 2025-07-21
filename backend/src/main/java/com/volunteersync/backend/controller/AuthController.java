@@ -286,4 +286,36 @@ public class AuthController {
                     .body(new ApiResponse(false, "Failed to check user type: " + e.getMessage()));
         }
     }
+
+    @PutMapping("/complete-profile")
+public ResponseEntity<?> completeProfile(
+        @RequestHeader("Authorization") String authHeader,
+        @RequestBody Map<String, Object> profileData) {
+    try {
+        String token = jwtTokenUtil.extractTokenFromHeader(authHeader);
+        
+        if (token == null || !jwtTokenUtil.validateToken(token)) {
+            return ResponseEntity.badRequest()
+                    .body(new ApiResponse(false, "Invalid token"));
+        }
+
+        String email = jwtTokenUtil.getUsernameFromToken(token);
+        User user = userService.findByEmail(email);
+
+        if (user == null) {
+            return ResponseEntity.badRequest()
+                    .body(new ApiResponse(false, "User not found"));
+        }
+
+        // Update user profile with additional information
+        user = userService.updateUserProfile(user, profileData);
+
+        return ResponseEntity.ok(new ApiResponse(true, "Profile completed successfully", user));
+
+    } catch (Exception e) {
+        return ResponseEntity.badRequest()
+                .body(new ApiResponse(false, "Failed to complete profile: " + e.getMessage()));
+    }
+}
+
 }

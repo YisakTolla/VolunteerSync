@@ -1,6 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { loginUser, registerUser, loginWithGoogle, registerWithGoogle, isLoggedIn } from '../services/authService';
+import { 
+  loginUser, 
+  registerUser, 
+  loginWithGoogle, 
+  registerWithGoogle, 
+  isLoggedIn,
+  shouldRedirectToProfileSetup  // Add this import
+} from '../services/authService';
 import './Login.css';
 
 const Login = ({ onBackToHome }) => {
@@ -8,28 +15,31 @@ const Login = ({ onBackToHome }) => {
   const navigate = useNavigate();
   const navigationState = location.state;
 
-  const [isSignUp, setIsSignUp] = useState(navigationState?.mode === 'signup' || false);
+  const [isSignUp, setIsSignUp] = useState(
+    navigationState?.mode === "signup" || false
+  );
   const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    confirmPassword: '',
-    firstName: '',
-    lastName: '',
-    organizationName: '',
-    userType: navigationState?.userType || 'volunteer'
+    email: "",
+    password: "",
+    confirmPassword: "",
+    firstName: "",
+    lastName: "",
+    organizationName: "",
+    userType: navigationState?.userType || "volunteer",
   });
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [googleLoaded, setGoogleLoaded] = useState(false);
 
-  const GOOGLE_CLIENT_ID = '511877812187-6jg8ojddjq5qp6ci4nqgk6jn4vuea87a.apps.googleusercontent.com';
+  const GOOGLE_CLIENT_ID =
+    "511877812187-6jg8ojddjq5qp6ci4nqgk6jn4vuea87a.apps.googleusercontent.com";
 
   // Redirect if already logged in
   useEffect(() => {
     if (isLoggedIn()) {
-      navigate('/dashboard');
+      navigate("/dashboard");
     }
   }, [navigate]);
 
@@ -43,20 +53,22 @@ const Login = ({ onBackToHome }) => {
       }
 
       // Check if script tag exists
-      const existingScript = document.querySelector('script[src*="accounts.google.com"]');
+      const existingScript = document.querySelector(
+        'script[src*="accounts.google.com"]'
+      );
       if (existingScript) {
-        existingScript.addEventListener('load', initializeGoogle);
+        existingScript.addEventListener("load", initializeGoogle);
         return;
       }
 
       // Create and load the script
-      const script = document.createElement('script');
-      script.src = 'https://accounts.google.com/gsi/client';
+      const script = document.createElement("script");
+      script.src = "https://accounts.google.com/gsi/client";
       script.async = true;
       script.defer = true;
       script.onload = initializeGoogle;
       script.onerror = () => {
-        console.error('Failed to load Google OAuth script');
+        console.error("Failed to load Google OAuth script");
         setGoogleLoaded(false);
       };
       document.head.appendChild(script);
@@ -69,16 +81,16 @@ const Login = ({ onBackToHome }) => {
             client_id: GOOGLE_CLIENT_ID,
             callback: handleGoogleResponse,
             auto_select: false,
-            cancel_on_tap_outside: true
+            cancel_on_tap_outside: true,
           });
           setGoogleLoaded(true);
-          console.log('Google OAuth initialized successfully');
+          console.log("Google OAuth initialized successfully");
         } catch (error) {
-          console.error('Failed to initialize Google OAuth:', error);
+          console.error("Failed to initialize Google OAuth:", error);
           setGoogleLoaded(false);
         }
       } else {
-        console.error('Google accounts API not available');
+        console.error("Google accounts API not available");
         setGoogleLoaded(false);
       }
     };
@@ -89,170 +101,160 @@ const Login = ({ onBackToHome }) => {
   // Update form when navigation state changes
   useEffect(() => {
     if (navigationState) {
-      setIsSignUp(navigationState.mode === 'signup');
-      setFormData(prev => ({
+      setIsSignUp(navigationState.mode === "signup");
+      setFormData((prev) => ({
         ...prev,
-        userType: navigationState.userType || 'volunteer'
+        userType: navigationState.userType || "volunteer",
       }));
     }
   }, [navigationState]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
     // Clear error when user starts typing
-    if (error) setError('');
+    if (error) setError("");
   };
 
   const handleUserTypeChange = (userType) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       userType,
       // Clear name fields when switching user types
-      firstName: '',
-      lastName: '',
-      organizationName: ''
+      firstName: "",
+      lastName: "",
+      organizationName: "",
     }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
-    setSuccess('');
+    setError("");
 
     try {
+      let result;
+
       if (isSignUp) {
-        // Registration
-        if (formData.password !== formData.confirmPassword) {
-          setError('Passwords do not match');
-          setLoading(false);
-          return;
-        }
-
-        let registrationData;
-        
-        if (formData.userType === 'organization') {
-          registrationData = {
-            organizationName: formData.organizationName,
-            email: formData.email,
-            password: formData.password,
-            confirmPassword: formData.confirmPassword,
-            userType: formData.userType.toUpperCase()
-          };
-        } else {
-          registrationData = {
-            firstName: formData.firstName,
-            lastName: formData.lastName,
-            email: formData.email,
-            password: formData.password,
-            confirmPassword: formData.confirmPassword,
-            userType: formData.userType.toUpperCase()
-          };
-        }
-
-        const result = await registerUser(registrationData);
-        
-        if (result.success) {
-          setSuccess('Account created successfully! Redirecting...');
-          setTimeout(() => {
-            navigate('/dashboard');
-          }, 1500);
-        } else {
-          setError(result.message);
-        }
+        // Registration logic
+        result = await registerUser(registrationData);
       } else {
-        // Login
-        const result = await loginUser(formData.email, formData.password);
-        
-        if (result.success) {
-          navigate('/dashboard');
-        } else {
-          setError(result.message);
-        }
+        // Login logic
+        result = await loginUser(formData.email, formData.password);
+      }
+
+      if (result.success) {
+        setSuccess(
+          `${
+            isSignUp ? "Account created" : "Signed in"
+          } successfully! Redirecting...`
+        );
+
+        setTimeout(() => {
+          // Check if profile setup is needed
+          if (shouldRedirectToProfileSetup()) {
+            navigate("/profile-setup");
+          } else {
+            navigate("/dashboard");
+          }
+        }, 1500);
+      } else {
+        setError(result.message);
       }
     } catch (error) {
-      setError('Something went wrong. Please try again.');
-      console.error('Auth error:', error);
+      setError("Something went wrong. Please try again.");
+      console.error("Auth error:", error);
     } finally {
       setLoading(false);
     }
   };
 
   const handleGoogleLogin = async () => {
-    console.log('Google login clicked, googleLoaded:', googleLoaded);
-    
+    console.log("Google login clicked, googleLoaded:", googleLoaded);
+
     if (!googleLoaded) {
-      setError('Google OAuth is still loading. Please wait a moment and try again.');
+      setError(
+        "Google OAuth is still loading. Please wait a moment and try again."
+      );
       return;
     }
 
     if (!window.google?.accounts?.id) {
-      setError('Google OAuth is not available. Please refresh the page and try again.');
+      setError(
+        "Google OAuth is not available. Please refresh the page and try again."
+      );
       return;
     }
 
     setLoading(true);
-    setError('');
-    
+    setError("");
+
     try {
       // Show Google sign-in prompt
       window.google.accounts.id.prompt((notification) => {
-        console.log('Google prompt notification:', notification);
-        
+        console.log("Google prompt notification:", notification);
+
         if (notification.isNotDisplayed()) {
-          setError('Google sign-in popup was blocked. Please allow popups and try again.');
+          setError(
+            "Google sign-in popup was blocked. Please allow popups and try again."
+          );
           setLoading(false);
         } else if (notification.isSkippedMoment()) {
-          setError('Google sign-in was cancelled. Please try again.');
+          setError("Google sign-in was cancelled. Please try again.");
           setLoading(false);
         }
       });
     } catch (error) {
-      console.error('Google OAuth error:', error);
-      setError('Google sign-in failed. Please try again.');
+      console.error("Google OAuth error:", error);
+      setError("Google sign-in failed. Please try again.");
       setLoading(false);
     }
   };
 
   const handleGoogleResponse = async (response) => {
-    console.log('Google response received:', response);
-    
+    console.log("Google response received:", response);
+
     if (!response.credential) {
-      setError('Google authentication failed. Please try again.');
+      setError("Google authentication failed. Please try again.");
       setLoading(false);
       return;
     }
 
     setLoading(true);
-    setError('');
+    setError("");
 
     try {
       let result;
-      
+
       if (isSignUp) {
         result = await registerWithGoogle(
-          response.credential, 
+          response.credential,
           formData.userType.toUpperCase()
         );
       } else {
         result = await loginWithGoogle(response.credential);
       }
-      
+
       if (result.success) {
-        setSuccess(`${isSignUp ? 'Account created' : 'Signed in'} successfully! Redirecting...`);
+        setSuccess(
+          `${
+            isSignUp ? "Account created" : "Signed in"
+          } successfully! Redirecting...`
+        );
         setTimeout(() => {
-          navigate('/dashboard');
+          navigate("/dashboard");
         }, 1500);
       } else {
-        setError(result.message || 'Google authentication failed. Please try again.');
+        setError(
+          result.message || "Google authentication failed. Please try again."
+        );
       }
     } catch (error) {
-      console.error('Google auth error:', error);
-      setError('Google authentication failed. Please try again.');
+      console.error("Google auth error:", error);
+      setError("Google authentication failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -261,16 +263,16 @@ const Login = ({ onBackToHome }) => {
   const toggleMode = () => {
     setIsSignUp(!isSignUp);
     setFormData({
-      email: '',
-      password: '',
-      confirmPassword: '',
-      firstName: '',
-      lastName: '',
-      organizationName: '',
-      userType: 'volunteer'
+      email: "",
+      password: "",
+      confirmPassword: "",
+      firstName: "",
+      lastName: "",
+      organizationName: "",
+      userType: "volunteer",
     });
-    setError('');
-    setSuccess('');
+    setError("");
+    setSuccess("");
   };
 
   return (
@@ -280,7 +282,11 @@ const Login = ({ onBackToHome }) => {
         <div className="login-form-section">
           <div className="login-form-container">
             {/* Logo with back navigation */}
-            <div className="login-logo" onClick={onBackToHome} style={{ cursor: 'pointer' }}>
+            <div
+              className="login-logo"
+              onClick={onBackToHome}
+              style={{ cursor: "pointer" }}
+            >
               <span className="login-logo-icon">🤝</span>
               <span className="login-logo-text">VolunteerSync</span>
             </div>
@@ -288,39 +294,44 @@ const Login = ({ onBackToHome }) => {
             {/* Header */}
             <div className="login-header">
               <h1 className="login-title">
-                {isSignUp ? 'Join VolunteerSync' : 'Welcome back'}
+                {isSignUp ? "Join VolunteerSync" : "Welcome back"}
               </h1>
               <p className="login-subtitle">
-                {isSignUp 
-                  ? 'Start making a difference in your community today'
-                  : 'Sign in to continue your volunteer journey'
-                }
+                {isSignUp
+                  ? "Start making a difference in your community today"
+                  : "Sign in to continue your volunteer journey"}
               </p>
             </div>
 
             {/* Error/Success Messages */}
             {error && (
-              <div className="error-message" style={{
-                backgroundColor: '#ffebee',
-                color: '#c62828',
-                padding: '12px',
-                borderRadius: '8px',
-                marginBottom: '16px',
-                fontSize: '14px'
-              }}>
+              <div
+                className="error-message"
+                style={{
+                  backgroundColor: "#ffebee",
+                  color: "#c62828",
+                  padding: "12px",
+                  borderRadius: "8px",
+                  marginBottom: "16px",
+                  fontSize: "14px",
+                }}
+              >
                 {error}
               </div>
             )}
 
             {success && (
-              <div className="success-message" style={{
-                backgroundColor: '#e8f5e8',
-                color: '#2e7d32',
-                padding: '12px',
-                borderRadius: '8px',
-                marginBottom: '16px',
-                fontSize: '14px'
-              }}>
+              <div
+                className="success-message"
+                style={{
+                  backgroundColor: "#e8f5e8",
+                  color: "#2e7d32",
+                  padding: "12px",
+                  borderRadius: "8px",
+                  marginBottom: "16px",
+                  fontSize: "14px",
+                }}
+              >
                 {success}
               </div>
             )}
@@ -332,16 +343,20 @@ const Login = ({ onBackToHome }) => {
                 <div className="user-type-buttons">
                   <button
                     type="button"
-                    className={`user-type-btn ${formData.userType === 'volunteer' ? 'active' : ''}`}
-                    onClick={() => handleUserTypeChange('volunteer')}
+                    className={`user-type-btn ${
+                      formData.userType === "volunteer" ? "active" : ""
+                    }`}
+                    onClick={() => handleUserTypeChange("volunteer")}
                   >
                     <span className="user-type-icon">👥</span>
                     <span className="user-type-text">Volunteer</span>
                   </button>
                   <button
                     type="button"
-                    className={`user-type-btn ${formData.userType === 'organization' ? 'active' : ''}`}
-                    onClick={() => handleUserTypeChange('organization')}
+                    className={`user-type-btn ${
+                      formData.userType === "organization" ? "active" : ""
+                    }`}
+                    onClick={() => handleUserTypeChange("organization")}
                   >
                     <span className="user-type-icon">🏢</span>
                     <span className="user-type-text">Organization</span>
@@ -358,16 +373,37 @@ const Login = ({ onBackToHome }) => {
               disabled={loading || !googleLoaded}
               style={{
                 opacity: googleLoaded ? 1 : 0.6,
-                cursor: googleLoaded && !loading ? 'pointer' : 'not-allowed'
+                cursor: googleLoaded && !loading ? "pointer" : "not-allowed",
               }}
             >
-              <svg className="google-icon" viewBox="0 0 24 24" width="20" height="20">
-                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+              <svg
+                className="google-icon"
+                viewBox="0 0 24 24"
+                width="20"
+                height="20"
+              >
+                <path
+                  fill="#4285F4"
+                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                />
+                <path
+                  fill="#34A853"
+                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                />
+                <path
+                  fill="#FBBC05"
+                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                />
+                <path
+                  fill="#EA4335"
+                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                />
               </svg>
-              {loading ? 'Connecting...' : googleLoaded ? 'Continue with Google' : 'Loading Google...'}
+              {loading
+                ? "Connecting..."
+                : googleLoaded
+                ? "Continue with Google"
+                : "Loading Google..."}
             </button>
 
             {/* Divider */}
@@ -380,10 +416,12 @@ const Login = ({ onBackToHome }) => {
               {/* Name fields for Sign Up */}
               {isSignUp && (
                 <>
-                  {formData.userType === 'organization' ? (
+                  {formData.userType === "organization" ? (
                     // Organization Name field
                     <div className="form-group">
-                      <label className="form-label" htmlFor="organizationName">Organization Name</label>
+                      <label className="form-label" htmlFor="organizationName">
+                        Organization Name
+                      </label>
                       <input
                         type="text"
                         id="organizationName"
@@ -400,7 +438,9 @@ const Login = ({ onBackToHome }) => {
                     // First Name and Last Name fields for volunteers
                     <div className="form-row">
                       <div className="form-group">
-                        <label className="form-label" htmlFor="firstName">First Name</label>
+                        <label className="form-label" htmlFor="firstName">
+                          First Name
+                        </label>
                         <input
                           type="text"
                           id="firstName"
@@ -414,7 +454,9 @@ const Login = ({ onBackToHome }) => {
                         />
                       </div>
                       <div className="form-group">
-                        <label className="form-label" htmlFor="lastName">Last Name</label>
+                        <label className="form-label" htmlFor="lastName">
+                          Last Name
+                        </label>
                         <input
                           type="text"
                           id="lastName"
@@ -434,7 +476,9 @@ const Login = ({ onBackToHome }) => {
 
               {/* Email */}
               <div className="form-group">
-                <label className="form-label" htmlFor="email">Email Address</label>
+                <label className="form-label" htmlFor="email">
+                  Email Address
+                </label>
                 <input
                   type="email"
                   id="email"
@@ -450,10 +494,12 @@ const Login = ({ onBackToHome }) => {
 
               {/* Password */}
               <div className="form-group">
-                <label className="form-label" htmlFor="password">Password</label>
+                <label className="form-label" htmlFor="password">
+                  Password
+                </label>
                 <div className="password-input-container">
                   <input
-                    type={showPassword ? 'text' : 'password'}
+                    type={showPassword ? "text" : "password"}
                     id="password"
                     name="password"
                     className="form-input"
@@ -469,7 +515,7 @@ const Login = ({ onBackToHome }) => {
                     className="password-toggle"
                     onClick={() => setShowPassword(!showPassword)}
                   >
-                    {showPassword ? '👁️' : '👁️‍🗨️'}
+                    {showPassword ? "👁️" : "👁️‍🗨️"}
                   </button>
                 </div>
               </div>
@@ -477,7 +523,9 @@ const Login = ({ onBackToHome }) => {
               {/* Confirm Password for Sign Up */}
               {isSignUp && (
                 <div className="form-group">
-                  <label className="form-label" htmlFor="confirmPassword">Confirm Password</label>
+                  <label className="form-label" htmlFor="confirmPassword">
+                    Confirm Password
+                  </label>
                   <input
                     type="password"
                     id="confirmPassword"
@@ -495,7 +543,9 @@ const Login = ({ onBackToHome }) => {
               {/* Forgot Password Link (Login only) */}
               {!isSignUp && (
                 <div className="forgot-password">
-                  <a href="#" className="forgot-password-link">Forgot your password?</a>
+                  <a href="#" className="forgot-password-link">
+                    Forgot your password?
+                  </a>
                 </div>
               )}
 
@@ -507,8 +557,10 @@ const Login = ({ onBackToHome }) => {
               >
                 {loading ? (
                   <div className="loading-spinner"></div>
+                ) : isSignUp ? (
+                  "Create Account"
                 ) : (
-                  isSignUp ? 'Create Account' : 'Sign In'
+                  "Sign In"
                 )}
               </button>
             </form>
@@ -516,23 +568,30 @@ const Login = ({ onBackToHome }) => {
             {/* Terms (Sign Up only) */}
             {isSignUp && (
               <p className="login-terms">
-                By creating an account, you agree to our{' '}
-                <a href="#" className="login-link">Terms of Service</a> and{' '}
-                <a href="#" className="login-link">Privacy Policy</a>
+                By creating an account, you agree to our{" "}
+                <a href="#" className="login-link">
+                  Terms of Service
+                </a>{" "}
+                and{" "}
+                <a href="#" className="login-link">
+                  Privacy Policy
+                </a>
               </p>
             )}
 
             {/* Toggle Mode */}
             <div className="login-toggle">
               <p>
-                {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
+                {isSignUp
+                  ? "Already have an account?"
+                  : "Don't have an account?"}{" "}
                 <button
                   type="button"
                   className="toggle-mode-btn"
                   onClick={toggleMode}
                   disabled={loading}
                 >
-                  {isSignUp ? 'Sign In' : 'Sign Up'}
+                  {isSignUp ? "Sign In" : "Sign Up"}
                 </button>
               </p>
             </div>
@@ -552,7 +611,7 @@ const Login = ({ onBackToHome }) => {
                     <div className="demo-hours">48 hours this month</div>
                   </div>
                 </div>
-                
+
                 <div className="volunteer-card-demo">
                   <div className="demo-avatar purple">AS</div>
                   <div className="demo-info">
@@ -561,7 +620,7 @@ const Login = ({ onBackToHome }) => {
                     <div className="demo-hours">32 hours this month</div>
                   </div>
                 </div>
-                
+
                 <div className="volunteer-card-demo">
                   <div className="demo-avatar orange">LB</div>
                   <div className="demo-info">
@@ -598,7 +657,7 @@ const Login = ({ onBackToHome }) => {
                   </div>
                 </div>
               </div>
-              
+
               <div className="floating-stats">
                 <div className="stat-bubble">
                   <div className="stat-number">2,500+</div>
@@ -610,10 +669,13 @@ const Login = ({ onBackToHome }) => {
                 </div>
               </div>
             </div>
-            
+
             <div className="visual-text">
               <h2>Join a community of changemakers</h2>
-              <p>Connect with passionate volunteers and meaningful opportunities in your area.</p>
+              <p>
+                Connect with passionate volunteers and meaningful opportunities
+                in your area.
+              </p>
             </div>
           </div>
         </div>
