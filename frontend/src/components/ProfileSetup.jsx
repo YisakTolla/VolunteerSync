@@ -1,459 +1,383 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  getCurrentUser, 
-  completeProfile, 
-  isLoggedIn, 
-  logout 
-} from '../services/authService';
+import { isLoggedIn } from '../services/authService';
 import {
   User,
+  Building,
   MapPin,
   Phone,
-  Globe,
-  FileText,
   Camera,
-  Upload,
   ArrowRight,
-  Check,
-  AlertCircle,
-  Building,
-  Target
+  CheckCircle
 } from 'lucide-react';
 import './ProfileSetup.css';
 
 const ProfileSetup = () => {
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const [profileImage, setProfileImage] = useState(null);
-  const [profileImagePreview, setProfileImagePreview] = useState(null);
-
-  const [profileData, setProfileData] = useState({
+  const [currentStep, setCurrentStep] = useState(1);
+  const [formData, setFormData] = useState({
+    profilePicture: null,
     phone: '',
     location: '',
-    website: '',
     bio: '',
     interests: [],
     skills: [],
-    causes: [],
-    services: [],
-    organizationType: 'Non-Profit',
-    founded: ''
+    availability: 'flexible'
   });
+  const [loading, setLoading] = useState(false);
 
-  // Predefined options (same as RegisterUser)
-  const volunteerInterests = [
-    'Education', 'Technology', 'Environment', 'Youth Development',
-    'Community Service', 'Animal Welfare', 'Healthcare', 'Arts & Culture',
-    'Senior Support', 'Disaster Relief', 'Food Security', 'Housing'
-  ];
-
-  const volunteerSkills = [
-    'Project Management', 'Public Speaking', 'Event Planning', 'Team Leadership',
-    'Marketing', 'Social Media', 'Graphic Design', 'Writing', 'Translation',
-    'Teaching', 'Counseling', 'First Aid', 'Computer Skills', 'Photography'
-  ];
-
-  const organizationCauses = [
-    'Climate Change', 'Wildlife Conservation', 'Clean Water', 'Renewable Energy',
-    'Education Access', 'Poverty Alleviation', 'Healthcare Access', 'Food Security',
-    'Human Rights', 'Gender Equality', 'Mental Health', 'Youth Development'
-  ];
-
-  const organizationServices = [
-    'Direct Service Delivery', 'Education & Training', 'Research & Advocacy',
-    'Community Organizing', 'Emergency Response', 'Counseling & Support',
-    'Resource Distribution', 'Infrastructure Development', 'Policy Development'
-  ];
-
-  const organizationTypes = [
-    'Non-Profit', 'Educational Institution', 'Religious Organization',
-    'Community Group', 'Government Agency', 'Healthcare Organization',
-    'Environmental Group', 'Social Services', 'Arts & Culture', 'Other'
-  ];
-
+  // Redirect if not logged in
   useEffect(() => {
     if (!isLoggedIn()) {
       navigate('/login');
-      return;
     }
-
-    const currentUser = getCurrentUser();
-    if (!currentUser) {
-      navigate('/login');
-      return;
-    }
-
-    setUser(currentUser);
-
-    // Pre-fill with existing data if any
-    setProfileData(prev => ({
-      ...prev,
-      phone: currentUser.phone || '',
-      location: currentUser.location || '',
-      website: currentUser.website || '',
-      bio: currentUser.bio || '',
-      organizationType: currentUser.organizationType || 'Non-Profit',
-      founded: currentUser.founded || ''
-    }));
-
   }, [navigate]);
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setProfileData(prev => ({
+  const totalSteps = 3;
+
+  const availableInterests = [
+    'Environment', 'Education', 'Healthcare', 'Community Service',
+    'Animal Welfare', 'Senior Care', 'Youth Development', 'Arts & Culture',
+    'Technology', 'Disaster Relief', 'Food Security', 'Homelessness'
+  ];
+
+  const availableSkills = [
+    'Communication', 'Leadership', 'Teaching', 'Event Planning',
+    'Marketing', 'Photography', 'Writing', 'Translation',
+    'Technology Support', 'First Aid', 'Fundraising', 'Administrative'
+  ];
+
+  const handleInputChange = (field, value) => {
+    setFormData(prev => ({
       ...prev,
-      [name]: value
+      [field]: value
     }));
-    if (error) setError('');
   };
 
-  const handleTagToggle = (category, item) => {
-    setProfileData(prev => ({
+  const handleArrayToggle = (field, value) => {
+    setFormData(prev => ({
       ...prev,
-      [category]: prev[category].includes(item)
-        ? prev[category].filter(i => i !== item)
-        : [...prev[category], item]
+      [field]: prev[field].includes(value)
+        ? prev[field].filter(item => item !== value)
+        : [...prev[field], value]
     }));
   };
 
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setProfileImage(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setProfileImagePreview(reader.result);
-      };
-      reader.readAsDataURL(file);
+  const handleNext = () => {
+    if (currentStep < totalSteps) {
+      setCurrentStep(currentStep + 1);
     }
   };
 
-  const validateProfile = () => {
-    if (!profileData.location.trim()) {
-      setError('Location is required');
-      return false;
+  const handlePrevious = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
     }
-
-    if (!profileData.bio.trim()) {
-      setError('Please add a brief bio');
-      return false;
-    }
-
-    if (user?.userType === 'VOLUNTEER' && profileData.interests.length === 0) {
-      setError('Please select at least one interest');
-      return false;
-    }
-
-    if (user?.userType === 'ORGANIZATION' && profileData.causes.length === 0) {
-      setError('Please select at least one cause your organization supports');
-      return false;
-    }
-
-    return true;
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    if (!validateProfile()) return;
+  const handleSkip = () => {
+    navigate('/dashboard');
+  };
 
+  const handleComplete = async () => {
     setLoading(true);
-    setError('');
-
     try {
-      const result = await completeProfile(profileData);
+      // TODO: Send profile data to backend
+      console.log('Profile setup data:', formData);
       
-      if (result.success) {
-        setSuccess('Profile completed successfully! Redirecting to dashboard...');
-        setTimeout(() => {
-          navigate('/dashboard');
-        }, 2000);
-      } else {
-        setError(result.message || 'Failed to complete profile. Please try again.');
-      }
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      navigate('/dashboard');
     } catch (error) {
-      console.error('Profile completion error:', error);
-      setError('An unexpected error occurred. Please try again.');
+      console.error('Profile setup failed:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSkipForNow = () => {
-    // Allow user to skip but mark profile as incomplete
-    navigate('/dashboard');
-  };
+  const renderStep1 = () => (
+    <div className="setup-step">
+      <div className="step-header">
+        <h2 className="step-title">Welcome! Let's set up your profile</h2>
+        <p className="step-description">
+          Add a photo and basic information to help others connect with you
+        </p>
+      </div>
 
-  const handleLogout = () => {
-    logout();
-    navigate('/');
-  };
-
-  if (!user) {
-    return <div>Loading...</div>;
-  }
-
-  return (
-    <div className="profile-setup-page">
-      <div className="profile-setup-container">
-        {/* Header */}
-        <div className="profile-setup-header">
-          <div className="profile-setup-logo">
-            <span className="profile-setup-logo-icon">🤝</span>
-            <span className="profile-setup-logo-text">VolunteerSync</span>
-          </div>
-          
-          <button 
-            className="profile-setup-logout"
-            onClick={handleLogout}
-          >
-            Logout
-          </button>
-        </div>
-
-        {/* Welcome */}
-        <div className="profile-setup-welcome">
-          <h1>Welcome to VolunteerSync, {user.userType === 'VOLUNTEER' ? user.firstName : user.organizationName}!</h1>
-          <p>Let's complete your profile to help you get the most out of our platform.</p>
-        </div>
-
-        {/* Form */}
-        <div className="profile-setup-form-container">
-          <form onSubmit={handleSubmit} className="profile-setup-form">
-            
-            {/* Profile Image */}
-            <div className="profile-setup-section">
-              <h2>Profile Photo</h2>
-              <div className="profile-setup-image-upload">
-                <div className="profile-setup-image-preview">
-                  {profileImagePreview ? (
-                    <img src={profileImagePreview} alt="Profile preview" />
-                  ) : (
-                    <div className="profile-setup-image-placeholder">
-                      <Camera />
-                      <span>Add Photo</span>
-                    </div>
-                  )}
-                </div>
-                <div className="profile-setup-image-actions">
-                  <input
-                    type="file"
-                    id="profileImage"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    className="profile-setup-file-input"
-                  />
-                  <label htmlFor="profileImage" className="profile-setup-file-label">
-                    <Upload />
-                    Choose Photo
-                  </label>
-                </div>
-              </div>
-            </div>
-
-            {/* Contact Information */}
-            <div className="profile-setup-section">
-              <h2>Contact Information</h2>
-              
-              <div className="profile-setup-form-row">
-                <div className="profile-setup-form-group">
-                  <label htmlFor="phone">
-                    <Phone className="profile-setup-icon" />
-                    Phone Number
-                  </label>
-                  <input
-                    type="tel"
-                    id="phone"
-                    name="phone"
-                    value={profileData.phone}
-                    onChange={handleInputChange}
-                    placeholder="Enter your phone number"
-                  />
-                </div>
-
-                <div className="profile-setup-form-group">
-                  <label htmlFor="location">
-                    <MapPin className="profile-setup-icon" />
-                    Location *
-                  </label>
-                  <input
-                    type="text"
-                    id="location"
-                    name="location"
-                    value={profileData.location}
-                    onChange={handleInputChange}
-                    placeholder="City, State"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="profile-setup-form-group">
-                <label htmlFor="website">
-                  <Globe className="profile-setup-icon" />
-                  Website
-                </label>
-                <input
-                  type="url"
-                  id="website"
-                  name="website"
-                  value={profileData.website}
-                  onChange={handleInputChange}
-                  placeholder="https://your-website.com"
-                />
-              </div>
-
-              {/* Organization specific fields */}
-              {user.userType === 'ORGANIZATION' && (
-                <div className="profile-setup-form-row">
-                  <div className="profile-setup-form-group">
-                    <label htmlFor="organizationType">
-                      <Building className="profile-setup-icon" />
-                      Organization Type
-                    </label>
-                    <select
-                      id="organizationType"
-                      name="organizationType"
-                      value={profileData.organizationType}
-                      onChange={handleInputChange}
-                    >
-                      {organizationTypes.map(type => (
-                        <option key={type} value={type}>{type}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="profile-setup-form-group">
-                    <label htmlFor="founded">
-                      <Building className="profile-setup-icon" />
-                      Founded
-                    </label>
-                    <input
-                      type="text"
-                      id="founded"
-                      name="founded"
-                      value={profileData.founded}
-                      onChange={handleInputChange}
-                      placeholder="e.g., March 2018"
-                    />
-                  </div>
+      <div className="step-content">
+        {/* Profile Picture */}
+        <div className="form-group">
+          <label className="form-label">Profile Picture</label>
+          <div className="profile-picture-upload">
+            <div className="profile-picture-preview">
+              {formData.profilePicture ? (
+                <img src={formData.profilePicture} alt="Profile" />
+              ) : (
+                <div className="profile-picture-placeholder">
+                  <Camera />
+                  <span>Add Photo</span>
                 </div>
               )}
             </div>
-
-            {/* Bio */}
-            <div className="profile-setup-section">
-              <h2>About {user.userType === 'VOLUNTEER' ? 'You' : 'Your Organization'}</h2>
-              <div className="profile-setup-form-group">
-                <label htmlFor="bio">
-                  <FileText className="profile-setup-icon" />
-                  Bio *
-                </label>
-                <textarea
-                  id="bio"
-                  name="bio"
-                  value={profileData.bio}
-                  onChange={handleInputChange}
-                  placeholder={`Tell us about ${user.userType === 'VOLUNTEER' ? 'yourself and your interests' : 'your organization and mission'}...`}
-                  rows={4}
-                  required
-                />
-              </div>
-            </div>
-
-            {/* Interests/Causes */}
-            <div className="profile-setup-section">
-              <h2>
-                <Target className="profile-setup-icon" />
-                {user.userType === 'VOLUNTEER' ? 'Your Interests' : 'Causes You Support'} *
-              </h2>
-              <p className="profile-setup-section-description">
-                {user.userType === 'VOLUNTEER' 
-                  ? 'Select areas you\'re passionate about to help us match you with relevant opportunities.'
-                  : 'Choose the causes your organization focuses on to attract the right volunteers.'
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                const file = e.target.files[0];
+                if (file) {
+                  const reader = new FileReader();
+                  reader.onload = (e) => {
+                    handleInputChange('profilePicture', e.target.result);
+                  };
+                  reader.readAsDataURL(file);
                 }
-              </p>
-              <div className="profile-setup-tags">
-                {(user.userType === 'VOLUNTEER' ? volunteerInterests : organizationCauses).map((item) => (
-                  <button
-                    key={item}
-                    type="button"
-                    className={`profile-setup-tag ${
-                      profileData[user.userType === 'VOLUNTEER' ? 'interests' : 'causes'].includes(item) ? 'active' : ''
-                    }`}
-                    onClick={() => handleTagToggle(user.userType === 'VOLUNTEER' ? 'interests' : 'causes', item)}
-                  >
-                    {item}
-                  </button>
-                ))}
-              </div>
+              }}
+              className="file-input"
+            />
+          </div>
+        </div>
+
+        {/* Phone */}
+        <div className="form-group">
+          <label className="form-label">
+            <Phone className="input-icon" />
+            Phone Number
+          </label>
+          <input
+            type="tel"
+            className="form-input"
+            value={formData.phone}
+            onChange={(e) => handleInputChange('phone', e.target.value)}
+            placeholder="Enter your phone number"
+          />
+        </div>
+
+        {/* Location */}
+        <div className="form-group">
+          <label className="form-label">
+            <MapPin className="input-icon" />
+            Location
+          </label>
+          <input
+            type="text"
+            className="form-input"
+            value={formData.location}
+            onChange={(e) => handleInputChange('location', e.target.value)}
+            placeholder="City, State"
+          />
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderStep2 = () => (
+    <div className="setup-step">
+      <div className="step-header">
+        <h2 className="step-title">Tell us about yourself</h2>
+        <p className="step-description">
+          Share your interests and skills to help us match you with the right opportunities
+        </p>
+      </div>
+
+      <div className="step-content">
+        {/* Bio */}
+        <div className="form-group">
+          <label className="form-label">Bio</label>
+          <textarea
+            className="form-textarea"
+            value={formData.bio}
+            onChange={(e) => handleInputChange('bio', e.target.value)}
+            placeholder="Tell us a bit about yourself and what motivates you to volunteer..."
+            rows={4}
+          />
+        </div>
+
+        {/* Interests */}
+        <div className="form-group">
+          <label className="form-label">Interests</label>
+          <p className="form-help">Select causes you're passionate about</p>
+          <div className="tag-grid">
+            {availableInterests.map(interest => (
+              <button
+                key={interest}
+                type="button"
+                className={`tag-btn ${formData.interests.includes(interest) ? 'active' : ''}`}
+                onClick={() => handleArrayToggle('interests', interest)}
+              >
+                {interest}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Skills */}
+        <div className="form-group">
+          <label className="form-label">Skills</label>
+          <p className="form-help">What skills can you bring to volunteer work?</p>
+          <div className="tag-grid">
+            {availableSkills.map(skill => (
+              <button
+                key={skill}
+                type="button"
+                className={`tag-btn ${formData.skills.includes(skill) ? 'active' : ''}`}
+                onClick={() => handleArrayToggle('skills', skill)}
+              >
+                {skill}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderStep3 = () => (
+    <div className="setup-step">
+      <div className="step-header">
+        <h2 className="step-title">Availability & Preferences</h2>
+        <p className="step-description">
+          Help organizations understand when and how you'd like to volunteer
+        </p>
+      </div>
+
+      <div className="step-content">
+        {/* Availability */}
+        <div className="form-group">
+          <label className="form-label">Availability</label>
+          <div className="radio-group">
+            <label className="radio-option">
+              <input
+                type="radio"
+                name="availability"
+                value="weekends"
+                checked={formData.availability === 'weekends'}
+                onChange={(e) => handleInputChange('availability', e.target.value)}
+              />
+              <span className="radio-label">Weekends only</span>
+            </label>
+            <label className="radio-option">
+              <input
+                type="radio"
+                name="availability"
+                value="weekdays"
+                checked={formData.availability === 'weekdays'}
+                onChange={(e) => handleInputChange('availability', e.target.value)}
+              />
+              <span className="radio-label">Weekdays only</span>
+            </label>
+            <label className="radio-option">
+              <input
+                type="radio"
+                name="availability"
+                value="flexible"
+                checked={formData.availability === 'flexible'}
+                onChange={(e) => handleInputChange('availability', e.target.value)}
+              />
+              <span className="radio-label">Flexible schedule</span>
+            </label>
+          </div>
+        </div>
+
+        {/* Summary */}
+        <div className="setup-summary">
+          <h3 className="summary-title">Profile Summary</h3>
+          <div className="summary-grid">
+            <div className="summary-item">
+              <strong>Location:</strong>
+              <span>{formData.location || 'Not specified'}</span>
             </div>
-
-            {/* Skills/Services */}
-            <div className="profile-setup-section">
-              <h2>{user.userType === 'VOLUNTEER' ? 'Your Skills' : 'Services & Programs'}</h2>
-              <p className="profile-setup-section-description">
-                {user.userType === 'VOLUNTEER' 
-                  ? 'What skills can you bring to volunteer opportunities?'
-                  : 'What services and programs does your organization offer?'
-                }
-              </p>
-              <div className="profile-setup-tags">
-                {(user.userType === 'VOLUNTEER' ? volunteerSkills : organizationServices).map((item) => (
-                  <button
-                    key={item}
-                    type="button"
-                    className={`profile-setup-tag ${
-                      profileData[user.userType === 'VOLUNTEER' ? 'skills' : 'services'].includes(item) ? 'active' : ''
-                    }`}
-                    onClick={() => handleTagToggle(user.userType === 'VOLUNTEER' ? 'skills' : 'services', item)}
-                  >
-                    {item}
-                  </button>
-                ))}
-              </div>
+            <div className="summary-item">
+              <strong>Interests:</strong>
+              <span>{formData.interests.length} selected</span>
             </div>
+            <div className="summary-item">
+              <strong>Skills:</strong>
+              <span>{formData.skills.length} selected</span>
+            </div>
+            <div className="summary-item">
+              <strong>Availability:</strong>
+              <span>{formData.availability}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 
-            {/* Messages */}
-            {error && (
-              <div className="profile-setup-message error">
-                <AlertCircle />
-                {error}
+  return (
+    <div className="profile-setup-page">
+      <div className="setup-container">
+        {/* Progress Bar */}
+        <div className="setup-progress">
+          <div className="progress-steps">
+            {Array.from({ length: totalSteps }, (_, i) => i + 1).map(step => (
+              <div
+                key={step}
+                className={`progress-step ${step <= currentStep ? 'active' : ''} ${step < currentStep ? 'completed' : ''}`}
+              >
+                {step < currentStep ? <CheckCircle /> : <span>{step}</span>}
               </div>
-            )}
-            
-            {success && (
-              <div className="profile-setup-message success">
-                <Check />
-                {success}
-              </div>
-            )}
+            ))}
+          </div>
+          <div className="progress-bar">
+            <div
+              className="progress-fill"
+              style={{ width: `${(currentStep / totalSteps) * 100}%` }}
+            />
+          </div>
+        </div>
 
-            {/* Actions */}
-            <div className="profile-setup-actions">
+        {/* Step Content */}
+        <div className="setup-content">
+          {currentStep === 1 && renderStep1()}
+          {currentStep === 2 && renderStep2()}
+          {currentStep === 3 && renderStep3()}
+        </div>
+
+        {/* Navigation */}
+        <div className="setup-navigation">
+          <div className="nav-left">
+            {currentStep > 1 && (
               <button
                 type="button"
-                className="profile-setup-btn secondary"
-                onClick={handleSkipForNow}
-                disabled={loading}
+                onClick={handlePrevious}
+                className="btn-secondary"
               >
-                Skip for Now
+                Previous
               </button>
-              
+            )}
+            <button
+              type="button"
+              onClick={handleSkip}
+              className="btn-text"
+            >
+              Skip for now
+            </button>
+          </div>
+
+          <div className="nav-right">
+            {currentStep < totalSteps ? (
               <button
-                type="submit"
-                className="profile-setup-btn primary"
-                disabled={loading}
+                type="button"
+                onClick={handleNext}
+                className="btn-primary"
               >
-                {loading ? 'Completing Profile...' : 'Complete Profile'}
+                Next
                 <ArrowRight />
               </button>
-            </div>
-          </form>
+            ) : (
+              <button
+                type="button"
+                onClick={handleComplete}
+                disabled={loading}
+                className="btn-primary"
+              >
+                {loading ? 'Completing...' : 'Complete Setup'}
+                {!loading && <CheckCircle />}
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>

@@ -65,18 +65,18 @@ export async function registerUser(userData) {
     if (response.data && (response.data.token || response.data.data?.token)) {
       const token = response.data.token || response.data.data.token;
       const user = response.data.user || response.data.data?.user || response.data.data;
-
+      
       localStorage.setItem('authToken', token);
       localStorage.setItem('user', JSON.stringify(user));
       return { success: true, data: response.data };
     }
-
+    
     return { success: false, message: 'Registration successful but no token received' };
   } catch (error) {
     console.error('Registration error:', error.response?.data);
-    return {
-      success: false,
-      message: error.response?.data?.message || 'Registration failed'
+    return { 
+      success: false, 
+      message: error.response?.data?.message || 'Registration failed' 
     };
   }
 }
@@ -96,18 +96,18 @@ export async function registerWithGoogle(googleIdToken, userType) {
     if (response.data && (response.data.token || response.data.data?.token)) {
       const token = response.data.token || response.data.data.token;
       const user = response.data.user || response.data.data?.user || response.data.data;
-
+      
       localStorage.setItem('authToken', token);
       localStorage.setItem('user', JSON.stringify(user));
       return { success: true, data: response.data };
     }
-
+    
     return { success: false, message: 'Google registration successful but no token received' };
   } catch (error) {
     console.error('Google registration error:', error.response?.data);
-    return {
-      success: false,
-      message: error.response?.data?.message || 'Google registration failed'
+    return { 
+      success: false, 
+      message: error.response?.data?.message || 'Google registration failed' 
     };
   }
 }
@@ -126,18 +126,18 @@ export async function loginUser(email, password) {
     if (response.data && (response.data.token || response.data.data?.token)) {
       const token = response.data.token || response.data.data.token;
       const user = response.data.user || response.data.data?.user || response.data.data;
-
+      
       localStorage.setItem('authToken', token);
       localStorage.setItem('user', JSON.stringify(user));
       return { success: true, data: response.data };
     }
-
+    
     return { success: false, message: 'Login successful but no token received' };
   } catch (error) {
     console.error('Login error:', error.response?.data);
-    return {
-      success: false,
-      message: error.response?.data?.message || 'Login failed'
+    return { 
+      success: false, 
+      message: error.response?.data?.message || 'Login failed' 
     };
   }
 }
@@ -157,92 +157,50 @@ export async function loginWithGoogle(googleIdToken) {
     if (response.data && (response.data.token || response.data.data?.token)) {
       const token = response.data.token || response.data.data.token;
       const user = response.data.user || response.data.data?.user || response.data.data;
-
+      
       localStorage.setItem('authToken', token);
       localStorage.setItem('user', JSON.stringify(user));
       return { success: true, data: response.data };
     }
-
+    
     return { success: false, message: 'Google login successful but no token received' };
   } catch (error) {
     console.error('Google login error:', error.response?.data);
-    return {
-      success: false,
-      message: error.response?.data?.message || 'Google login failed'
+    return { 
+      success: false, 
+      message: error.response?.data?.message || 'Google login failed' 
     };
   }
-}
-
-// Add these functions to your existing authService.js
-
-export function isProfileComplete(user) {
-  if (!user) return false;
-
-  // Check required fields based on user type
-  if (user.userType === 'VOLUNTEER') {
-    return !!(
-      user.firstName &&
-      user.lastName &&
-      user.email &&
-      user.bio && // Profile completion indicator
-      user.location // Basic profile info
-    );
-  } else if (user.userType === 'ORGANIZATION') {
-    return !!(
-      user.organizationName &&
-      user.email &&
-      user.bio && // Profile completion indicator
-      user.location // Basic profile info
-    );
-  }
-
-  return false;
-}
-
-export function needsProfileSetup(user) {
-  return user && !isProfileComplete(user);
-}
-
-// Complete user profile after signup
-export async function completeProfile(profileData) {
-  try {
-    const response = await api.put('/auth/complete-profile', profileData);
-
-    if (response.data && response.data.user) {
-      // Update localStorage with complete user data
-      localStorage.setItem('user', JSON.stringify(response.data.user));
-      return { success: true, data: response.data };
-    }
-
-    return { success: false, message: 'Profile update failed' };
-  } catch (error) {
-    console.error('Profile completion error:', error.response?.data);
-    return {
-      success: false,
-      message: error.response?.data?.message || 'Failed to complete profile'
-    };
-  }
-}
-
-// Check if user needs onboarding on login/registration
-export function shouldRedirectToProfileSetup() {
-  const user = getCurrentUser();
-  return needsProfileSetup(user);
 }
 
 // ==========================================
-// UTILITY FUNCTIONS
+// UTILITY FUNCTIONS - FIXED getCurrentUser
 // ==========================================
 
 export function getCurrentUser() {
-  const user = localStorage.getItem('user');
-  return user ? JSON.parse(user) : null;
+  try {
+    const user = localStorage.getItem('user');
+    
+    // Check for null, undefined, or the string "undefined"
+    if (!user || user === 'undefined' || user === 'null') {
+      return null;
+    }
+    
+    return JSON.parse(user);
+  } catch (error) {
+    console.error('Error parsing user from localStorage:', error);
+    // Clear corrupted data
+    localStorage.removeItem('user');
+    return null;
+  }
 }
 
 export function isLoggedIn() {
   const token = localStorage.getItem('authToken');
-  const user = localStorage.getItem('user');
-  return token !== null && user !== null;
+  const user = getCurrentUser(); // This now safely handles undefined
+  
+  // Check that both token exists and is not the string "undefined"
+  return token && token !== 'undefined' && token !== 'null' && user !== null;
 }
 
 export function logout() {
@@ -255,24 +213,82 @@ export function logout() {
 export async function getUserProfile() {
   try {
     const response = await api.get('/auth/me');
-
+    
     // Update local storage with fresh user data
     if (response.data && response.data.data) {
       localStorage.setItem('user', JSON.stringify(response.data.data));
     }
-
+    
     return { success: true, data: response.data };
   } catch (error) {
     console.error('Get profile error:', error.response?.data);
-
+    
     // If unauthorized, clear local storage
     if (error.response?.status === 401 || error.response?.status === 403) {
       logout();
     }
+    
+    return { 
+      success: false, 
+      message: error.response?.data?.message || 'Failed to get profile' 
+    };
+  }
+}
 
-    return {
-      success: false,
-      message: error.response?.data?.message || 'Failed to get profile'
+// ==========================================
+// PROFILE COMPLETION FUNCTIONS
+// ==========================================
+
+export function isProfileComplete(user) {
+  if (!user) return false;
+  
+  // Check required fields based on user type
+  if (user.userType === 'VOLUNTEER') {
+    return !!(
+      user.firstName && 
+      user.lastName && 
+      user.email &&
+      user.bio && // Profile completion indicator
+      user.location // Basic profile info
+    );
+  } else if (user.userType === 'ORGANIZATION') {
+    return !!(
+      user.organizationName && 
+      user.email &&
+      user.bio && // Profile completion indicator
+      user.location // Basic profile info
+    );
+  }
+  
+  return false;
+}
+
+export function needsProfileSetup(user) {
+  return user && !isProfileComplete(user);
+}
+
+export function shouldRedirectToProfileSetup() {
+  const user = getCurrentUser();
+  return needsProfileSetup(user);
+}
+
+// Complete user profile after signup
+export async function completeProfile(profileData) {
+  try {
+    const response = await api.put('/auth/complete-profile', profileData);
+    
+    if (response.data && response.data.user) {
+      // Update localStorage with complete user data
+      localStorage.setItem('user', JSON.stringify(response.data.user));
+      return { success: true, data: response.data };
+    }
+    
+    return { success: false, message: 'Profile update failed' };
+  } catch (error) {
+    console.error('Profile completion error:', error.response?.data);
+    return { 
+      success: false, 
+      message: error.response?.data?.message || 'Failed to complete profile' 
     };
   }
 }
@@ -284,24 +300,22 @@ export async function getUserProfile() {
 export async function refreshToken() {
   try {
     const response = await api.post('/auth/refresh');
-
+    
     if (response.data && response.data.token) {
       localStorage.setItem('authToken', response.data.token);
       return { success: true };
     }
-
+    
     return { success: false, message: 'Token refresh failed' };
   } catch (error) {
     console.error('Token refresh error:', error.response?.data);
     logout(); // Clear invalid tokens
-    return {
-      success: false,
-      message: error.response?.data?.message || 'Token refresh failed'
+    return { 
+      success: false, 
+      message: error.response?.data?.message || 'Token refresh failed' 
     };
   }
 }
-
-
 
 // ==========================================
 // HELPER FUNCTIONS FOR DEBUGGING
