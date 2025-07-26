@@ -38,9 +38,6 @@ const Login = ({ onBackToHome }) => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [googleLoaded, setGoogleLoaded] = useState(false);
-
-  const GOOGLE_CLIENT_ID = '511877812187-6jg8ojddjq5qp6ci4nqgk6jn4vuea87a.apps.googleusercontent.com';
 
   // Redirect if already logged in
   useEffect(() => {
@@ -104,7 +101,7 @@ const Login = ({ onBackToHome }) => {
 
         // Prepare registration data based on user type
         const baseData = {
-          email: formData.email.trim(),
+          email: formData.email.trim(), // 🔧 Will be normalized in authService
           password: formData.password,
           confirmPassword: formData.confirmPassword,
           userType: formData.userType.toUpperCase()
@@ -138,30 +135,28 @@ const Login = ({ onBackToHome }) => {
           };
         }
 
-        console.log('Sending registration data:', registrationData); // Debug log
+        console.log('Attempting registration...'); // Debug log
 
         const result = await registerUser(registrationData);
         
         if (result.success) {
           setSuccess('Account created successfully! Redirecting...');
           setTimeout(() => {
-            // Check if user data indicates they need profile setup
-            const userData = result.data?.user || result.data;
-            
-            // For new registrations, always send to profile setup first
-            // The ProfileSetupRoute will handle redirecting if profile is already complete
+            // Send new users to profile setup
             navigate('/profile-setup');
           }, 1500);
         } else {
           setError(result.message || 'Registration failed');
         }
       } else {
-        // Login validation
+        // 🔧 LOGIN LOGIC - Now with proper email handling
         if (!formData.email.trim() || !formData.password) {
           setError('Email and password are required');
           setLoading(false);
           return;
         }
+
+        console.log('Attempting login...'); // Debug log
 
         const result = await loginUser(formData.email.trim(), formData.password);
         
@@ -184,7 +179,6 @@ const Login = ({ onBackToHome }) => {
 
   const handleGoogleLogin = async () => {
     console.log('Google login clicked');
-    // Google OAuth implementation would go here
     setError('Google OAuth not implemented yet');
   };
 

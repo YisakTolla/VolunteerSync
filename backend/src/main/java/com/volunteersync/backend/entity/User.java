@@ -39,11 +39,34 @@ public class User {
     @Column
     private String profilePicture;
     
+    // 🔧 NEW FIELDS FOR PROFILE COMPLETION
+    @Column(columnDefinition = "TEXT")
+    private String bio; // User's biography/description
+    
+    @Column
+    private String location; // User's location (city, state)
+    
+    @Column
+    private String phone; // User's phone number
+    
+    @Column(columnDefinition = "TEXT")
+    private String interests; // Comma-separated list of interests
+    
+    @Column(columnDefinition = "TEXT") 
+    private String skills; // Comma-separated list of skills
+    
+    @Column
+    private String availability; // User's availability (weekends, weekdays, flexible)
+    
     @CreationTimestamp
     private LocalDateTime createdAt;
     
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+    
+    // ========================================
+    // CONSTRUCTORS
+    // ========================================
     
     // Default constructor
     public User() {}
@@ -77,7 +100,10 @@ public class User {
         this.googleId = googleId;
     }
     
-    // Getters
+    // ========================================
+    // GETTERS - BASIC FIELDS
+    // ========================================
+    
     public Long getId() {
         return id;
     }
@@ -122,7 +148,38 @@ public class User {
         return updatedAt;
     }
     
-    // Setters
+    // ========================================
+    // GETTERS - NEW PROFILE FIELDS
+    // ========================================
+    
+    public String getBio() {
+        return bio;
+    }
+    
+    public String getLocation() {
+        return location;
+    }
+    
+    public String getPhone() {
+        return phone;
+    }
+    
+    public String getInterests() {
+        return interests;
+    }
+    
+    public String getSkills() {
+        return skills;
+    }
+    
+    public String getAvailability() {
+        return availability;
+    }
+    
+    // ========================================
+    // SETTERS - BASIC FIELDS
+    // ========================================
+    
     public void setId(Long id) {
         this.id = id;
     }
@@ -167,28 +224,60 @@ public class User {
         this.updatedAt = updatedAt;
     }
     
-    // Helper methods
+    // ========================================
+    // SETTERS - NEW PROFILE FIELDS
+    // ========================================
+    
+    public void setBio(String bio) {
+        this.bio = bio;
+    }
+    
+    public void setLocation(String location) {
+        this.location = location;
+    }
+    
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+    
+    public void setInterests(String interests) {
+        this.interests = interests;
+    }
+    
+    public void setSkills(String skills) {
+        this.skills = skills;
+    }
+    
+    public void setAvailability(String availability) {
+        this.availability = availability;
+    }
+    
+    // ========================================
+    // HELPER METHODS
+    // ========================================
+    
+    // Helper methods to check user type
     public boolean isVolunteer() {
-        return UserType.VOLUNTEER.equals(userType);
+        return this.userType == UserType.VOLUNTEER;
     }
     
     public boolean isOrganization() {
-        return UserType.ORGANIZATION.equals(userType);
+        return this.userType == UserType.ORGANIZATION;
     }
     
     // Get display name based on user type
     public String getDisplayName() {
-        if (isOrganization() && organizationName != null) {
+        if (isOrganization()) {
             return organizationName;
-        } else if (isVolunteer() && firstName != null && lastName != null) {
+        } else if (firstName != null && lastName != null) {
             return firstName + " " + lastName;
         }
-        return email; // fallback to email if names are not available
+        return null;
     }
     
-    // Get full name for volunteers (returns null for organizations)
+    // Get full name (for volunteers only)
     public String getFullName() {
-        if (isVolunteer() && firstName != null && lastName != null) {
+        if (firstName != null && lastName != null) {
             return firstName + " " + lastName;
         }
         return null;
@@ -205,6 +294,24 @@ public class User {
         return false;
     }
     
+    // Check if profile is complete (for profile setup flow)
+    public boolean isProfileComplete() {
+        // Basic fields must be valid
+        if (!hasValidFields()) {
+            return false;
+        }
+        
+        // Check for additional profile information
+        boolean hasLocation = location != null && !location.trim().isEmpty();
+        boolean hasBio = bio != null && !bio.trim().isEmpty();
+        
+        return hasLocation && hasBio;
+    }
+    
+    // ========================================
+    // OBJECT METHODS
+    // ========================================
+    
     @Override
     public String toString() {
         if (isOrganization()) {
@@ -213,6 +320,7 @@ public class User {
                     ", organizationName='" + organizationName + '\'' +
                     ", email='" + email + '\'' +
                     ", userType=" + userType +
+                    ", location='" + location + '\'' +
                     ", createdAt=" + createdAt +
                     '}';
         } else {
@@ -222,6 +330,7 @@ public class User {
                     ", lastName='" + lastName + '\'' +
                     ", email='" + email + '\'' +
                     ", userType=" + userType +
+                    ", location='" + location + '\'' +
                     ", createdAt=" + createdAt +
                     '}';
         }

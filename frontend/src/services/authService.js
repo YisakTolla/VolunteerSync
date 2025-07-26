@@ -43,7 +43,7 @@ export async function registerUser(userData) {
   try {
     // Build request payload based on user type
     let requestPayload = {
-      email: userData.email,
+      email: userData.email.trim().toLowerCase(), // 🔧 FIX: Always normalize email to lowercase
       password: userData.password,
       confirmPassword: userData.confirmPassword,
       userType: userData.userType // "VOLUNTEER" or "ORGANIZATION"
@@ -51,28 +51,43 @@ export async function registerUser(userData) {
 
     // Add type-specific fields
     if (userData.userType === 'VOLUNTEER') {
-      requestPayload.firstName = userData.firstName;
-      requestPayload.lastName = userData.lastName;
+      requestPayload.firstName = userData.firstName.trim();
+      requestPayload.lastName = userData.lastName.trim();
     } else if (userData.userType === 'ORGANIZATION') {
-      requestPayload.organizationName = userData.organizationName;
+      requestPayload.organizationName = userData.organizationName.trim();
     }
 
+    console.log('=== REGISTRATION DEBUG ===');
+    console.log('Original email:', userData.email);
+    console.log('Normalized email:', requestPayload.email);
     console.log('Sending registration data:', requestPayload);
 
     const response = await api.post('/auth/register', requestPayload);
 
+    console.log('Registration response:', response.data);
+    console.log('Full response structure:', response);
+
     // Handle successful registration
-    if (response.data && (response.data.token || response.data.data?.token)) {
-      const token = response.data.token || response.data.data.token;
-      const user = response.data.user || response.data.data?.user || response.data.data;
+    if (response.data && response.data.token) {
+      const token = response.data.token;
+      
+      // 🔧 FIX: Extract user data correctly from JwtResponse structure
+      const user = response.data; // The user data is directly in response.data, not nested
       
       localStorage.setItem('authToken', token);
       localStorage.setItem('user', JSON.stringify(user));
+      
+      console.log('Registration successful! Saved to localStorage.');
+      console.log('Token:', token);
+      console.log('User data being saved:', user);
+      console.log('User ID:', user.id);
+      
       return { success: true, data: response.data };
     }
     
     return { success: false, message: 'Registration successful but no token received' };
   } catch (error) {
+    console.error('=== REGISTRATION ERROR ===');
     console.error('Registration error:', error.response?.data);
     return { 
       success: false, 
@@ -87,7 +102,7 @@ export async function registerWithGoogle(googleIdToken, userType) {
     console.log('User type:', userType);
 
     const response = await api.post('/auth/google', {
-      googleToken: googleIdToken, // This should match your backend expectation
+      googleToken: googleIdToken,
       userType: userType // "VOLUNTEER" or "ORGANIZATION"
     });
 
@@ -113,28 +128,49 @@ export async function registerWithGoogle(googleIdToken, userType) {
 }
 
 // ==========================================
-// LOGIN FUNCTIONS
+// LOGIN FUNCTIONS - 🔧 FIXED WITH EMAIL NORMALIZATION
 // ==========================================
 
 export async function loginUser(email, password) {
   try {
+    const normalizedEmail = email.trim().toLowerCase(); // 🔧 FIX: Always normalize email to lowercase
+    
+    console.log('=== LOGIN DEBUG ===');
+    console.log('Original email:', email);
+    console.log('Normalized email:', normalizedEmail);
+    console.log('Attempting login...');
+
     const response = await api.post('/auth/login', {
-      email: email,
+      email: normalizedEmail, // 🔧 FIX: Use normalized email
       password: password
     });
 
-    if (response.data && (response.data.token || response.data.data?.token)) {
-      const token = response.data.token || response.data.data.token;
-      const user = response.data.user || response.data.data?.user || response.data.data;
+    console.log('Login response:', response.data);
+    console.log('Full response structure:', response);
+
+    if (response.data && response.data.token) {
+      const token = response.data.token;
+      
+      // 🔧 FIX: Extract user data correctly from JwtResponse structure
+      const user = response.data; // The user data is directly in response.data, not nested
       
       localStorage.setItem('authToken', token);
       localStorage.setItem('user', JSON.stringify(user));
+      
+      console.log('Login successful! Saved to localStorage.');
+      console.log('Token:', token);
+      console.log('User data being saved:', user);
+      console.log('User ID:', user.id);
+      
       return { success: true, data: response.data };
     }
     
+    console.error('Login response missing token:', response.data);
     return { success: false, message: 'Login successful but no token received' };
   } catch (error) {
+    console.error('=== LOGIN ERROR ===');
     console.error('Login error:', error.response?.data);
+    console.error('Status:', error.response?.status);
     return { 
       success: false, 
       message: error.response?.data?.message || 'Login failed' 
@@ -146,7 +182,6 @@ export async function loginWithGoogle(googleIdToken) {
   try {
     console.log('Sending Google login with token:', googleIdToken.substring(0, 20) + '...');
 
-    // For login, we don't specify user type - backend will use existing user's type
     const response = await api.post('/auth/google', {
       googleToken: googleIdToken,
       userType: "VOLUNTEER" // Default, backend will override with existing user type
@@ -174,7 +209,7 @@ export async function loginWithGoogle(googleIdToken) {
 }
 
 // ==========================================
-// UTILITY FUNCTIONS - FIXED getCurrentUser
+// UTILITY FUNCTIONS - 🔧 IMPROVED ERROR HANDLING
 // ==========================================
 
 export function getCurrentUser() {
@@ -197,17 +232,24 @@ export function getCurrentUser() {
 
 export function isLoggedIn() {
   const token = localStorage.getItem('authToken');
-  const user = getCurrentUser(); // This now safely handles undefined
+  const user = getCurrentUser();
+  
+  console.log('=== AUTH STATUS CHECK ===');
+  console.log('Token exists:', !!token);
+  console.log('User exists:', !!user);
+  console.log('User ID:', user?.id);
+  console.log('========================');
   
   // Check that both token exists and is not the string "undefined"
   return token && token !== 'undefined' && token !== 'null' && user !== null;
 }
 
 export function logout() {
+  console.log('=== LOGOUT ===');
   localStorage.removeItem('authToken');
   localStorage.removeItem('user');
-  // Clear any other auth-related data
   localStorage.removeItem('googleUser');
+  console.log('Cleared localStorage');
 }
 
 export async function getUserProfile() {

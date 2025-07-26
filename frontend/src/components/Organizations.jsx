@@ -66,25 +66,28 @@ const Organizations = () => {
     );
   };
 
+  const hasActiveFilters = selectedCategories.length > 0 || selectedLocations.length > 0 || 
+                         selectedDatePosted.length > 0 || selectedSizes.length > 0;
+
   return (
     <div className="organizations-page">
       <div className="organizations-container">
         {/* Left Sidebar - Filters */}
         <div className="organizations-sidebar">
-          <div className="filter-card">
-            <h2 className="filter-title">
-              <Filter className="w-5 h-5" />
+          <div className="organizations-filter-card">
+            <h2 className="organizations-filter-title">
+              <Filter />
               Filter Options
             </h2>
             
             {/* Category Filter */}
-            <div className="filter-section">
-              <h3 className="filter-section-title">Category</h3>
-              <div className="filter-options">
+            <div className="organizations-filter-section">
+              <h3 className="organizations-filter-section-title">Category</h3>
+              <div className="organizations-filter-options">
                 {categories.slice(0, showMoreCategories ? categories.length : 8).map((category) => (
                   <div
                     key={category}
-                    className={`filter-option ${selectedCategories.includes(category) ? 'active' : ''}`}
+                    className={`organizations-filter-option ${selectedCategories.includes(category) ? 'active' : ''}`}
                     onClick={() => handleCategoryToggle(category)}
                   >
                     {category}
@@ -94,7 +97,7 @@ const Organizations = () => {
               {categories.length > 8 && (
                 <button
                   onClick={() => setShowMoreCategories(!showMoreCategories)}
-                  className="show-more-btn"
+                  className="organizations-show-more-btn"
                 >
                   {showMoreCategories ? 'Show Less' : 'Show More'}
                 </button>
@@ -102,13 +105,13 @@ const Organizations = () => {
             </div>
 
             {/* Location Filter */}
-            <div className="filter-section">
-              <h3 className="filter-section-title">Location</h3>
-              <div className="filter-options">
+            <div className="organizations-filter-section">
+              <h3 className="organizations-filter-section-title">Location</h3>
+              <div className="organizations-filter-options">
                 {locations.slice(0, showMoreLocations ? locations.length : 6).map((location) => (
                   <div
                     key={location}
-                    className={`filter-option location ${selectedLocations.includes(location) ? 'active' : ''}`}
+                    className={`organizations-filter-option location ${selectedLocations.includes(location) ? 'active' : ''}`}
                     onClick={() => handleLocationToggle(location)}
                   >
                     {location}
@@ -118,7 +121,7 @@ const Organizations = () => {
               {locations.length > 6 && (
                 <button
                   onClick={() => setShowMoreLocations(!showMoreLocations)}
-                  className="show-more-btn"
+                  className="organizations-show-more-btn"
                 >
                   {showMoreLocations ? 'Show Less' : 'Show More'}
                 </button>
@@ -126,13 +129,13 @@ const Organizations = () => {
             </div>
 
             {/* Date Posted Filter */}
-            <div className="filter-section">
-              <h3 className="filter-section-title">Date Updated</h3>
-              <div className="filter-options">
+            <div className="organizations-filter-section">
+              <h3 className="organizations-filter-section-title">Date Updated</h3>
+              <div className="organizations-filter-options">
                 {datePostedOptions.map((option) => (
                   <div
                     key={option}
-                    className={`filter-option date ${selectedDatePosted.includes(option) ? 'active' : ''}`}
+                    className={`organizations-filter-option date ${selectedDatePosted.includes(option) ? 'active' : ''}`}
                     onClick={() => handleDatePostedToggle(option)}
                   >
                     {option}
@@ -142,13 +145,13 @@ const Organizations = () => {
             </div>
 
             {/* Organization Size Filter */}
-            <div className="filter-section">
-              <h3 className="filter-section-title">Organization Size</h3>
-              <div className="filter-options">
+            <div className="organizations-filter-section">
+              <h3 className="organizations-filter-section-title">Organization Size</h3>
+              <div className="organizations-filter-options">
                 {organizationSizes.map((size) => (
                   <div
                     key={size}
-                    className={`filter-option size ${selectedSizes.includes(size) ? 'active' : ''}`}
+                    className={`organizations-filter-option size ${selectedSizes.includes(size) ? 'active' : ''}`}
                     onClick={() => handleSizeToggle(size)}
                   >
                     {size}
@@ -166,51 +169,51 @@ const Organizations = () => {
             <div>
               <h1 className="organizations-title">All Organizations</h1>
               <p className="organizations-subtitle">
-                Last Updated: <span className="highlight">Today</span>
+                Last Updated: <span className="organizations-highlight">Today</span>
               </p>
             </div>
           </div>
 
           {/* Search Bar */}
-          <div className="search-section">
-            <div className="search-input-container">
-              <Search className="search-icon" />
+          <div className="organizations-search-section">
+            <div className="organizations-search-input-container">
+              <Search className="organizations-search-icon" />
               <input
                 type="text"
                 placeholder="Search organizations, causes, or locations..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="search-input"
+                className="organizations-search-input"
               />
             </div>
 
             {/* Location Search */}
-            <div className="search-input-container location-search">
-              <MapPin className="search-icon" />
+            <div className="organizations-search-input-container organizations-location-search">
+              <MapPin className="organizations-search-icon" />
               <input
                 type="text"
                 placeholder="Search by city, state, country, or zip code..."
-                className="search-input"
+                className="organizations-search-input"
               />
             </div>
           </div>
 
           {/* Active Filters */}
-          {(selectedCategories.length > 0 || selectedLocations.length > 0 || selectedDatePosted.length > 0 || selectedSizes.length > 0) && (
-            <div className="active-filters">
-              <div className="active-filters-content">
-                <Filter className="active-filters-icon" />
-                <span className="active-filters-label">Active Filters:</span>
+          {hasActiveFilters && (
+            <div className="organizations-active-filters">
+              <div className="organizations-active-filters-content">
+                <Filter className="organizations-active-filters-icon" />
+                <span className="organizations-active-filters-label">Active Filters:</span>
                 
                 {selectedCategories.map((category) => (
                   <span
                     key={category}
-                    className="filter-chip category"
+                    className="organizations-filter-chip category"
                   >
                     {category}
                     <button
                       onClick={() => handleCategoryToggle(category)}
-                      className="filter-chip-remove"
+                      className="organizations-filter-chip-remove"
                     >
                       ×
                     </button>
@@ -220,12 +223,12 @@ const Organizations = () => {
                 {selectedLocations.map((location) => (
                   <span
                     key={location}
-                    className="filter-chip location"
+                    className="organizations-filter-chip location"
                   >
                     {location}
                     <button
                       onClick={() => handleLocationToggle(location)}
-                      className="filter-chip-remove"
+                      className="organizations-filter-chip-remove"
                     >
                       ×
                     </button>
@@ -235,12 +238,12 @@ const Organizations = () => {
                 {selectedDatePosted.map((date) => (
                   <span
                     key={date}
-                    className="filter-chip date"
+                    className="organizations-filter-chip date"
                   >
                     {date}
                     <button
                       onClick={() => handleDatePostedToggle(date)}
-                      className="filter-chip-remove"
+                      className="organizations-filter-chip-remove"
                     >
                       ×
                     </button>
@@ -250,12 +253,12 @@ const Organizations = () => {
                 {selectedSizes.map((size) => (
                   <span
                     key={size}
-                    className="filter-chip size"
+                    className="organizations-filter-chip size"
                   >
                     {size}
                     <button
                       onClick={() => handleSizeToggle(size)}
-                      className="filter-chip-remove"
+                      className="organizations-filter-chip-remove"
                     >
                       ×
                     </button>
@@ -266,23 +269,23 @@ const Organizations = () => {
           )}
 
           {/* Empty State */}
-          <div className="empty-state">
-            <div className="empty-state-icon">
+          <div className="organizations-empty-state">
+            <div className="organizations-empty-state-icon">
               <Users />
             </div>
-            <h3 className="empty-state-title">
+            <h3 className="organizations-empty-state-title">
               Organizations Coming Soon!
             </h3>
-            <p className="empty-state-description">
+            <p className="organizations-empty-state-description">
               We're working hard to partner with amazing organizations in your area. 
               Check back soon to discover volunteer opportunities that match your interests.
             </p>
-            <div className="empty-state-cta">
-              <p className="empty-state-cta-text">
+            <div className="organizations-empty-state-cta">
+              <p className="organizations-empty-state-cta-text">
                 <strong>Are you an organization?</strong> Join our platform to connect with passionate volunteers 
                 and make a greater impact in your community.
               </p>
-              <button className="empty-state-cta-button">
+              <button className="organizations-empty-state-cta-button">
                 Register Your Organization
               </button>
             </div>
