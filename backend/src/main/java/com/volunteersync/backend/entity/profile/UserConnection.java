@@ -1,6 +1,5 @@
-package com.volunteersync.backend.entity.profile;
-
 import com.volunteersync.backend.entity.User;
+import com.volunteersync.backend.entity.enums.ProfileVisibility;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -14,14 +13,14 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "user_connections",
        indexes = {
-           @Index(name = "idx_requester_connection", columnList = "requester_id, connection_status"),
-           @Index(name = "idx_recipient_connection", columnList = "recipient_id, connection_status"),
+           @Index(name = "idx_requester_connection", columnList = "requester_profile_id, connection_status"),
+           @Index(name = "idx_recipient_connection", columnList = "recipient_profile_id, connection_status"),
            @Index(name = "idx_connection_type", columnList = "connection_type"),
            @Index(name = "idx_connection_status", columnList = "connection_status"),
            @Index(name = "idx_created_date", columnList = "created_at")
        },
        uniqueConstraints = {
-           @UniqueConstraint(columnNames = {"requester_id", "recipient_id"})
+           @UniqueConstraint(columnNames = {"requester_profile_id", "recipient_profile_id"})
        })
 public class UserConnection {
     
@@ -34,12 +33,12 @@ public class UserConnection {
     // =====================================================
     
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "requester_id", nullable = false)
-    private User requester; // User who initiated the connection
+    @JoinColumn(name = "requester_profile_id", nullable = false)
+    private Profile requesterProfile; // Profile who initiated the connection
     
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "recipient_id", nullable = false)
-    private User recipient; // User who received the connection request
+    @JoinColumn(name = "recipient_profile_id", nullable = false)
+    private Profile recipientProfile; // Profile who received the connection request
     
     // =====================================================
     // CONNECTION DETAILS
@@ -133,7 +132,7 @@ public class UserConnection {
     private Boolean isMentorshipRelation = false; // One mentors the other
     
     @Column
-    private Long mentorUserId; // If mentorship, who is the mentor
+    private Long mentorProfileId; // If mentorship, profile ID of the mentor
     
     // =====================================================
     // ENDORSEMENTS & RECOMMENDATIONS
@@ -253,16 +252,16 @@ public class UserConnection {
         // Default constructor for JPA
     }
     
-    public UserConnection(User requester, User recipient) {
-        this.requester = requester;
-        this.recipient = recipient;
+    public UserConnection(Profile requesterProfile, Profile recipientProfile) {
+        this.requesterProfile = requesterProfile;
+        this.recipientProfile = recipientProfile;
         this.requestedAt = LocalDateTime.now();
         setDefaults();
     }
     
-    public UserConnection(User requester, User recipient, ConnectionType connectionType, String message) {
-        this.requester = requester;
-        this.recipient = recipient;
+    public UserConnection(Profile requesterProfile, Profile recipientProfile, ConnectionType connectionType, String message) {
+        this.requesterProfile = requesterProfile;
+        this.recipientProfile = recipientProfile;
         this.connectionType = connectionType;
         this.connectionMessage = message;
         this.requestedAt = LocalDateTime.now();
@@ -328,12 +327,12 @@ public class UserConnection {
         return id;
     }
     
-    public User getRequester() {
-        return requester;
+    public Profile getRequesterProfile() {
+        return requesterProfile;
     }
     
-    public User getRecipient() {
-        return recipient;
+    public Profile getRecipientProfile() {
+        return recipientProfile;
     }
     
     public ConnectionStatus getConnectionStatus() {
@@ -428,8 +427,8 @@ public class UserConnection {
         return isMentorshipRelation;
     }
     
-    public Long getMentorUserId() {
-        return mentorUserId;
+    public Long getMentorProfileId() {
+        return mentorProfileId;
     }
     
     public Boolean getHasEndorsedRequester() {
@@ -500,12 +499,12 @@ public class UserConnection {
         this.id = id;
     }
     
-    public void setRequester(User requester) {
-        this.requester = requester;
+    public void setRequesterProfile(Profile requesterProfile) {
+        this.requesterProfile = requesterProfile;
     }
     
-    public void setRecipient(User recipient) {
-        this.recipient = recipient;
+    public void setRecipientProfile(Profile recipientProfile) {
+        this.recipientProfile = recipientProfile;
     }
     
     public void setConnectionStatus(ConnectionStatus connectionStatus) {
@@ -600,8 +599,8 @@ public class UserConnection {
         this.isMentorshipRelation = isMentorshipRelation;
     }
     
-    public void setMentorUserId(Long mentorUserId) {
-        this.mentorUserId = mentorUserId;
+    public void setMentorProfileId(Long mentorProfileId) {
+        this.mentorProfileId = mentorProfileId;
     }
     
     public void setHasEndorsedRequester(Boolean hasEndorsedRequester) {
@@ -669,15 +668,15 @@ public class UserConnection {
     // =====================================================
     
     /**
-     * Get the other user in this connection relationship
+     * Get the other profile in this connection relationship
      */
-    public User getOtherUser(User currentUser) {
-        if (currentUser.equals(requester)) {
-            return recipient;
-        } else if (currentUser.equals(recipient)) {
-            return requester;
+    public Profile getOtherProfile(Profile currentProfile) {
+        if (currentProfile.equals(requesterProfile)) {
+            return recipientProfile;
+        } else if (currentProfile.equals(recipientProfile)) {
+            return requesterProfile;
         }
-        throw new IllegalArgumentException("Current user is not part of this connection");
+        throw new IllegalArgumentException("Current profile is not part of this connection");
     }
     
     /**
@@ -695,23 +694,23 @@ public class UserConnection {
     }
     
     /**
-     * Check if current user can message the other user
+     * Check if current profile can message the other profile
      */
-    public boolean canSendMessage(User currentUser) {
+    public boolean canSendMessage(Profile currentProfile) {
         return isActiveConnection() && allowDirectMessages;
     }
     
     /**
-     * Check if current user can invite the other user to events
+     * Check if current profile can invite the other profile to events
      */
-    public boolean canInviteToEvents(User currentUser) {
+    public boolean canInviteToEvents(Profile currentProfile) {
         return isActiveConnection() && allowEventInvitations;
     }
     
     /**
-     * Check if current user can invite the other user to projects
+     * Check if current profile can invite the other profile to projects
      */
-    public boolean canInviteToProjects(User currentUser) {
+    public boolean canInviteToProjects(Profile currentProfile) {
         return isActiveConnection() && allowProjectInvitations;
     }
     
@@ -837,13 +836,13 @@ public class UserConnection {
     }
     
     /**
-     * Add endorsement from one user to another
+     * Add endorsement from one profile to another
      */
-    public void addEndorsement(User endorser, String endorsementText) {
-        if (endorser.equals(requester)) {
+    public void addEndorsement(Profile endorser, String endorsementText) {
+        if (endorser.equals(requesterProfile)) {
             this.recipientEndorsement = endorsementText;
             this.hasEndorsedRecipient = true;
-        } else if (endorser.equals(recipient)) {
+        } else if (endorser.equals(recipientProfile)) {
             this.requesterEndorsement = endorsementText;
             this.hasEndorsedRequester = true;
         } else {
@@ -892,11 +891,11 @@ public class UserConnection {
     /**
      * Get connection summary for profile display
      */
-    public String getConnectionSummary(User currentUser) {
-        User otherUser = getOtherUser(currentUser);
+    public String getConnectionSummary(Profile currentProfile) {
+        Profile otherProfile = getOtherProfile(currentProfile);
         StringBuilder summary = new StringBuilder();
         
-        summary.append(otherUser.getDisplayName());
+        summary.append(otherProfile.getDisplayName());
         
         if (connectionType != null) {
             summary.append(" • ").append(connectionType.getDisplayName());
@@ -924,9 +923,9 @@ public class UserConnection {
             return id.equals(that.id);
         }
         
-        // If no IDs, compare by requester and recipient
-        return requester != null && requester.equals(that.requester) &&
-               recipient != null && recipient.equals(that.recipient);
+        // If no IDs, compare by requester and recipient profiles
+        return requesterProfile != null && requesterProfile.equals(that.requesterProfile) &&
+               recipientProfile != null && recipientProfile.equals(that.recipientProfile);
     }
     
     @Override
@@ -935,8 +934,8 @@ public class UserConnection {
             return id.hashCode();
         }
         
-        int result = requester != null ? requester.hashCode() : 0;
-        result = 31 * result + (recipient != null ? recipient.hashCode() : 0);
+        int result = requesterProfile != null ? requesterProfile.hashCode() : 0;
+        result = 31 * result + (recipientProfile != null ? recipientProfile.hashCode() : 0);
         return result;
     }
     
@@ -944,8 +943,8 @@ public class UserConnection {
     public String toString() {
         return "UserConnection{" +
                 "id=" + id +
-                ", requester=" + (requester != null ? requester.getId() : null) +
-                ", recipient=" + (recipient != null ? recipient.getId() : null) +
+                ", requesterProfile=" + (requesterProfile != null ? requesterProfile.getId() : null) +
+                ", recipientProfile=" + (recipientProfile != null ? recipientProfile.getId() : null) +
                 ", connectionStatus=" + connectionStatus +
                 ", connectionType=" + connectionType +
                 ", connectionStrength=" + connectionStrength +

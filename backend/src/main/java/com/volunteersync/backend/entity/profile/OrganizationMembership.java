@@ -1,6 +1,8 @@
 package com.volunteersync.backend.entity.profile;
 
 import com.volunteersync.backend.entity.User;
+import com.volunteersync.backend.entity.enums.ProfileVisibility;
+import com.volunteersync.backend.entity.enums.ExperienceLevel;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -1177,12 +1179,26 @@ public class OrganizationMembership {
     }
     
     /**
+     * Get the organization name for display purposes
+     */
+    public String getOrganizationName() {
+        return organization != null ? organization.getDisplayName() : "Unknown Organization";
+    }
+    
+    /**
+     * Get the volunteer name for display purposes
+     */
+    public String getVolunteerName() {
+        return volunteer != null ? volunteer.getDisplayName() : "Unknown Volunteer";
+    }
+    
+    /**
      * Create a summary string for display purposes
      */
     public String getSummaryText() {
         return String.format("%s at %s since %s (%s hours, %s activities)", 
                 currentRole,
-                organization != null ? organization.getOrganizationName() : "Unknown Organization",
+                getOrganizationName(),
                 joinedAt.toLocalDate().toString(),
                 totalHoursContributed,
                 activitiesCompleted);
