@@ -21,19 +21,26 @@ import java.util.Optional;
 public interface OrganizationProfileRepository extends JpaRepository<OrganizationProfile, Long> {
     
     // =====================================================
+    // CORE USER RELATIONSHIP QUERIES
+    // =====================================================
+    
+    /**
+     * Find organization profile by user ID
+     */
+    @Query("SELECT op FROM OrganizationProfile op WHERE op.user.id = :userId")
+    Optional<OrganizationProfile> findByUserId(@Param("userId") Long userId);
+    
+    // =====================================================
     // ORGANIZATION TYPE & CLASSIFICATION QUERIES
     // =====================================================
     
     /**
-     * Find organizations by type
-     * @param organizationType The organization type to search for
-     * @return List of organizations of that type
+     * Find organizations by type (case insensitive)
      */
     List<OrganizationProfile> findByOrganizationTypeIgnoreCase(String organizationType);
     
     /**
      * Find all non-profit organizations
-     * @return List of non-profit organizations
      */
     @Query("""
         SELECT op FROM OrganizationProfile op 
@@ -46,15 +53,11 @@ public interface OrganizationProfileRepository extends JpaRepository<Organizatio
     
     /**
      * Find organizations by tax exempt status
-     * @param taxExemptStatus The tax exempt status (e.g., "501(c)(3)")
-     * @return List of organizations with that tax status
      */
     List<OrganizationProfile> findByTaxExemptStatus(String taxExemptStatus);
     
     /**
      * Find organizations by size category
-     * @param organizationSize The size category to search for
-     * @return List of organizations of that size
      */
     List<OrganizationProfile> findByOrganizationSize(String organizationSize);
     
@@ -63,35 +66,27 @@ public interface OrganizationProfileRepository extends JpaRepository<Organizatio
     // =====================================================
     
     /**
-     * Find verified organizations
-     * @return List of verified organizations
+     * Find all verified organizations
      */
     List<OrganizationProfile> findByIsVerifiedTrue();
     
     /**
      * Find unverified organizations
-     * @return List of organizations pending verification
      */
     List<OrganizationProfile> findByIsVerifiedFalse();
     
     /**
      * Find organizations verified by specific admin
-     * @param verifiedBy The admin who verified the organization
-     * @return List of organizations verified by that admin
      */
     List<OrganizationProfile> findByVerifiedBy(String verifiedBy);
     
     /**
      * Find recently verified organizations
-     * @param since Verified since this date
-     * @return List of recently verified organizations
      */
     List<OrganizationProfile> findByVerifiedAtAfter(LocalDateTime since);
     
     /**
      * Find organizations needing verification review
-     * @param cutoffDate Organizations created before this date without verification
-     * @return List of organizations needing verification
      */
     @Query("""
         SELECT op FROM OrganizationProfile op 
@@ -106,28 +101,27 @@ public interface OrganizationProfileRepository extends JpaRepository<Organizatio
     // =====================================================
     
     /**
-     * Find active organizations
-     * @return List of active organizations
+     * Find all active organizations
      */
     List<OrganizationProfile> findByIsActiveTrue();
     
     /**
+     * Find verified and active organizations
+     */
+    List<OrganizationProfile> findByIsVerifiedTrueAndIsActiveTrue();
+    
+    /**
      * Find inactive/deactivated organizations
-     * @return List of inactive organizations
      */
     List<OrganizationProfile> findByIsActiveFalse();
     
     /**
      * Find organizations deactivated for specific reason
-     * @param reason The deactivation reason
-     * @return List of organizations deactivated for that reason
      */
     List<OrganizationProfile> findByDeactivationReason(String reason);
     
     /**
      * Find organizations deactivated recently
-     * @param since Deactivated since this date
-     * @return List of recently deactivated organizations
      */
     List<OrganizationProfile> findByDeactivatedAtAfter(LocalDateTime since);
     
@@ -137,36 +131,31 @@ public interface OrganizationProfileRepository extends JpaRepository<Organizatio
     
     /**
      * Find organizations by city
-     * @param city The city to search for
-     * @return List of organizations in that city
      */
     List<OrganizationProfile> findByCityIgnoreCase(String city);
     
     /**
      * Find organizations by state
-     * @param state The state to search for
-     * @return List of organizations in that state
      */
     List<OrganizationProfile> findByStateIgnoreCase(String state);
     
     /**
+     * Find organizations by city and state
+     */
+    List<OrganizationProfile> findByCityAndStateIgnoreCase(String city, String state);
+    
+    /**
      * Find organizations by zip code
-     * @param zipCode The zip code to search for
-     * @return List of organizations in that zip code
      */
     List<OrganizationProfile> findByZipCode(String zipCode);
     
     /**
      * Find organizations by address area
-     * @param address Partial address to search for
-     * @return List of organizations with matching address
      */
     List<OrganizationProfile> findByAddressContainingIgnoreCase(String address);
     
     /**
      * Find organizations serving specific areas
-     * @param area The area they serve
-     * @return List of organizations serving that area
      */
     @Query("""
         SELECT op FROM OrganizationProfile op 
@@ -181,9 +170,14 @@ public interface OrganizationProfileRepository extends JpaRepository<Organizatio
     // =====================================================
     
     /**
-     * Find organizations by focus area
-     * @param focusArea The focus area to search for
-     * @return List of organizations with that focus
+     * Find organizations with focus areas containing specific area
+     */
+    @Query("SELECT op FROM OrganizationProfile op WHERE " +
+           "LOWER(op.focusAreas) LIKE LOWER(CONCAT('%', :focusArea, '%'))")
+    List<OrganizationProfile> findByFocusAreasContaining(@Param("focusArea") String focusArea);
+    
+    /**
+     * Find organizations by focus area (alternative method)
      */
     @Query("""
         SELECT op FROM OrganizationProfile op 
@@ -194,8 +188,6 @@ public interface OrganizationProfileRepository extends JpaRepository<Organizatio
     
     /**
      * Find organizations by mission keywords
-     * @param keyword Keywords to search in mission statement
-     * @return List of organizations with matching mission
      */
     @Query("""
         SELECT op FROM OrganizationProfile op 
@@ -206,8 +198,6 @@ public interface OrganizationProfileRepository extends JpaRepository<Organizatio
     
     /**
      * Find organizations serving specific demographics
-     * @param demographic The target demographic
-     * @return List of organizations serving that group
      */
     @Query("""
         SELECT op FROM OrganizationProfile op 
@@ -217,37 +207,44 @@ public interface OrganizationProfileRepository extends JpaRepository<Organizatio
     List<OrganizationProfile> findByTargetDemographic(@Param("demographic") String demographic);
     
     // =====================================================
+    // SEARCH & DISCOVERY QUERIES
+    // =====================================================
+    
+    /**
+     * Search organizations by name or description
+     */
+    @Query("SELECT op FROM OrganizationProfile op WHERE " +
+           "LOWER(op.displayName) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
+           "LOWER(op.description) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
+           "LOWER(op.missionStatement) LIKE LOWER(CONCAT('%', :searchTerm, '%'))")
+    List<OrganizationProfile> searchByNameOrDescription(@Param("searchTerm") String searchTerm);
+    
+    // =====================================================
     // VOLUNTEER REQUIREMENTS QUERIES
     // =====================================================
     
     /**
      * Find organizations accepting international volunteers
-     * @return List of organizations open to international volunteers
      */
     List<OrganizationProfile> findByAcceptsInternationalVolunteersTrue();
     
     /**
      * Find organizations that provide volunteer training
-     * @return List of organizations offering training
      */
     List<OrganizationProfile> findByProvidesVolunteerTrainingTrue();
     
     /**
      * Find organizations requiring background checks
-     * @return List of organizations with background check requirements
      */
     List<OrganizationProfile> findByRequiresBackgroundCheckTrue();
     
     /**
      * Find organizations requiring orientation
-     * @return List of organizations with orientation requirements
      */
     List<OrganizationProfile> findByRequiresOrientationSessionTrue();
     
     /**
-     * Find organizations by minimum volunteer age
-     * @param age The minimum age requirement
-     * @return List of organizations with that age requirement
+     * Find organizations suitable for volunteer age
      */
     @Query("""
         SELECT op FROM OrganizationProfile op 
@@ -259,8 +256,6 @@ public interface OrganizationProfileRepository extends JpaRepository<Organizatio
     
     /**
      * Find organizations by commitment requirements
-     * @param maxHours Maximum hours volunteer can commit
-     * @return List of organizations with suitable commitment levels
      */
     @Query("""
         SELECT op FROM OrganizationProfile op 
@@ -276,22 +271,16 @@ public interface OrganizationProfileRepository extends JpaRepository<Organizatio
     
     /**
      * Find organizations founded after specific date
-     * @param date The founding date threshold
-     * @return List of organizations founded after that date
      */
     List<OrganizationProfile> findByFoundedDateAfter(LocalDate date);
     
     /**
      * Find organizations founded before specific date (established organizations)
-     * @param date The founding date threshold
-     * @return List of established organizations
      */
     List<OrganizationProfile> findByFoundedDateBefore(LocalDate date);
     
     /**
      * Find organizations by founding year
-     * @param year The founding year
-     * @return List of organizations founded in that year
      */
     @Query("""
         SELECT op FROM OrganizationProfile op 
@@ -302,8 +291,6 @@ public interface OrganizationProfileRepository extends JpaRepository<Organizatio
     
     /**
      * Find organizations incorporated after specific date
-     * @param date The incorporation date threshold
-     * @return List of recently incorporated organizations
      */
     List<OrganizationProfile> findByIncorporationDateAfter(LocalDate date);
     
@@ -313,8 +300,6 @@ public interface OrganizationProfileRepository extends JpaRepository<Organizatio
     
     /**
      * Find organizations by contact email domain
-     * @param domain The email domain to search for
-     * @return List of organizations with that email domain
      */
     @Query("""
         SELECT op FROM OrganizationProfile op 
@@ -325,7 +310,6 @@ public interface OrganizationProfileRepository extends JpaRepository<Organizatio
     
     /**
      * Find organizations with complete contact information
-     * @return List of organizations with full contact details
      */
     @Query("""
         SELECT op FROM OrganizationProfile op 
@@ -338,7 +322,6 @@ public interface OrganizationProfileRepository extends JpaRepository<Organizatio
     
     /**
      * Find organizations missing contact information
-     * @return List of organizations with incomplete contact details
      */
     @Query("""
         SELECT op FROM OrganizationProfile op 
@@ -354,15 +337,17 @@ public interface OrganizationProfileRepository extends JpaRepository<Organizatio
     
     /**
      * Find organizations with recent activity
-     * @param since Activity since this date
-     * @return List of recently active organizations
      */
     List<OrganizationProfile> findByLastActivityDateAfter(LocalDateTime since);
     
     /**
+     * Count active volunteers for organization
+     */
+    @Query("SELECT op.activeVolunteersCount FROM OrganizationProfile op WHERE op.id = :organizationId")
+    Integer countActiveVolunteersByOrganizationId(@Param("organizationId") Long organizationId);
+    
+    /**
      * Find organizations with active volunteer base
-     * @param minVolunteers Minimum number of active volunteers
-     * @return List of organizations with active volunteers
      */
     @Query("""
         SELECT op FROM OrganizationProfile op 
@@ -374,8 +359,6 @@ public interface OrganizationProfileRepository extends JpaRepository<Organizatio
     
     /**
      * Find organizations serving many people
-     * @param minPeopleServed Minimum number of people served annually
-     * @return List of high-impact organizations
      */
     @Query("""
         SELECT op FROM OrganizationProfile op 
@@ -390,13 +373,11 @@ public interface OrganizationProfileRepository extends JpaRepository<Organizatio
     
     /**
      * Find organizations that publish annual reports
-     * @return List of transparent organizations
      */
     List<OrganizationProfile> findByPublishesAnnualReportTrue();
     
     /**
      * Find organizations with financial reports available
-     * @return List of financially transparent organizations
      */
     @Query("""
         SELECT op FROM OrganizationProfile op 
@@ -407,7 +388,6 @@ public interface OrganizationProfileRepository extends JpaRepository<Organizatio
     
     /**
      * Find organizations with latest annual reports
-     * @return List of organizations with current annual reports
      */
     @Query("""
         SELECT op FROM OrganizationProfile op 
@@ -423,11 +403,6 @@ public interface OrganizationProfileRepository extends JpaRepository<Organizatio
     
     /**
      * Find organizations suitable for volunteer matching
-     * @param volunteerAge Volunteer's age
-     * @param hasBackgroundCheck Whether volunteer has background check
-     * @param maxCommitmentHours Volunteer's available hours
-     * @param location Volunteer's location
-     * @return List of suitable organizations
      */
     @Query("""
         SELECT op FROM OrganizationProfile op 
@@ -449,9 +424,6 @@ public interface OrganizationProfileRepository extends JpaRepository<Organizatio
     
     /**
      * Find featured organizations for homepage
-     * @param minVolunteers Minimum volunteer count
-     * @param recentActivityDays Days since last activity
-     * @return List of featured organizations
      */
     @Query("""
         SELECT op FROM OrganizationProfile op 
@@ -475,26 +447,21 @@ public interface OrganizationProfileRepository extends JpaRepository<Organizatio
     
     /**
      * Count organizations by type
-     * @param organizationType The organization type
-     * @return Number of organizations of that type
      */
     long countByOrganizationTypeIgnoreCase(String organizationType);
     
     /**
      * Count verified organizations
-     * @return Number of verified organizations
      */
     long countByIsVerifiedTrue();
     
     /**
      * Count active organizations
-     * @return Number of active organizations
      */
     long countByIsActiveTrue();
     
     /**
      * Get organization statistics by type
-     * @return Organization type distribution
      */
     @Query("""
         SELECT op.organizationType, COUNT(op) 
@@ -508,7 +475,6 @@ public interface OrganizationProfileRepository extends JpaRepository<Organizatio
     
     /**
      * Get verification statistics
-     * @return Verification status breakdown
      */
     @Query("""
         SELECT 
@@ -522,7 +488,6 @@ public interface OrganizationProfileRepository extends JpaRepository<Organizatio
     
     /**
      * Get geographic distribution
-     * @return State-wise organization count
      */
     @Query("""
         SELECT op.state, COUNT(op) 
@@ -541,7 +506,6 @@ public interface OrganizationProfileRepository extends JpaRepository<Organizatio
     
     /**
      * Find organizations needing data review
-     * @return List of organizations with incomplete or outdated data
      */
     @Query("""
         SELECT op FROM OrganizationProfile op 
@@ -555,16 +519,11 @@ public interface OrganizationProfileRepository extends JpaRepository<Organizatio
     
     /**
      * Find organizations by EIN
-     * @param ein The Employer Identification Number
-     * @return Optional containing the organization if found
      */
     Optional<OrganizationProfile> findByEin(String ein);
     
     /**
      * Find organizations by registration number
-     * @param registrationNumber The state registration number
-     * @param registrationState The state of registration
-     * @return Optional containing the organization if found
      */
     Optional<OrganizationProfile> findByRegistrationNumberAndRegistrationState(
         String registrationNumber, String registrationState);

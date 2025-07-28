@@ -2,6 +2,8 @@ package com.volunteersync.backend.util;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import jakarta.servlet.http.HttpServletRequest;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
@@ -217,5 +219,23 @@ public class JwtTokenUtil {
                 .expiration(expiryDate)
                 .signWith(getSigningKey(), Jwts.SIG.HS256)
                 .compact();
+    }
+
+    /**
+     * Extract JWT token from HTTP request
+     */
+    public String extractTokenFromRequest(HttpServletRequest request) {
+        String bearerToken = request.getHeader("Authorization");
+        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
+            return bearerToken.substring(7);
+        }
+        return null;
+    }
+
+    /**
+     * Extract email from JWT token
+     */
+    public String extractEmail(String token) {
+        return getClaimFromToken(token, Claims::getSubject);
     }
 }

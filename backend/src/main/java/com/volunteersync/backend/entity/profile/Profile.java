@@ -63,6 +63,36 @@ public abstract class Profile {
     private String instagramUrl;
     
     // =====================================================
+    // MISSING FIELDS NEEDED FOR COMPILATION
+    // =====================================================
+    
+    @Column(name = "display_name", nullable = false)
+    private String displayName;
+    
+    @Column(name = "phone_number")
+    private String phoneNumber;
+    
+    @Column(name = "website_url")
+    private String websiteUrl;
+    
+    @Column(name = "is_verified")
+    private Boolean isVerified = false;
+    
+    @Column(name = "is_active")
+    private Boolean isActive = true;
+    
+    @Column(name = "is_deleted")
+    private Boolean isDeleted = false;
+    
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+    
+    // Alias for profileVisibility to match other code references
+    @Enumerated(EnumType.STRING)
+    @Column(name = "visibility")
+    private ProfileVisibility visibility;
+    
+    // =====================================================
     // PRIVACY & VISIBILITY SETTINGS
     // =====================================================
     
@@ -106,6 +136,7 @@ public abstract class Profile {
     
     protected Profile() {
         // Default constructor for JPA
+        this.visibility = ProfileVisibility.PUBLIC; // Initialize visibility
     }
     
     protected Profile(User user) {
@@ -116,12 +147,6 @@ public abstract class Profile {
     // =====================================================
     // ABSTRACT METHODS (must be implemented by subclasses)
     // =====================================================
-    
-    /**
-     * Get the display name for this profile
-     * @return Display name (varies by profile type)
-     */
-    public abstract String getDisplayName();
     
     /**
      * Get the profile type display string
@@ -170,6 +195,7 @@ public abstract class Profile {
      */
     private void setDefaultPrivacySettings() {
         this.profileVisibility = ProfileVisibility.PUBLIC;
+        this.visibility = ProfileVisibility.PUBLIC;
         this.showEmail = false;
         this.showPhone = false;
         this.showLocation = true;
@@ -183,11 +209,12 @@ public abstract class Profile {
      * @return Website URL with http/https protocol
      */
     public String getFormattedWebsite() {
-        if (website == null || website.trim().isEmpty()) {
+        String websiteToFormat = website != null ? website : websiteUrl;
+        if (websiteToFormat == null || websiteToFormat.trim().isEmpty()) {
             return null;
         }
         
-        String trimmedWebsite = website.trim();
+        String trimmedWebsite = websiteToFormat.trim();
         if (!trimmedWebsite.startsWith("http://") && !trimmedWebsite.startsWith("https://")) {
             return "https://" + trimmedWebsite;
         }
@@ -301,6 +328,7 @@ public abstract class Profile {
     
     public void setProfileVisibility(ProfileVisibility profileVisibility) {
         this.profileVisibility = profileVisibility;
+        this.visibility = profileVisibility; // Keep them in sync
     }
     
     public Boolean getShowEmail() {
@@ -365,6 +393,78 @@ public abstract class Profile {
     
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+    
+    // =====================================================
+    // MISSING GETTERS/SETTERS FOR COMPILATION
+    // =====================================================
+    
+    // Override getDisplayName to return the displayName field if abstract method isn't implemented
+    public String getDisplayName() {
+        return displayName;
+    }
+    
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
+    }
+    
+    public String getPhoneNumber() {
+        return phoneNumber != null ? phoneNumber : phone;
+    }
+    
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
+        this.phone = phoneNumber; // Keep them in sync
+    }
+    
+    public String getWebsiteUrl() {
+        return websiteUrl != null ? websiteUrl : website;
+    }
+    
+    public void setWebsiteUrl(String websiteUrl) {
+        this.websiteUrl = websiteUrl;
+        this.website = websiteUrl; // Keep them in sync
+    }
+    
+    public Boolean getIsVerified() {
+        return isVerified;
+    }
+    
+    public void setIsVerified(Boolean isVerified) {
+        this.isVerified = isVerified;
+    }
+    
+    public Boolean getIsActive() {
+        return isActive;
+    }
+    
+    public void setIsActive(Boolean isActive) {
+        this.isActive = isActive;
+    }
+    
+    public Boolean getIsDeleted() {
+        return isDeleted;
+    }
+    
+    public void setIsDeleted(Boolean isDeleted) {
+        this.isDeleted = isDeleted;
+    }
+    
+    public LocalDateTime getDeletedAt() {
+        return deletedAt;
+    }
+    
+    public void setDeletedAt(LocalDateTime deletedAt) {
+        this.deletedAt = deletedAt;
+    }
+    
+    public ProfileVisibility getVisibility() {
+        return visibility != null ? visibility : profileVisibility;
+    }
+    
+    public void setVisibility(ProfileVisibility visibility) {
+        this.visibility = visibility;
+        this.profileVisibility = visibility; // Keep them in sync
     }
     
     // =====================================================
