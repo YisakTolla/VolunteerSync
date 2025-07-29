@@ -1,7 +1,7 @@
 package com.volunteersync.backend.service;
 
-import com.volunteersync.backend.entity.User;
 import com.volunteersync.backend.entity.profile.VolunteerProfile;
+import com.volunteersync.backend.entity.user.User;
 import com.volunteersync.backend.entity.profile.ProfileSkill;
 import com.volunteersync.backend.entity.profile.ProfileInterest;
 import com.volunteersync.backend.entity.profile.ProfileBadge;

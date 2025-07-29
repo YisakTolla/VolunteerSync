@@ -1,7 +1,7 @@
 package com.volunteersync.backend.repository;
 
-import com.volunteersync.backend.entity.User;
 import com.volunteersync.backend.entity.profile.Profile;
+import com.volunteersync.backend.entity.user.User;
 import com.volunteersync.backend.entity.enums.ProfileVisibility;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;

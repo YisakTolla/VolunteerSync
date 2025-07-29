@@ -1,7 +1,7 @@
 package com.volunteersync.backend.entity.profile;
 
-import com.volunteersync.backend.entity.User;
 import com.volunteersync.backend.entity.enums.ProfileVisibility;
+import com.volunteersync.backend.entity.user.User;
 import com.volunteersync.backend.entity.enums.ExperienceLevel;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;

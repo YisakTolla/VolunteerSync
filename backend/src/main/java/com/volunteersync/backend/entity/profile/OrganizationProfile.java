@@ -1,9 +1,10 @@
 package com.volunteersync.backend.entity.profile;
 
-import com.volunteersync.backend.entity.User;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+
+import com.volunteersync.backend.entity.user.User;
 
 /**
  * Organization-specific profile entity.
@@ -71,9 +72,6 @@ public class OrganizationProfile extends Profile {
     // LEGAL & ADMINISTRATIVE INFORMATION
     // =====================================================
     
-    @Column(nullable = false)
-    private Boolean isVerified = false;
-    
     @Column
     private LocalDateTime verifiedAt;
     
@@ -91,9 +89,6 @@ public class OrganizationProfile extends Profile {
     
     @Column
     private LocalDate incorporationDate;
-    
-    @Column(nullable = false)
-    private Boolean isActive = true;
     
     @Column
     private LocalDateTime deactivatedAt;
@@ -244,16 +239,8 @@ public class OrganizationProfile extends Profile {
     // =====================================================
     
     @Override
-    public String getDisplayName() {
-        if (getUser() != null && getUser().getOrganizationName() != null) {
-            return getUser().getOrganizationName();
-        }
-        return "Organization";
-    }
-    
-    @Override
-    public String getProfileTypeDisplay() {
-        return "🏢 Organization";
+    public String getProfileType() {
+        return "ORGANIZATION";
     }
     
     // =====================================================
@@ -365,7 +352,7 @@ public class OrganizationProfile extends Profile {
      * @return true if active and not deactivated
      */
     public boolean isAcceptingVolunteers() {
-        return Boolean.TRUE.equals(isActive) && deactivatedAt == null;
+        return Boolean.TRUE.equals(getIsActive()) && deactivatedAt == null;
     }
     
     /**
@@ -389,7 +376,7 @@ public class OrganizationProfile extends Profile {
      * @return true if verified
      */
     public boolean isVerifiedOrganization() {
-        return Boolean.TRUE.equals(isVerified) && verifiedAt != null;
+        return Boolean.TRUE.equals(getIsVerified()) && verifiedAt != null;
     }
     
     /**
@@ -414,13 +401,11 @@ public class OrganizationProfile extends Profile {
      * Set default values for organization profile
      */
     private void setOrganizationDefaults() {
-        this.isVerified = false;
         this.country = "United States";
         this.acceptsInternationalVolunteers = true;
         this.providesVolunteerTraining = false;
         this.requiresBackgroundCheck = false;
         this.requiresOrientationSession = false;
-        this.isActive = true;
         this.lastActivityDate = LocalDateTime.now();
         this.totalVolunteersServed = 0;
         this.activeVolunteersCount = 0;
@@ -551,14 +536,6 @@ public class OrganizationProfile extends Profile {
         this.mailingZipCode = mailingZipCode;
     }
     
-    public Boolean getIsVerified() {
-        return isVerified;
-    }
-    
-    public void setIsVerified(Boolean isVerified) {
-        this.isVerified = isVerified;
-    }
-    
     public LocalDateTime getVerifiedAt() {
         return verifiedAt;
     }
@@ -605,14 +582,6 @@ public class OrganizationProfile extends Profile {
     
     public void setIncorporationDate(LocalDate incorporationDate) {
         this.incorporationDate = incorporationDate;
-    }
-    
-    public Boolean getIsActive() {
-        return isActive;
-    }
-    
-    public void setIsActive(Boolean isActive) {
-        this.isActive = isActive;
     }
     
     public LocalDateTime getDeactivatedAt() {

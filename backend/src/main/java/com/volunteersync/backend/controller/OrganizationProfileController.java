@@ -4,9 +4,9 @@ import com.volunteersync.backend.dto.request.UpdateOrganizationProfileRequest;
 import com.volunteersync.backend.dto.response.ApiResponse;
 import com.volunteersync.backend.service.OrganizationProfileService;
 import com.volunteersync.backend.service.ProfileService;
-import com.volunteersync.backend.entity.User;
-import com.volunteersync.backend.entity.UserType;
 import com.volunteersync.backend.entity.profile.OrganizationProfile;
+import com.volunteersync.backend.entity.user.User;
+import com.volunteersync.backend.entity.user.UserType;
 import com.volunteersync.backend.util.JwtTokenUtil;
 import com.volunteersync.backend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,12 +58,12 @@ public class OrganizationProfileController {
             User user = getCurrentUser(httpRequest);
             if (user == null) {
                 return ResponseEntity.status(401)
-                        .body(new ApiResponse(false, "Authentication required", null, null));
+                        .body(ApiResponse.error("Authentication required"));
             }
 
             if (user.getUserType() != UserType.ORGANIZATION) {
                 return ResponseEntity.status(403)
-                        .body(new ApiResponse(false, "This endpoint is only for organization accounts", null, null));
+                        .body(ApiResponse.error("This endpoint is only for organization accounts"));
             }
 
             // Extract individual fields from the DTO and call the service method
@@ -82,12 +82,12 @@ public class OrganizationProfileController {
                 request.getFocusAreas()
             );
             
-            return ResponseEntity.ok(new ApiResponse(true, "Organization profile setup completed", 
-                    organizationProfileService.convertToDTO(updatedProfile), null));
+            return ResponseEntity.ok(ApiResponse.success("Organization profile setup completed", 
+                    organizationProfileService.convertToDTO(updatedProfile)));
 
         } catch (Exception e) {
             return ResponseEntity.status(500)
-                    .body(new ApiResponse(false, "Failed to complete setup", null, e.getMessage()));
+                    .body(ApiResponse.error("Failed to complete setup: " + e.getMessage()));
         }
     }
 
@@ -104,23 +104,23 @@ public class OrganizationProfileController {
             User user = getCurrentUser(httpRequest);
             if (user == null) {
                 return ResponseEntity.status(401)
-                        .body(new ApiResponse(false, "Authentication required", null, null));
+                        .body(ApiResponse.error("Authentication required"));
             }
 
             if (user.getUserType() != UserType.ORGANIZATION) {
                 return ResponseEntity.status(403)
-                        .body(new ApiResponse(false, "This endpoint is only for organization accounts", null, null));
+                        .body(ApiResponse.error("This endpoint is only for organization accounts"));
             }
 
             OrganizationProfile updatedProfile = organizationProfileService.updateOrganizationProfile(
                     user.getId(), request);
 
-            return ResponseEntity.ok(new ApiResponse(true, "Organization profile updated successfully",
-                    organizationProfileService.convertToDTO(updatedProfile), null));
+            return ResponseEntity.ok(ApiResponse.success("Organization profile updated successfully",
+                    organizationProfileService.convertToDTO(updatedProfile)));
 
         } catch (Exception e) {
             return ResponseEntity.status(500)
-                    .body(new ApiResponse(false, "Failed to update profile", null, e.getMessage()));
+                    .body(ApiResponse.error("Failed to update profile: " + e.getMessage()));
         }
     }
 
@@ -144,23 +144,23 @@ public class OrganizationProfileController {
             User user = getCurrentUser(request);
             if (user == null) {
                 return ResponseEntity.status(401)
-                        .body(new ApiResponse(false, "Authentication required", null, null));
+                        .body(ApiResponse.error("Authentication required"));
             }
 
             if (user.getUserType() != UserType.ORGANIZATION) {
                 return ResponseEntity.status(403)
-                        .body(new ApiResponse(false, "This endpoint is only for organization accounts", null, null));
+                        .body(ApiResponse.error("This endpoint is only for organization accounts"));
             }
 
             OrganizationProfile updatedProfile = organizationProfileService.submitForVerification(
                     user.getId(), taxDocument, registrationDocument, additionalDocuments);
 
-            return ResponseEntity.ok(new ApiResponse(true, "Verification documents submitted successfully",
-                    organizationProfileService.convertToDTO(updatedProfile), null));
+            return ResponseEntity.ok(ApiResponse.success("Verification documents submitted successfully",
+                    organizationProfileService.convertToDTO(updatedProfile)));
 
         } catch (Exception e) {
             return ResponseEntity.status(500)
-                    .body(new ApiResponse(false, "Failed to submit verification", null, e.getMessage()));
+                    .body(ApiResponse.error("Failed to submit verification: " + e.getMessage()));
         }
     }
 
@@ -175,22 +175,22 @@ public class OrganizationProfileController {
             User user = getCurrentUser(request);
             if (user == null) {
                 return ResponseEntity.status(401)
-                        .body(new ApiResponse(false, "Authentication required", null, null));
+                        .body(ApiResponse.error("Authentication required"));
             }
 
             if (user.getUserType() != UserType.ORGANIZATION) {
                 return ResponseEntity.status(403)
-                        .body(new ApiResponse(false, "This endpoint is only for organization accounts", null, null));
+                        .body(ApiResponse.error("This endpoint is only for organization accounts"));
             }
 
             Object verificationStatus = organizationProfileService.getVerificationStatus(user.getId());
 
-            return ResponseEntity.ok(new ApiResponse(true, "Verification status retrieved successfully",
-                    verificationStatus, null));
+            return ResponseEntity.ok(ApiResponse.success("Verification status retrieved successfully",
+                    verificationStatus));
 
         } catch (Exception e) {
             return ResponseEntity.status(500)
-                    .body(new ApiResponse(false, "Failed to retrieve verification status", null, e.getMessage()));
+                    .body(ApiResponse.error("Failed to retrieve verification status: " + e.getMessage()));
         }
     }
 
@@ -213,22 +213,22 @@ public class OrganizationProfileController {
             User user = getCurrentUser(request);
             if (user == null) {
                 return ResponseEntity.status(401)
-                        .body(new ApiResponse(false, "Authentication required", null, null));
+                        .body(ApiResponse.error("Authentication required"));
             }
 
             if (user.getUserType() != UserType.ORGANIZATION) {
                 return ResponseEntity.status(403)
-                        .body(new ApiResponse(false, "This endpoint is only for organization accounts", null, null));
+                        .body(ApiResponse.error("This endpoint is only for organization accounts"));
             }
 
             Object volunteers = organizationProfileService.getOrganizationVolunteers(
                     user.getId(), page, size, status);
 
-            return ResponseEntity.ok(new ApiResponse(true, "Volunteers retrieved successfully", volunteers, null));
+            return ResponseEntity.ok(ApiResponse.success("Volunteers retrieved successfully", volunteers));
 
         } catch (Exception e) {
             return ResponseEntity.status(500)
-                    .body(new ApiResponse(false, "Failed to retrieve volunteers", null, e.getMessage()));
+                    .body(ApiResponse.error("Failed to retrieve volunteers: " + e.getMessage()));
         }
     }
 
@@ -246,21 +246,21 @@ public class OrganizationProfileController {
             User user = getCurrentUser(request);
             if (user == null) {
                 return ResponseEntity.status(401)
-                        .body(new ApiResponse(false, "Authentication required", null, null));
+                        .body(ApiResponse.error("Authentication required"));
             }
 
             if (user.getUserType() != UserType.ORGANIZATION) {
                 return ResponseEntity.status(403)
-                        .body(new ApiResponse(false, "This endpoint is only for organization accounts", null, null));
+                        .body(ApiResponse.error("This endpoint is only for organization accounts"));
             }
 
             organizationProfileService.inviteVolunteer(user.getId(), volunteerEmail, message);
 
-            return ResponseEntity.ok(new ApiResponse(true, "Volunteer invitation sent successfully", null, null));
+            return ResponseEntity.ok(ApiResponse.success("Volunteer invitation sent successfully"));
 
         } catch (Exception e) {
             return ResponseEntity.status(500)
-                    .body(new ApiResponse(false, "Failed to send invitation", null, e.getMessage()));
+                    .body(ApiResponse.error("Failed to send invitation: " + e.getMessage()));
         }
     }
 
@@ -279,21 +279,21 @@ public class OrganizationProfileController {
             User user = getCurrentUser(request);
             if (user == null) {
                 return ResponseEntity.status(401)
-                        .body(new ApiResponse(false, "Authentication required", null, null));
+                        .body(ApiResponse.error("Authentication required"));
             }
 
             if (user.getUserType() != UserType.ORGANIZATION) {
                 return ResponseEntity.status(403)
-                        .body(new ApiResponse(false, "This endpoint is only for organization accounts", null, null));
+                        .body(ApiResponse.error("This endpoint is only for organization accounts"));
             }
 
             organizationProfileService.updateVolunteerStatus(user.getId(), volunteerId, status, notes);
 
-            return ResponseEntity.ok(new ApiResponse(true, "Volunteer status updated successfully", null, null));
+            return ResponseEntity.ok(ApiResponse.success("Volunteer status updated successfully"));
 
         } catch (Exception e) {
             return ResponseEntity.status(500)
-                    .body(new ApiResponse(false, "Failed to update volunteer status", null, e.getMessage()));
+                    .body(ApiResponse.error("Failed to update volunteer status: " + e.getMessage()));
         }
     }
 
@@ -314,21 +314,21 @@ public class OrganizationProfileController {
             User user = getCurrentUser(request);
             if (user == null) {
                 return ResponseEntity.status(401)
-                        .body(new ApiResponse(false, "Authentication required", null, null));
+                        .body(ApiResponse.error("Authentication required"));
             }
 
             if (user.getUserType() != UserType.ORGANIZATION) {
                 return ResponseEntity.status(403)
-                        .body(new ApiResponse(false, "This endpoint is only for organization accounts", null, null));
+                        .body(ApiResponse.error("This endpoint is only for organization accounts"));
             }
 
             Object impactMetrics = organizationProfileService.getOrganizationImpact(user.getId(), timeframe);
 
-            return ResponseEntity.ok(new ApiResponse(true, "Impact metrics retrieved successfully", impactMetrics, null));
+            return ResponseEntity.ok(ApiResponse.success("Impact metrics retrieved successfully", impactMetrics));
 
         } catch (Exception e) {
             return ResponseEntity.status(500)
-                    .body(new ApiResponse(false, "Failed to retrieve impact metrics", null, e.getMessage()));
+                    .body(ApiResponse.error("Failed to retrieve impact metrics: " + e.getMessage()));
         }
     }
 
@@ -345,21 +345,21 @@ public class OrganizationProfileController {
             User user = getCurrentUser(request);
             if (user == null) {
                 return ResponseEntity.status(401)
-                        .body(new ApiResponse(false, "Authentication required", null, null));
+                        .body(ApiResponse.error("Authentication required"));
             }
 
             if (user.getUserType() != UserType.ORGANIZATION) {
                 return ResponseEntity.status(403)
-                        .body(new ApiResponse(false, "This endpoint is only for organization accounts", null, null));
+                        .body(ApiResponse.error("This endpoint is only for organization accounts"));
             }
 
             Object updatedMetrics = organizationProfileService.updateImpactMetrics(user.getId(), impactData);
 
-            return ResponseEntity.ok(new ApiResponse(true, "Impact metrics updated successfully", updatedMetrics, null));
+            return ResponseEntity.ok(ApiResponse.success("Impact metrics updated successfully", updatedMetrics));
 
         } catch (Exception e) {
             return ResponseEntity.status(500)
-                    .body(new ApiResponse(false, "Failed to update impact metrics", null, e.getMessage()));
+                    .body(ApiResponse.error("Failed to update impact metrics: " + e.getMessage()));
         }
     }
 
@@ -382,22 +382,22 @@ public class OrganizationProfileController {
             User user = getCurrentUser(request);
             if (user == null) {
                 return ResponseEntity.status(401)
-                        .body(new ApiResponse(false, "Authentication required", null, null));
+                        .body(ApiResponse.error("Authentication required"));
             }
 
             if (user.getUserType() != UserType.ORGANIZATION) {
                 return ResponseEntity.status(403)
-                        .body(new ApiResponse(false, "This endpoint is only for organization accounts", null, null));
+                        .body(ApiResponse.error("This endpoint is only for organization accounts"));
             }
 
             Object events = organizationProfileService.getOrganizationEvents(
                     user.getId(), page, size, status);
 
-            return ResponseEntity.ok(new ApiResponse(true, "Events retrieved successfully", events, null));
+            return ResponseEntity.ok(ApiResponse.success("Events retrieved successfully", events));
 
         } catch (Exception e) {
             return ResponseEntity.status(500)
-                    .body(new ApiResponse(false, "Failed to retrieve events", null, e.getMessage()));
+                    .body(ApiResponse.error("Failed to retrieve events: " + e.getMessage()));
         }
     }
 
@@ -417,22 +417,22 @@ public class OrganizationProfileController {
             User user = getCurrentUser(request);
             if (user == null) {
                 return ResponseEntity.status(401)
-                        .body(new ApiResponse(false, "Authentication required", null, null));
+                        .body(ApiResponse.error("Authentication required"));
             }
 
             if (user.getUserType() != UserType.ORGANIZATION) {
                 return ResponseEntity.status(403)
-                        .body(new ApiResponse(false, "This endpoint is only for organization accounts", null, null));
+                        .body(ApiResponse.error("This endpoint is only for organization accounts"));
             }
 
             Object applications = organizationProfileService.getVolunteerApplications(
                     user.getId(), page, size, status, eventId);
 
-            return ResponseEntity.ok(new ApiResponse(true, "Applications retrieved successfully", applications, null));
+            return ResponseEntity.ok(ApiResponse.success("Applications retrieved successfully", applications));
 
         } catch (Exception e) {
             return ResponseEntity.status(500)
-                    .body(new ApiResponse(false, "Failed to retrieve applications", null, e.getMessage()));
+                    .body(ApiResponse.error("Failed to retrieve applications: " + e.getMessage()));
         }
     }
 
@@ -456,22 +456,22 @@ public class OrganizationProfileController {
             User user = getCurrentUser(request);
             if (user == null) {
                 return ResponseEntity.status(401)
-                        .body(new ApiResponse(false, "Authentication required", null, null));
+                        .body(ApiResponse.error("Authentication required"));
             }
 
             if (user.getUserType() != UserType.ORGANIZATION) {
                 return ResponseEntity.status(403)
-                        .body(new ApiResponse(false, "This endpoint is only for organization accounts", null, null));
+                        .body(ApiResponse.error("This endpoint is only for organization accounts"));
             }
 
             Object matches = organizationProfileService.getVolunteerMatches(
                     user.getId(), page, size, skills, location);
 
-            return ResponseEntity.ok(new ApiResponse(true, "Volunteer matches retrieved successfully", matches, null));
+            return ResponseEntity.ok(ApiResponse.success("Volunteer matches retrieved successfully", matches));
 
         } catch (Exception e) {
             return ResponseEntity.status(500)
-                    .body(new ApiResponse(false, "Failed to retrieve matches", null, e.getMessage()));
+                    .body(ApiResponse.error("Failed to retrieve matches: " + e.getMessage()));
         }
     }
 
@@ -489,23 +489,23 @@ public class OrganizationProfileController {
             User user = getCurrentUser(request);
             if (user == null) {
                 return ResponseEntity.status(401)
-                        .body(new ApiResponse(false, "Authentication required", null, null));
+                        .body(ApiResponse.error("Authentication required"));
             }
 
             if (user.getUserType() != UserType.ORGANIZATION) {
                 return ResponseEntity.status(403)
-                        .body(new ApiResponse(false, "This endpoint is only for organization accounts", null, null));
+                        .body(ApiResponse.error("This endpoint is only for organization accounts"));
             }
 
             Object partnerships = organizationProfileService.getPartnershipRecommendations(
                     user.getId(), page, size);
 
-            return ResponseEntity.ok(new ApiResponse(true, "Partnership recommendations retrieved successfully",
-                    partnerships, null));
+            return ResponseEntity.ok(ApiResponse.success("Partnership recommendations retrieved successfully",
+                    partnerships));
 
         } catch (Exception e) {
             return ResponseEntity.status(500)
-                    .body(new ApiResponse(false, "Failed to retrieve partnership recommendations", null, e.getMessage()));
+                    .body(ApiResponse.error("Failed to retrieve partnership recommendations: " + e.getMessage()));
         }
     }
 
@@ -526,23 +526,23 @@ public class OrganizationProfileController {
             User user = getCurrentUser(request);
             if (user == null) {
                 return ResponseEntity.status(401)
-                        .body(new ApiResponse(false, "Authentication required", null, null));
+                        .body(ApiResponse.error("Authentication required"));
             }
 
             if (user.getUserType() != UserType.ORGANIZATION) {
                 return ResponseEntity.status(403)
-                        .body(new ApiResponse(false, "This endpoint is only for organization accounts", null, null));
+                        .body(ApiResponse.error("This endpoint is only for organization accounts"));
             }
 
             Object updatedSettings = organizationProfileService.updateNotificationSettings(
                     user.getId(), notificationSettings);
 
-            return ResponseEntity.ok(new ApiResponse(true, "Notification settings updated successfully",
-                    updatedSettings, null));
+            return ResponseEntity.ok(ApiResponse.success("Notification settings updated successfully",
+                    updatedSettings));
 
         } catch (Exception e) {
             return ResponseEntity.status(500)
-                    .body(new ApiResponse(false, "Failed to update notification settings", null, e.getMessage()));
+                    .body(ApiResponse.error("Failed to update notification settings: " + e.getMessage()));
         }
     }
 
@@ -559,23 +559,23 @@ public class OrganizationProfileController {
             User user = getCurrentUser(request);
             if (user == null) {
                 return ResponseEntity.status(401)
-                        .body(new ApiResponse(false, "Authentication required", null, null));
+                        .body(ApiResponse.error("Authentication required"));
             }
 
             if (user.getUserType() != UserType.ORGANIZATION) {
                 return ResponseEntity.status(403)
-                        .body(new ApiResponse(false, "This endpoint is only for organization accounts", null, null));
+                        .body(ApiResponse.error("This endpoint is only for organization accounts"));
             }
 
             Object updatedSettings = organizationProfileService.updateRecruitingSettings(
                     user.getId(), recruitingSettings);
 
-            return ResponseEntity.ok(new ApiResponse(true, "Recruiting settings updated successfully",
-                    updatedSettings, null));
+            return ResponseEntity.ok(ApiResponse.success("Recruiting settings updated successfully",
+                    updatedSettings));
 
         } catch (Exception e) {
             return ResponseEntity.status(500)
-                    .body(new ApiResponse(false, "Failed to update recruiting settings", null, e.getMessage()));
+                    .body(ApiResponse.error("Failed to update recruiting settings: " + e.getMessage()));
         }
     }
 
@@ -589,9 +589,9 @@ public class OrganizationProfileController {
     private User getCurrentUser(HttpServletRequest request) {
         try {
             String token = jwtTokenUtil.extractTokenFromRequest(request);
-            if (token != null) {
-                String email = jwtTokenUtil.extractEmail(token);
-                return userRepository.findByEmail(email);
+            if (token != null && jwtTokenUtil.validateToken(token)) {
+                String email = jwtTokenUtil.getUsernameFromToken(token);
+                return userRepository.findByEmail(email).orElse(null);
             }
         } catch (Exception e) {
             // Token is invalid or expired

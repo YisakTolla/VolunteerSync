@@ -1,9 +1,11 @@
 package com.volunteersync.backend.service;
 
-import com.volunteersync.backend.entity.User;
-import com.volunteersync.backend.entity.UserType;
+import com.volunteersync.backend.dto.request.ProfilePrivacySettings;
+import com.volunteersync.backend.dto.request.UpdateProfileRequest;
 import com.volunteersync.backend.entity.profile.Profile;
 import com.volunteersync.backend.entity.profile.VolunteerProfile;
+import com.volunteersync.backend.entity.user.User;
+import com.volunteersync.backend.entity.user.UserType;
 import com.volunteersync.backend.entity.profile.OrganizationProfile;
 import com.volunteersync.backend.entity.enums.ProfileVisibility;
 import com.volunteersync.backend.repository.ProfileRepository;
@@ -15,9 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-
+import java.util.*;
 /**
  * Main profile service providing common functionality for all profile types.
  * Handles profile creation, retrieval, updates, and privacy settings.
@@ -496,4 +496,255 @@ public class ProfileService {
         public int getTotalConnections() { return totalConnections; }
         public int getTotalActivities() { return totalActivities; }
     }
+
+    /**
+ * Find profile by user ID
+ */
+@Transactional(readOnly = true)
+public Optional<Profile> findByUserId(Long userId) {
+    logger.debug("Finding profile for user ID: {}", userId);
+    return profileRepository.findByUserId(userId);
+}
+
+/**
+ * Find profile by ID
+ */
+@Transactional(readOnly = true)
+public Optional<Profile> findById(Long profileId) {
+    logger.debug("Finding profile with ID: {}", profileId);
+    return profileRepository.findById(profileId);
+}
+
+/**
+ * Check if a user can view a profile
+ */
+public boolean canViewProfile(Profile profile, User viewer) {
+    if (profile == null) return false;
+    if (!profile.getIsActive() || profile.getIsDeleted()) return false;
+    
+    // Owner can always view their own profile
+    if (viewer != null && profile.getUser().getId().equals(viewer.getId())) {
+        return true;
+    }
+    
+    // Check visibility settings
+    switch (profile.getVisibility()) {
+        case PUBLIC:
+            return true;
+        case PRIVATE:
+            return false;
+        case CONNECTIONS_ONLY:
+            // TODO: Check if viewer is connected to profile owner
+            return false;
+        default:
+            return false;
+    }
+}
+
+/**
+ * Update profile using UpdateProfileRequest
+ */
+@Transactional
+public Profile updateProfile(Long userId, UpdateProfileRequest request) {
+    logger.info("Updating profile for user ID: {}", userId);
+    
+    Optional<Profile> profileOpt = findByUserId(userId);
+    if (profileOpt.isEmpty()) {
+        throw new RuntimeException("Profile not found for user: " + userId);
+    }
+    
+    Profile profile = profileOpt.get();
+    
+    // Update basic profile fields
+    if (request.getBio() != null) {
+        profile.setBio(request.getBio());
+    }
+    if (request.getLocation() != null) {
+        profile.setLocation(request.getLocation());
+    }
+    if (request.getWebsite() != null) {
+        profile.setWebsite(request.getWebsite());
+    }
+    if (request.getPhoneNumber() != null) {
+        profile.setPhoneNumber(request.getPhoneNumber());
+    }
+    if (request.getLinkedinUrl() != null) {
+        profile.setLinkedinUrl(request.getLinkedinUrl());
+    }
+    if (request.getTwitterUrl() != null) {
+        profile.setTwitterUrl(request.getTwitterUrl());
+    }
+    if (request.getFacebookUrl() != null) {
+        profile.setFacebookUrl(request.getFacebookUrl());
+    }
+    if (request.getInstagramUrl() != null) {
+        profile.setInstagramUrl(request.getInstagramUrl());
+    }
+    if (request.getProfileImageUrl() != null) {
+        profile.setProfileImageUrl(request.getProfileImageUrl());
+    }
+    if (request.getCoverImageUrl() != null) {
+        profile.setCoverImageUrl(request.getCoverImageUrl());
+    }
+    
+    // Update privacy settings
+    if (request.getVisibility() != null) {
+        profile.setVisibility(request.getVisibility());
+        profile.setProfileVisibility(request.getVisibility());
+    }
+    if (request.getShowEmail() != null) {
+        profile.setShowEmail(request.getShowEmail());
+    }
+    if (request.getShowPhone() != null) {
+        profile.setShowPhone(request.getShowPhone());
+    }
+    if (request.getShowLocation() != null) {
+        profile.setShowLocation(request.getShowLocation());
+    }
+    if (request.getAllowMessaging() != null) {
+        profile.setAllowMessaging(request.getAllowMessaging());
+    }
+    if (request.getShowActivity() != null) {
+        profile.setShowActivity(request.getShowActivity());
+    }
+    
+    // Update status fields
+    if (request.getIsActive() != null) {
+        profile.setIsActive(request.getIsActive());
+    }
+    
+    return profileRepository.save(profile);
+}
+
+/**
+ * Update privacy settings using ProfilePrivacySettings
+ */
+@Transactional
+public Profile updatePrivacySettings(Long userId, ProfilePrivacySettings settings) {
+    logger.info("Updating privacy settings for user ID: {}", userId);
+    
+    Optional<Profile> profileOpt = findByUserId(userId);
+    if (profileOpt.isEmpty()) {
+        throw new RuntimeException("Profile not found for user: " + userId);
+    }
+    
+    Profile profile = profileOpt.get();
+    
+    // Update core visibility settings
+    if (settings.getProfileVisibility() != null) {
+        profile.setVisibility(settings.getProfileVisibility());
+        profile.setProfileVisibility(settings.getProfileVisibility());
+    }
+    
+    // Update contact information visibility
+    if (settings.getShowEmail() != null) {
+        profile.setShowEmail(settings.getShowEmail());
+    }
+    if (settings.getShowPhone() != null) {
+        profile.setShowPhone(settings.getShowPhone());
+    }
+    if (settings.getShowLocation() != null) {
+        profile.setShowLocation(settings.getShowLocation());
+    }
+    if (settings.getShowSocialLinks() != null) {
+        profile.setShowSocialMedia(settings.getShowSocialLinks());
+    }
+    
+    // Update communication settings
+    if (settings.getAllowDirectMessaging() != null) {
+        profile.setAllowMessaging(settings.getAllowDirectMessaging());
+        profile.setAllowMessages(settings.getAllowDirectMessaging());
+    }
+    if (settings.getAllowConnectionRequests() != null) {
+        profile.setAllowConnections(settings.getAllowConnectionRequests());
+    }
+    
+    // Update activity and search visibility
+    if (settings.getShowActivity() != null) {
+        profile.setShowActivity(settings.getShowActivity());
+    }
+    if (settings.getProfileSearchable() != null) {
+        profile.setSearchable(settings.getProfileSearchable());
+    }
+    
+    return profileRepository.save(profile);
+}
+
+/**
+ * Search profiles with advanced criteria
+ */
+@Transactional(readOnly = true)
+public List<Profile> searchProfiles(String query, String location, String profileType, 
+                                   List<String> skills, List<String> interests, 
+                                   int page, int size, User viewer) {
+    logger.debug("Advanced profile search: query={}, location={}, type={}", query, location, profileType);
+    
+    // For now, return basic search results
+    // TODO: Implement full advanced search with criteria
+    return profileRepository.findPublicAndSearchableProfiles();
+}
+
+/**
+ * Soft delete profile
+ */
+@Transactional
+public void softDeleteProfile(Long userId) {
+    logger.info("Soft deleting profile for user ID: {}", userId);
+    
+    Optional<Profile> profileOpt = findByUserId(userId);
+    if (profileOpt.isEmpty()) {
+        throw new RuntimeException("Profile not found for user: " + userId);
+    }
+    
+    Profile profile = profileOpt.get();
+    profile.softDelete();
+    profileRepository.save(profile);
+}
+
+/**
+ * Convert profile to DTO based on type
+ */
+public Object convertToVolunteerDTO(Profile profile) {
+    // TODO: Implement VolunteerProfileDTO conversion
+    return createBasicProfileDTO(profile);
+}
+
+public Object convertToOrganizationDTO(Profile profile) {
+    // TODO: Implement OrganizationProfileDTO conversion
+    return createBasicProfileDTO(profile);
+}
+
+public Object convertToBaseDTO(Profile profile) {
+    return createBasicProfileDTO(profile);
+}
+
+public Object convertToPublicVolunteerDTO(Profile profile, User viewer) {
+    // TODO: Implement public VolunteerProfile DTO conversion
+    return createBasicProfileDTO(profile);
+}
+
+public Object convertToPublicOrganizationDTO(Profile profile, User viewer) {
+    // TODO: Implement public OrganizationProfile DTO conversion
+    return createBasicProfileDTO(profile);
+}
+
+public Object convertToPublicBaseDTO(Profile profile, User viewer) {
+    return createBasicProfileDTO(profile);
+}
+
+/**
+ * Helper method to create basic profile DTO
+ */
+private Object createBasicProfileDTO(Profile profile) {
+    Map<String, Object> dto = new HashMap<>();
+    dto.put("id", profile.getId());
+    dto.put("displayName", profile.getDisplayName());
+    dto.put("bio", profile.getBio());
+    dto.put("location", profile.getLocation());
+    dto.put("profileImageUrl", profile.getProfileImageUrl());
+    dto.put("isVerified", profile.getIsVerified());
+    dto.put("profileType", profile.getProfileType());
+    return dto;
+}
+
 }

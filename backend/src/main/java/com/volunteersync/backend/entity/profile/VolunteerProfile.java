@@ -1,7 +1,8 @@
 package com.volunteersync.backend.entity.profile;
 
-import com.volunteersync.backend.entity.User;
 import com.volunteersync.backend.entity.enums.ExperienceLevel;
+import com.volunteersync.backend.entity.user.User;
+
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -196,16 +197,8 @@ public class VolunteerProfile extends Profile {
     // =====================================================
     
     @Override
-    public String getDisplayName() {
-        if (getUser() != null) {
-            return getUser().getDisplayName();
-        }
-        return "Volunteer";
-    }
-    
-    @Override
-    public String getProfileTypeDisplay() {
-        return "🙋‍♀️ Volunteer";
+    public String getProfileType() {
+        return "VOLUNTEER";
     }
     
     // =====================================================
@@ -218,7 +211,11 @@ public class VolunteerProfile extends Profile {
      */
     public String getFullName() {
         if (getUser() != null) {
-            return getUser().getFullName();
+            String firstName = getUser().getFirstName();
+            String lastName = getUser().getLastName();
+            if (firstName != null && lastName != null) {
+                return firstName + " " + lastName;
+            }
         }
         return null;
     }
@@ -655,10 +652,6 @@ public class VolunteerProfile extends Profile {
     
     public void setIsActivelyVolunteering(Boolean isActivelyVolunteering) {
         this.isActivelyVolunteering = isActivelyVolunteering;
-    }
-    
-    public LocalDateTime getLastVolunteerActivity() {
-        return lastVolunteerActivity;
     }
     
     public void setLastVolunteerActivity(LocalDateTime lastVolunteerActivity) {

@@ -1,7 +1,7 @@
 package com.volunteersync.backend.dto;
 
-import com.volunteersync.backend.entity.User;
-import com.volunteersync.backend.entity.UserType;
+import com.volunteersync.backend.entity.user.User;
+import com.volunteersync.backend.entity.user.UserType;
 
 public class JwtResponse {
     

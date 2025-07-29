@@ -3,10 +3,11 @@ package com.volunteersync.backend.controller;
 import com.volunteersync.backend.dto.*;
 import com.volunteersync.backend.dto.profile.*;
 import com.volunteersync.backend.dto.request.*;
+import com.volunteersync.backend.dto.response.ApiResponse;
 import com.volunteersync.backend.service.VolunteerProfileService;
 import com.volunteersync.backend.service.ProfileService;
-import com.volunteersync.backend.entity.User;
-import com.volunteersync.backend.entity.UserType;
+import com.volunteersync.backend.entity.user.User;
+import com.volunteersync.backend.entity.user.UserType;
 import com.volunteersync.backend.entity.profile.VolunteerProfile;
 import com.volunteersync.backend.entity.profile.ProfileSkill;
 import com.volunteersync.backend.entity.profile.ProfileInterest;
@@ -66,23 +67,23 @@ public class VolunteerProfileController {
             User user = getCurrentUser(httpRequest);
             if (user == null) {
                 return ResponseEntity.status(401)
-                        .body(new ApiResponse(false, "Authentication required"));
+                        .body(ApiResponse.error("Authentication required"));
             }
 
             if (user.getUserType() != UserType.VOLUNTEER) {
                 return ResponseEntity.status(403)
-                        .body(new ApiResponse(false, "This endpoint is only for volunteer accounts"));
+                        .body(ApiResponse.error("This endpoint is only for volunteer accounts"));
             }
 
             VolunteerProfile updatedProfile = volunteerProfileService.completeProfileSetup(
                     user.getId(), request);
             
-            return ResponseEntity.ok(new ApiResponse(true, "Volunteer profile setup completed", 
+            return ResponseEntity.ok(ApiResponse.success("Volunteer profile setup completed", 
                     convertToVolunteerDTO(updatedProfile)));
 
         } catch (Exception e) {
             return ResponseEntity.status(500)
-                    .body(new ApiResponse(false, "Failed to complete setup: " + e.getMessage()));
+                    .body(ApiResponse.error("Failed to complete setup: " + e.getMessage()));
         }
     }
 
@@ -99,23 +100,23 @@ public class VolunteerProfileController {
             User user = getCurrentUser(httpRequest);
             if (user == null) {
                 return ResponseEntity.status(401)
-                        .body(new ApiResponse(false, "Authentication required"));
+                        .body(ApiResponse.error("Authentication required"));
             }
 
             if (user.getUserType() != UserType.VOLUNTEER) {
                 return ResponseEntity.status(403)
-                        .body(new ApiResponse(false, "This endpoint is only for volunteer accounts"));
+                        .body(ApiResponse.error("This endpoint is only for volunteer accounts"));
             }
 
             VolunteerProfile updatedProfile = volunteerProfileService.updateVolunteerProfile(
                     user.getId(), request);
             
-            return ResponseEntity.ok(new ApiResponse(true, "Volunteer profile updated successfully", 
+            return ResponseEntity.ok(ApiResponse.success("Volunteer profile updated successfully", 
                     convertToVolunteerDTO(updatedProfile)));
 
         } catch (Exception e) {
             return ResponseEntity.status(500)
-                    .body(new ApiResponse(false, "Failed to update profile: " + e.getMessage()));
+                    .body(ApiResponse.error("Failed to update profile: " + e.getMessage()));
         }
     }
 
@@ -136,22 +137,22 @@ public class VolunteerProfileController {
             User user = getCurrentUser(httpRequest);
             if (user == null) {
                 return ResponseEntity.status(401)
-                        .body(new ApiResponse(false, "Authentication required"));
+                        .body(ApiResponse.error("Authentication required"));
             }
 
             if (user.getUserType() != UserType.VOLUNTEER) {
                 return ResponseEntity.status(403)
-                        .body(new ApiResponse(false, "This endpoint is only for volunteer accounts"));
+                        .body(ApiResponse.error("This endpoint is only for volunteer accounts"));
             }
 
             ProfileSkill skill = volunteerProfileService.addSkill(user.getId(), request);
             
-            return ResponseEntity.ok(new ApiResponse(true, "Skill added successfully", 
+            return ResponseEntity.ok(ApiResponse.success("Skill added successfully", 
                     convertToSkillDTO(skill)));
 
         } catch (Exception e) {
             return ResponseEntity.status(500)
-                    .body(new ApiResponse(false, "Failed to add skill: " + e.getMessage()));
+                    .body(ApiResponse.error("Failed to add skill: " + e.getMessage()));
         }
     }
 
@@ -169,23 +170,23 @@ public class VolunteerProfileController {
             User user = getCurrentUser(request);
             if (user == null) {
                 return ResponseEntity.status(401)
-                        .body(new ApiResponse(false, "Authentication required"));
+                        .body(ApiResponse.error("Authentication required"));
             }
 
             if (user.getUserType() != UserType.VOLUNTEER) {
                 return ResponseEntity.status(403)
-                        .body(new ApiResponse(false, "This endpoint is only for volunteer accounts"));
+                        .body(ApiResponse.error("This endpoint is only for volunteer accounts"));
             }
 
             ProfileSkill updatedSkill = volunteerProfileService.updateSkillLevel(
                     user.getId(), skillId, skillLevel);
             
-            return ResponseEntity.ok(new ApiResponse(true, "Skill updated successfully", 
+            return ResponseEntity.ok(ApiResponse.success("Skill updated successfully", 
                     convertToSkillDTO(updatedSkill)));
 
         } catch (Exception e) {
             return ResponseEntity.status(500)
-                    .body(new ApiResponse(false, "Failed to update skill: " + e.getMessage()));
+                    .body(ApiResponse.error("Failed to update skill: " + e.getMessage()));
         }
     }
 
@@ -202,21 +203,21 @@ public class VolunteerProfileController {
             User user = getCurrentUser(request);
             if (user == null) {
                 return ResponseEntity.status(401)
-                        .body(new ApiResponse(false, "Authentication required"));
+                        .body(ApiResponse.error("Authentication required"));
             }
 
             if (user.getUserType() != UserType.VOLUNTEER) {
                 return ResponseEntity.status(403)
-                        .body(new ApiResponse(false, "This endpoint is only for volunteer accounts"));
+                        .body(ApiResponse.error("This endpoint is only for volunteer accounts"));
             }
 
             volunteerProfileService.removeSkill(user.getId(), skillId);
             
-            return ResponseEntity.ok(new ApiResponse(true, "Skill removed successfully"));
+            return ResponseEntity.ok(ApiResponse.success("Skill removed successfully"));
 
         } catch (Exception e) {
             return ResponseEntity.status(500)
-                    .body(new ApiResponse(false, "Failed to remove skill: " + e.getMessage()));
+                    .body(ApiResponse.error("Failed to remove skill: " + e.getMessage()));
         }
     }
 
@@ -231,12 +232,12 @@ public class VolunteerProfileController {
             User user = getCurrentUser(request);
             if (user == null) {
                 return ResponseEntity.status(401)
-                        .body(new ApiResponse(false, "Authentication required"));
+                        .body(ApiResponse.error("Authentication required"));
             }
 
             if (user.getUserType() != UserType.VOLUNTEER) {
                 return ResponseEntity.status(403)
-                        .body(new ApiResponse(false, "This endpoint is only for volunteer accounts"));
+                        .body(ApiResponse.error("This endpoint is only for volunteer accounts"));
             }
 
             List<ProfileSkill> skills = volunteerProfileService.getVolunteerSkills(user.getId());
@@ -244,11 +245,11 @@ public class VolunteerProfileController {
                     .map(this::convertToSkillDTO)
                     .toList();
             
-            return ResponseEntity.ok(new ApiResponse(true, "Skills retrieved successfully", skillDTOs));
+            return ResponseEntity.ok(ApiResponse.success("Skills retrieved successfully", skillDTOs));
 
         } catch (Exception e) {
             return ResponseEntity.status(500)
-                    .body(new ApiResponse(false, "Failed to retrieve skills: " + e.getMessage()));
+                    .body(ApiResponse.error("Failed to retrieve skills: " + e.getMessage()));
         }
     }
 
@@ -269,22 +270,22 @@ public class VolunteerProfileController {
             User user = getCurrentUser(httpRequest);
             if (user == null) {
                 return ResponseEntity.status(401)
-                        .body(new ApiResponse(false, "Authentication required"));
+                        .body(ApiResponse.error("Authentication required"));
             }
 
             if (user.getUserType() != UserType.VOLUNTEER) {
                 return ResponseEntity.status(403)
-                        .body(new ApiResponse(false, "This endpoint is only for volunteer accounts"));
+                        .body(ApiResponse.error("This endpoint is only for volunteer accounts"));
             }
 
             ProfileInterest interest = volunteerProfileService.addInterest(user.getId(), request);
             
-            return ResponseEntity.ok(new ApiResponse(true, "Interest added successfully", 
+            return ResponseEntity.ok(ApiResponse.success("Interest added successfully", 
                     convertToInterestDTO(interest)));
 
         } catch (Exception e) {
             return ResponseEntity.status(500)
-                    .body(new ApiResponse(false, "Failed to add interest: " + e.getMessage()));
+                    .body(ApiResponse.error("Failed to add interest: " + e.getMessage()));
         }
     }
 
@@ -301,21 +302,21 @@ public class VolunteerProfileController {
             User user = getCurrentUser(request);
             if (user == null) {
                 return ResponseEntity.status(401)
-                        .body(new ApiResponse(false, "Authentication required"));
+                        .body(ApiResponse.error("Authentication required"));
             }
 
             if (user.getUserType() != UserType.VOLUNTEER) {
                 return ResponseEntity.status(403)
-                        .body(new ApiResponse(false, "This endpoint is only for volunteer accounts"));
+                        .body(ApiResponse.error("This endpoint is only for volunteer accounts"));
             }
 
             volunteerProfileService.removeInterest(user.getId(), interestId);
             
-            return ResponseEntity.ok(new ApiResponse(true, "Interest removed successfully"));
+            return ResponseEntity.ok(ApiResponse.success("Interest removed successfully"));
 
         } catch (Exception e) {
             return ResponseEntity.status(500)
-                    .body(new ApiResponse(false, "Failed to remove interest: " + e.getMessage()));
+                    .body(ApiResponse.error("Failed to remove interest: " + e.getMessage()));
         }
     }
 
@@ -330,12 +331,12 @@ public class VolunteerProfileController {
             User user = getCurrentUser(request);
             if (user == null) {
                 return ResponseEntity.status(401)
-                        .body(new ApiResponse(false, "Authentication required"));
+                        .body(ApiResponse.error("Authentication required"));
             }
 
             if (user.getUserType() != UserType.VOLUNTEER) {
                 return ResponseEntity.status(403)
-                        .body(new ApiResponse(false, "This endpoint is only for volunteer accounts"));
+                        .body(ApiResponse.error("This endpoint is only for volunteer accounts"));
             }
 
             List<ProfileInterest> interests = volunteerProfileService.getVolunteerInterests(user.getId());
@@ -343,11 +344,11 @@ public class VolunteerProfileController {
                     .map(this::convertToInterestDTO)
                     .toList();
             
-            return ResponseEntity.ok(new ApiResponse(true, "Interests retrieved successfully", interestDTOs));
+            return ResponseEntity.ok(ApiResponse.success("Interests retrieved successfully", interestDTOs));
 
         } catch (Exception e) {
             return ResponseEntity.status(500)
-                    .body(new ApiResponse(false, "Failed to retrieve interests: " + e.getMessage()));
+                    .body(ApiResponse.error("Failed to retrieve interests: " + e.getMessage()));
         }
     }
 
@@ -368,23 +369,23 @@ public class VolunteerProfileController {
             User user = getCurrentUser(request);
             if (user == null) {
                 return ResponseEntity.status(401)
-                        .body(new ApiResponse(false, "Authentication required"));
+                        .body(ApiResponse.error("Authentication required"));
             }
 
             if (user.getUserType() != UserType.VOLUNTEER) {
                 return ResponseEntity.status(403)
-                        .body(new ApiResponse(false, "This endpoint is only for volunteer accounts"));
+                        .body(ApiResponse.error("This endpoint is only for volunteer accounts"));
             }
 
             VolunteerProfile updatedProfile = volunteerProfileService.updateExperienceLevel(
                     user.getId(), experienceLevel);
             
-            return ResponseEntity.ok(new ApiResponse(true, "Experience level updated successfully", 
+            return ResponseEntity.ok(ApiResponse.success("Experience level updated successfully", 
                     convertToVolunteerDTO(updatedProfile)));
 
         } catch (Exception e) {
             return ResponseEntity.status(500)
-                    .body(new ApiResponse(false, "Failed to update experience level: " + e.getMessage()));
+                    .body(ApiResponse.error("Failed to update experience level: " + e.getMessage()));
         }
     }
 
@@ -399,22 +400,22 @@ public class VolunteerProfileController {
             User user = getCurrentUser(request);
             if (user == null) {
                 return ResponseEntity.status(401)
-                        .body(new ApiResponse(false, "Authentication required"));
+                        .body(ApiResponse.error("Authentication required"));
             }
 
             if (user.getUserType() != UserType.VOLUNTEER) {
                 return ResponseEntity.status(403)
-                        .body(new ApiResponse(false, "This endpoint is only for volunteer accounts"));
+                        .body(ApiResponse.error("This endpoint is only for volunteer accounts"));
             }
 
             // This would return activity stats, volunteer hours, completed events, etc.
             Object activityStats = volunteerProfileService.getVolunteerActivityStats(user.getId());
             
-            return ResponseEntity.ok(new ApiResponse(true, "Activity retrieved successfully", activityStats));
+            return ResponseEntity.ok(ApiResponse.success("Activity retrieved successfully", activityStats));
 
         } catch (Exception e) {
             return ResponseEntity.status(500)
-                    .body(new ApiResponse(false, "Failed to retrieve activity: " + e.getMessage()));
+                    .body(ApiResponse.error("Failed to retrieve activity: " + e.getMessage()));
         }
     }
 
@@ -433,12 +434,12 @@ public class VolunteerProfileController {
             User user = getCurrentUser(request);
             if (user == null) {
                 return ResponseEntity.status(401)
-                        .body(new ApiResponse(false, "Authentication required"));
+                        .body(ApiResponse.error("Authentication required"));
             }
 
             if (user.getUserType() != UserType.VOLUNTEER) {
                 return ResponseEntity.status(403)
-                        .body(new ApiResponse(false, "This endpoint is only for volunteer accounts"));
+                        .body(ApiResponse.error("This endpoint is only for volunteer accounts"));
             }
 
             List<ProfileBadge> badges = volunteerProfileService.getVolunteerBadges(user.getId());
@@ -446,11 +447,11 @@ public class VolunteerProfileController {
                     .map(this::convertToBadgeDTO)
                     .toList();
             
-            return ResponseEntity.ok(new ApiResponse(true, "Badges retrieved successfully", badgeDTOs));
+            return ResponseEntity.ok(ApiResponse.success("Badges retrieved successfully", badgeDTOs));
 
         } catch (Exception e) {
             return ResponseEntity.status(500)
-                    .body(new ApiResponse(false, "Failed to retrieve badges: " + e.getMessage()));
+                    .body(ApiResponse.error("Failed to retrieve badges: " + e.getMessage()));
         }
     }
 
@@ -472,24 +473,24 @@ public class VolunteerProfileController {
             User user = getCurrentUser(request);
             if (user == null) {
                 return ResponseEntity.status(401)
-                        .body(new ApiResponse(false, "Authentication required"));
+                        .body(ApiResponse.error("Authentication required"));
             }
 
             if (user.getUserType() != UserType.VOLUNTEER) {
                 return ResponseEntity.status(403)
-                        .body(new ApiResponse(false, "This endpoint is only for volunteer accounts"));
+                        .body(ApiResponse.error("This endpoint is only for volunteer accounts"));
             }
 
             // This would use the volunteer's skills, interests, and location to find matching opportunities
             Object recommendations = volunteerProfileService.getVolunteerRecommendations(
                     user.getId(), page, size);
             
-            return ResponseEntity.ok(new ApiResponse(true, "Recommendations retrieved successfully", 
+            return ResponseEntity.ok(ApiResponse.success("Recommendations retrieved successfully", 
                     recommendations));
 
         } catch (Exception e) {
             return ResponseEntity.status(500)
-                    .body(new ApiResponse(false, "Failed to retrieve recommendations: " + e.getMessage()));
+                    .body(ApiResponse.error("Failed to retrieve recommendations: " + e.getMessage()));
         }
     }
 
@@ -503,9 +504,9 @@ public class VolunteerProfileController {
     private User getCurrentUser(HttpServletRequest request) {
         try {
             String token = jwtTokenUtil.extractTokenFromRequest(request);
-            if (token != null) {
-                String email = jwtTokenUtil.extractEmail(token);
-                return userRepository.findByEmail(email);
+            if (token != null && jwtTokenUtil.validateToken(token)) {
+                String email = jwtTokenUtil.getUsernameFromToken(token);
+                return userRepository.findByEmail(email).orElse(null);
             }
         } catch (Exception e) {
             // Token is invalid or expired

@@ -1,15 +1,15 @@
 package com.volunteersync.backend.controller;
 
-import com.volunteersync.backend.dto.*;
+import com.volunteersync.backend.dto.response.ApiResponse;
 import com.volunteersync.backend.dto.profile.*;
 import com.volunteersync.backend.dto.request.*;
 import com.volunteersync.backend.dto.response.*;
 import com.volunteersync.backend.service.ProfileService;
 import com.volunteersync.backend.service.VolunteerProfileService;
 import com.volunteersync.backend.service.OrganizationProfileService;
-import com.volunteersync.backend.entity.User;
-import com.volunteersync.backend.entity.UserType;
 import com.volunteersync.backend.entity.profile.Profile;
+import com.volunteersync.backend.entity.user.User;
+import com.volunteersync.backend.entity.user.UserType;
 import com.volunteersync.backend.entity.enums.ProfileVisibility;
 import com.volunteersync.backend.util.JwtTokenUtil;
 import com.volunteersync.backend.repository.UserRepository;
@@ -19,8 +19,7 @@ import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
 import jakarta.servlet.http.HttpServletRequest;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * Main profile controller providing common endpoints for all profile types.
@@ -65,25 +64,25 @@ public class ProfileController {
             User user = getCurrentUser(request);
             if (user == null) {
                 return ResponseEntity.status(401)
-                        .body(new ApiResponse(false, "Authentication required"));
+                        .body(ApiResponse.error("Authentication required"));
             }
 
             // Check if profile already exists
             Optional<Profile> existingProfile = profileService.findByUserId(user.getId());
             if (existingProfile.isPresent()) {
                 return ResponseEntity.badRequest()
-                        .body(new ApiResponse(false, "Profile already exists for this user"));
+                        .body(ApiResponse.error("Profile already exists for this user"));
             }
 
             // Create profile based on user type
-            Profile profile = profileService.createProfileForUser(user);
+            Profile profile = profileService.createProfileForUser(user.getId());
             
-            return ResponseEntity.ok(new ApiResponse(true, "Profile created successfully", 
+            return ResponseEntity.ok(ApiResponse.success("Profile created successfully", 
                     convertToDTO(profile)));
 
         } catch (Exception e) {
             return ResponseEntity.status(500)
-                    .body(new ApiResponse(false, "Failed to create profile: " + e.getMessage()));
+                    .body(ApiResponse.error("Failed to create profile: " + e.getMessage()));
         }
     }
 
@@ -102,21 +101,21 @@ public class ProfileController {
             User user = getCurrentUser(request);
             if (user == null) {
                 return ResponseEntity.status(401)
-                        .body(new ApiResponse(false, "Authentication required"));
+                        .body(ApiResponse.error("Authentication required"));
             }
 
             Optional<Profile> profile = profileService.findByUserId(user.getId());
             if (profile.isEmpty()) {
                 return ResponseEntity.status(404)
-                        .body(new ApiResponse(false, "Profile not found"));
+                        .body(ApiResponse.error("Profile not found"));
             }
 
-            return ResponseEntity.ok(new ApiResponse(true, "Profile retrieved successfully", 
+            return ResponseEntity.ok(ApiResponse.success("Profile retrieved successfully", 
                     convertToDTO(profile.get())));
 
         } catch (Exception e) {
             return ResponseEntity.status(500)
-                    .body(new ApiResponse(false, "Failed to retrieve profile: " + e.getMessage()));
+                    .body(ApiResponse.error("Failed to retrieve profile: " + e.getMessage()));
         }
     }
 
@@ -132,7 +131,7 @@ public class ProfileController {
             Optional<Profile> profile = profileService.findById(id);
             if (profile.isEmpty()) {
                 return ResponseEntity.status(404)
-                        .body(new ApiResponse(false, "Profile not found"));
+                        .body(ApiResponse.error("Profile not found"));
             }
 
             Profile prof = profile.get();
@@ -141,15 +140,15 @@ public class ProfileController {
             User currentUser = getCurrentUser(request);
             if (!profileService.canViewProfile(prof, currentUser)) {
                 return ResponseEntity.status(403)
-                        .body(new ApiResponse(false, "Not authorized to view this profile"));
+                        .body(ApiResponse.error("Not authorized to view this profile"));
             }
 
-            return ResponseEntity.ok(new ApiResponse(true, "Profile retrieved successfully", 
+            return ResponseEntity.ok(ApiResponse.success("Profile retrieved successfully", 
                     convertToPublicDTO(prof, currentUser)));
 
         } catch (Exception e) {
             return ResponseEntity.status(500)
-                    .body(new ApiResponse(false, "Failed to retrieve profile: " + e.getMessage()));
+                    .body(ApiResponse.error("Failed to retrieve profile: " + e.getMessage()));
         }
     }
 
@@ -171,17 +170,17 @@ public class ProfileController {
             User user = getCurrentUser(httpRequest);
             if (user == null) {
                 return ResponseEntity.status(401)
-                        .body(new ApiResponse(false, "Authentication required"));
+                        .body(ApiResponse.error("Authentication required"));
             }
 
             Profile updatedProfile = profileService.updateProfile(user.getId(), request);
             
-            return ResponseEntity.ok(new ApiResponse(true, "Profile updated successfully", 
+            return ResponseEntity.ok(ApiResponse.success("Profile updated successfully", 
                     convertToDTO(updatedProfile)));
 
         } catch (Exception e) {
             return ResponseEntity.status(500)
-                    .body(new ApiResponse(false, "Failed to update profile: " + e.getMessage()));
+                    .body(ApiResponse.error("Failed to update profile: " + e.getMessage()));
         }
     }
 
@@ -198,17 +197,17 @@ public class ProfileController {
             User user = getCurrentUser(request);
             if (user == null) {
                 return ResponseEntity.status(401)
-                        .body(new ApiResponse(false, "Authentication required"));
+                        .body(ApiResponse.error("Authentication required"));
             }
 
             Profile updatedProfile = profileService.updatePrivacySettings(user.getId(), settings);
             
-            return ResponseEntity.ok(new ApiResponse(true, "Privacy settings updated successfully", 
+            return ResponseEntity.ok(ApiResponse.success("Privacy settings updated successfully", 
                     convertToDTO(updatedProfile)));
 
         } catch (Exception e) {
             return ResponseEntity.status(500)
-                    .body(new ApiResponse(false, "Failed to update privacy settings: " + e.getMessage()));
+                    .body(ApiResponse.error("Failed to update privacy settings: " + e.getMessage()));
         }
     }
 
@@ -235,15 +234,23 @@ public class ProfileController {
         try {
             User currentUser = getCurrentUser(request);
             
-            ProfileSearchResponse searchResponse = profileService.searchProfiles(
-                    query, type, location, skills, interests, page, size, currentUser);
+            // Use the actual method signature from ProfileService
+            List<Profile> searchResults = profileService.searchProfiles(
+                    query, location, type, skills, interests, page, size, currentUser);
             
-            return ResponseEntity.ok(new ApiResponse(true, "Search completed successfully", 
-                    searchResponse));
+            // Create a simple response wrapper
+            Map<String, Object> response = new HashMap<>();
+            response.put("profiles", searchResults);
+            response.put("totalElements", searchResults.size());
+            response.put("totalPages", 1);
+            response.put("currentPage", page);
+            
+            return ResponseEntity.ok(ApiResponse.success("Search completed successfully", 
+                    response));
 
         } catch (Exception e) {
             return ResponseEntity.status(500)
-                    .body(new ApiResponse(false, "Search failed: " + e.getMessage()));
+                    .body(ApiResponse.error("Search failed: " + e.getMessage()));
         }
     }
 
@@ -259,16 +266,35 @@ public class ProfileController {
             User user = getCurrentUser(request);
             if (user == null) {
                 return ResponseEntity.status(401)
-                        .body(new ApiResponse(false, "Authentication required"));
+                        .body(ApiResponse.error("Authentication required"));
             }
 
-            ProfileStatsResponse stats = profileService.getProfileStats(user.getId());
+            // Get the user's profile first
+            Optional<Profile> profileOpt = profileService.findByUserId(user.getId());
+            if (profileOpt.isEmpty()) {
+                return ResponseEntity.status(404)
+                        .body(ApiResponse.error("Profile not found"));
+            }
+
+            // Use the actual method that exists in ProfileService
+            ProfileService.ProfileStats basicStats = profileService.getProfileStats(profileOpt.get().getId());
             
-            return ResponseEntity.ok(new ApiResponse(true, "Stats retrieved successfully", stats));
+            // Convert to ProfileStatsResponse
+            ProfileStatsResponse stats = new ProfileStatsResponse(
+                    basicStats.getProfileId(), 
+                    user.getUserType().toString()
+            );
+            
+            // Populate the response with basic stats
+            stats.setLastUpdated(basicStats.getLastUpdated());
+            stats.setProfileViews(basicStats.getTotalViews());
+            stats.setConnectionsCount(basicStats.getTotalConnections());
+            
+            return ResponseEntity.ok(ApiResponse.success("Stats retrieved successfully", stats));
 
         } catch (Exception e) {
             return ResponseEntity.status(500)
-                    .body(new ApiResponse(false, "Failed to retrieve stats: " + e.getMessage()));
+                    .body(ApiResponse.error("Failed to retrieve stats: " + e.getMessage()));
         }
     }
 
@@ -288,16 +314,16 @@ public class ProfileController {
             User user = getCurrentUser(request);
             if (user == null) {
                 return ResponseEntity.status(401)
-                        .body(new ApiResponse(false, "Authentication required"));
+                        .body(ApiResponse.error("Authentication required"));
             }
 
             profileService.softDeleteProfile(user.getId());
             
-            return ResponseEntity.ok(new ApiResponse(true, "Profile deleted successfully"));
+            return ResponseEntity.ok(ApiResponse.success("Profile deleted successfully"));
 
         } catch (Exception e) {
             return ResponseEntity.status(500)
-                    .body(new ApiResponse(false, "Failed to delete profile: " + e.getMessage()));
+                    .body(ApiResponse.error("Failed to delete profile: " + e.getMessage()));
         }
     }
 
@@ -310,10 +336,12 @@ public class ProfileController {
      */
     private User getCurrentUser(HttpServletRequest request) {
         try {
+            // FIXED: Use correct method name from JwtTokenUtil
             String token = jwtTokenUtil.extractTokenFromRequest(request);
-            if (token != null) {
-                String email = jwtTokenUtil.extractEmail(token);
-                return userRepository.findByEmail(email);
+            if (token != null && jwtTokenUtil.validateToken(token)) {
+                // FIXED: Use correct method name from JwtTokenUtil
+                String email = jwtTokenUtil.getUsernameFromToken(token);
+                return userRepository.findByEmail(email).orElse(null);
             }
         } catch (Exception e) {
             // Token is invalid or expired

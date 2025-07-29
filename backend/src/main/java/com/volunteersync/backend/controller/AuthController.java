@@ -1,16 +1,19 @@
 package com.volunteersync.backend.controller;
 
 import com.volunteersync.backend.dto.*;
+import com.volunteersync.backend.dto.response.ApiResponse;
+import com.volunteersync.backend.entity.user.User;
+import com.volunteersync.backend.entity.user.UserType;
 import com.volunteersync.backend.service.UserService;
 import com.volunteersync.backend.util.JwtTokenUtil;
-import com.volunteersync.backend.entity.User;
-import com.volunteersync.backend.entity.UserType;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -40,13 +43,13 @@ public class AuthController {
             // validation
             if (request.getEmail() == null || request.getPassword() == null || request.getUserType() == null) {
                 return ResponseEntity.badRequest()
-                        .body(new ApiResponse(false, "Email, password, and user type are required"));
+                        .body(ApiResponse.error("Email, password, and user type are required"));
             }
 
             // Validate password confirmation
             if (!request.isPasswordMatching()) {
                 return ResponseEntity.badRequest()
-                        .body(new ApiResponse(false, "Passwords do not match"));
+                        .body(ApiResponse.error("Passwords do not match"));
             }
 
             // Validate user type specific fields
@@ -55,7 +58,7 @@ public class AuthController {
                 userType = UserType.valueOf(request.getUserType().toUpperCase());
             } catch (IllegalArgumentException e) {
                 return ResponseEntity.badRequest()
-                        .body(new ApiResponse(false, "Invalid user type. Must be VOLUNTEER or ORGANIZATION"));
+                        .body(ApiResponse.error("Invalid user type. Must be VOLUNTEER or ORGANIZATION"));
             }
 
             // Type-specific validation
@@ -63,33 +66,33 @@ public class AuthController {
                 if (request.getFirstName() == null || request.getFirstName().trim().isEmpty() ||
                         request.getLastName() == null || request.getLastName().trim().isEmpty()) {
                     return ResponseEntity.badRequest()
-                            .body(new ApiResponse(false, "First name and last name are required for volunteers"));
+                            .body(ApiResponse.error("First name and last name are required for volunteers"));
                 }
 
                 // Ensure organization name is not provided for volunteers
                 if (request.getOrganizationName() != null && !request.getOrganizationName().trim().isEmpty()) {
                     return ResponseEntity.badRequest()
-                            .body(new ApiResponse(false, "Organization name should not be provided for volunteers"));
+                            .body(ApiResponse.error("Organization name should not be provided for volunteers"));
                 }
 
             } else if (userType == UserType.ORGANIZATION) {
                 if (request.getOrganizationName() == null || request.getOrganizationName().trim().isEmpty()) {
                     return ResponseEntity.badRequest()
-                            .body(new ApiResponse(false, "Organization name is required for organizations"));
+                            .body(ApiResponse.error("Organization name is required for organizations"));
                 }
 
                 // Ensure individual names are not provided for organizations
                 if ((request.getFirstName() != null && !request.getFirstName().trim().isEmpty()) ||
                         (request.getLastName() != null && !request.getLastName().trim().isEmpty())) {
                     return ResponseEntity.badRequest()
-                            .body(new ApiResponse(false, "Individual names should not be provided for organizations"));
+                            .body(ApiResponse.error("Individual names should not be provided for organizations"));
                 }
             }
 
             // Check if user already exists
             if (userService.existsByEmail(request.getEmail())) {
                 return ResponseEntity.badRequest()
-                        .body(new ApiResponse(false, "Email already registered"));
+                        .body(ApiResponse.error("Email already registered"));
             }
 
             // Create user
@@ -98,11 +101,12 @@ public class AuthController {
             // Generate JWT token
             String token = jwtTokenUtil.generateToken(user.getEmail());
 
-            return ResponseEntity.ok(new JwtResponse(token, user));
+            return ResponseEntity.ok(ApiResponse.success("User registered successfully", 
+                    new JwtResponse(token, user)));
 
         } catch (Exception e) {
             return ResponseEntity.badRequest()
-                    .body(new ApiResponse(false, "Registration failed: " + e.getMessage()));
+                    .body(ApiResponse.error("Registration failed: " + e.getMessage()));
         }
     }
 
@@ -115,7 +119,7 @@ public class AuthController {
                 userType = UserType.valueOf(request.getUserType().toUpperCase());
             } catch (IllegalArgumentException e) {
                 return ResponseEntity.badRequest()
-                        .body(new ApiResponse(false, "Invalid user type. Must be VOLUNTEER or ORGANIZATION"));
+                        .body(ApiResponse.error("Invalid user type. Must be VOLUNTEER or ORGANIZATION"));
             }
 
             // Verify Google token
@@ -123,20 +127,22 @@ public class AuthController {
 
             if (tokenInfo == null) {
                 return ResponseEntity.badRequest()
-                        .body(new ApiResponse(false, "Invalid Google token"));
+                        .body(ApiResponse.error("Invalid Google token"));
             }
 
-            // Check if user exists
-            User user = userService.findByEmail(tokenInfo.getEmail());
+            // Check if user exists - FIXED: Use correct method name
+            Optional<User> userOptional = userService.findByEmail(tokenInfo.getEmail());
+            User user = null;
 
-            if (user == null) {
+            if (userOptional.isEmpty()) {
                 // Create new user based on type
                 user = userService.createGoogleUser(tokenInfo, userType);
             } else {
+                user = userOptional.get();
                 // For existing users, verify they're trying to login with the correct type
                 if (!user.getUserType().equals(userType)) {
                     return ResponseEntity.badRequest()
-                            .body(new ApiResponse(false,
+                            .body(ApiResponse.error(
                                     "Account exists with different user type. Please login as " +
                                             user.getUserType().name().toLowerCase()));
                 }
@@ -145,11 +151,12 @@ public class AuthController {
             // Generate JWT token
             String token = jwtTokenUtil.generateToken(user.getEmail());
 
-            return ResponseEntity.ok(new JwtResponse(token, user));
+            return ResponseEntity.ok(ApiResponse.success("Google authentication successful",
+                    new JwtResponse(token, user)));
 
         } catch (Exception e) {
             return ResponseEntity.badRequest()
-                    .body(new ApiResponse(false, "Google authentication failed: " + e.getMessage()));
+                    .body(ApiResponse.error("Google authentication failed: " + e.getMessage()));
         }
     }
 
@@ -161,17 +168,18 @@ public class AuthController {
 
             if (user == null) {
                 return ResponseEntity.badRequest()
-                        .body(new ApiResponse(false, "Invalid email or password"));
+                        .body(ApiResponse.error("Invalid email or password"));
             }
 
             // Generate JWT token
             String token = jwtTokenUtil.generateToken(user.getEmail());
 
-            return ResponseEntity.ok(new JwtResponse(token, user));
+            return ResponseEntity.ok(ApiResponse.success("Login successful", 
+                    new JwtResponse(token, user)));
 
         } catch (Exception e) {
             return ResponseEntity.badRequest()
-                    .body(new ApiResponse(false, "Login failed: " + e.getMessage()));
+                    .body(ApiResponse.error("Login failed: " + e.getMessage()));
         }
     }
 
@@ -182,18 +190,19 @@ public class AuthController {
 
             if (token == null || !jwtTokenUtil.validateToken(token)) {
                 return ResponseEntity.badRequest()
-                        .body(new ApiResponse(false, "Invalid token"));
+                        .body(ApiResponse.error("Invalid token"));
             }
 
+            // FIXED: Use correct method name
             String username = jwtTokenUtil.getUsernameFromToken(token);
             String newToken = jwtTokenUtil.generateToken(username);
 
-            return ResponseEntity.ok(new ApiResponse(true, "Token refreshed",
+            return ResponseEntity.ok(ApiResponse.success("Token refreshed successfully",
                     Map.of("token", newToken)));
 
         } catch (Exception e) {
             return ResponseEntity.badRequest()
-                    .body(new ApiResponse(false, "Token refresh failed: " + e.getMessage()));
+                    .body(ApiResponse.error("Token refresh failed: " + e.getMessage()));
         }
     }
 
@@ -211,7 +220,7 @@ public class AuthController {
             if (token == null) {
                 System.out.println("ERROR: Token extraction failed");
                 return ResponseEntity.badRequest()
-                        .body(new ApiResponse(false, "No token provided"));
+                        .body(ApiResponse.error("No token provided"));
             }
 
             boolean isValid = jwtTokenUtil.validateToken(token);
@@ -220,27 +229,30 @@ public class AuthController {
             if (!isValid) {
                 System.out.println("ERROR: Token validation failed");
                 return ResponseEntity.badRequest()
-                        .body(new ApiResponse(false, "Invalid token"));
+                        .body(ApiResponse.error("Invalid token"));
             }
 
+            // FIXED: Use correct method name
             String email = jwtTokenUtil.getUsernameFromToken(token);
             System.out.println("Email extracted from token: " + email);
 
             if (email == null) {
                 System.out.println("ERROR: Email extraction from token failed");
                 return ResponseEntity.badRequest()
-                        .body(new ApiResponse(false, "Cannot extract email from token"));
+                        .body(ApiResponse.error("Cannot extract email from token"));
             }
 
-            User user = userService.findByEmail(email);
-            System.out.println("User found: " + (user != null ? "Yes" : "No"));
+            // FIXED: Use correct method name
+            Optional<User> userOptional = userService.findByEmail(email);
+            System.out.println("User found: " + (userOptional.isPresent() ? "Yes" : "No"));
 
-            if (user == null) {
+            if (userOptional.isEmpty()) {
                 System.out.println("ERROR: User not found for email: " + email);
                 return ResponseEntity.badRequest()
-                        .body(new ApiResponse(false, "User not found"));
+                        .body(ApiResponse.error("User not found"));
             }
 
+            User user = userOptional.get();
             System.out.println("User details:");
             System.out.println("  ID: " + user.getId());
             System.out.println("  Email: " + user.getEmail());
@@ -250,13 +262,13 @@ public class AuthController {
             System.out.println("  Last Name: " + user.getLastName());
             System.out.println("========================");
 
-            return ResponseEntity.ok(new ApiResponse(true, "User found", user));
+            return ResponseEntity.ok(ApiResponse.success("User retrieved successfully", user));
 
         } catch (Exception e) {
             System.out.println("ERROR in /me endpoint: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.badRequest()
-                    .body(new ApiResponse(false, "Failed to get user: " + e.getMessage()));
+                    .body(ApiResponse.error("Failed to get user: " + e.getMessage()));
         }
     }
 
@@ -268,54 +280,59 @@ public class AuthController {
 
             if (email == null || email.trim().isEmpty()) {
                 return ResponseEntity.badRequest()
-                        .body(new ApiResponse(false, "Email is required"));
+                        .body(ApiResponse.error("Email is required"));
             }
 
-            User user = userService.findByEmail(email);
+            // FIXED: Use correct method name
+            Optional<User> userOptional = userService.findByEmail(email);
 
-            if (user == null) {
-                return ResponseEntity.ok(new ApiResponse(true, "Email available",
+            if (userOptional.isEmpty()) {
+                return ResponseEntity.ok(ApiResponse.success("Email available",
                         Map.of("exists", false)));
             } else {
-                return ResponseEntity.ok(new ApiResponse(true, "User found",
+                User user = userOptional.get();
+                return ResponseEntity.ok(ApiResponse.success("User found",
                         Map.of("exists", true, "userType", user.getUserType().name())));
             }
 
         } catch (Exception e) {
             return ResponseEntity.badRequest()
-                    .body(new ApiResponse(false, "Failed to check user type: " + e.getMessage()));
+                    .body(ApiResponse.error("Failed to check user type: " + e.getMessage()));
         }
     }
 
     @PutMapping("/complete-profile")
-public ResponseEntity<?> completeProfile(
-        @RequestHeader("Authorization") String authHeader,
-        @RequestBody Map<String, Object> profileData) {
-    try {
-        String token = jwtTokenUtil.extractTokenFromHeader(authHeader);
-        
-        if (token == null || !jwtTokenUtil.validateToken(token)) {
+    public ResponseEntity<?> completeProfile(
+            @RequestHeader("Authorization") String authHeader,
+            @RequestBody Map<String, Object> profileData) {
+        try {
+            String token = jwtTokenUtil.extractTokenFromHeader(authHeader);
+            
+            if (token == null || !jwtTokenUtil.validateToken(token)) {
+                return ResponseEntity.badRequest()
+                        .body(ApiResponse.error("Invalid token"));
+            }
+
+            // FIXED: Use correct method name
+            String email = jwtTokenUtil.getUsernameFromToken(token);
+            
+            // FIXED: Use correct method name
+            Optional<User> userOptional = userService.findByEmail(email);
+
+            if (userOptional.isEmpty()) {
+                return ResponseEntity.badRequest()
+                        .body(ApiResponse.error("User not found"));
+            }
+
+            User user = userOptional.get();
+            // Update user profile with additional information
+            user = userService.updateUserProfile(user, profileData);
+
+            return ResponseEntity.ok(ApiResponse.success("Profile completed successfully", user));
+
+        } catch (Exception e) {
             return ResponseEntity.badRequest()
-                    .body(new ApiResponse(false, "Invalid token"));
+                    .body(ApiResponse.error("Failed to complete profile: " + e.getMessage()));
         }
-
-        String email = jwtTokenUtil.getUsernameFromToken(token);
-        User user = userService.findByEmail(email);
-
-        if (user == null) {
-            return ResponseEntity.badRequest()
-                    .body(new ApiResponse(false, "User not found"));
-        }
-
-        // Update user profile with additional information
-        user = userService.updateUserProfile(user, profileData);
-
-        return ResponseEntity.ok(new ApiResponse(true, "Profile completed successfully", user));
-
-    } catch (Exception e) {
-        return ResponseEntity.badRequest()
-                .body(new ApiResponse(false, "Failed to complete profile: " + e.getMessage()));
     }
-}
-
 }

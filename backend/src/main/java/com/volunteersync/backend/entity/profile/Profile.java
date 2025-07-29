@@ -1,7 +1,8 @@
 package com.volunteersync.backend.entity.profile;
 
-import com.volunteersync.backend.entity.User;
 import com.volunteersync.backend.entity.enums.ProfileVisibility;
+import com.volunteersync.backend.entity.user.User;
+
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -28,8 +29,11 @@ public abstract class Profile {
     private User user;
     
     // =====================================================
-    // COMMON PROFILE FIELDS
+    // BASIC PROFILE INFORMATION
     // =====================================================
+    
+    @Column(name = "display_name", nullable = false)
+    private String displayName;
     
     @Column(columnDefinition = "TEXT")
     private String bio;
@@ -37,11 +41,17 @@ public abstract class Profile {
     @Column
     private String phone;
     
+    @Column(name = "phone_number")
+    private String phoneNumber;
+    
     @Column
     private String location;
     
     @Column
     private String website;
+    
+    @Column(name = "website_url")
+    private String websiteUrl;
     
     @Column
     private String profileImageUrl;
@@ -49,7 +59,10 @@ public abstract class Profile {
     @Column
     private String coverImageUrl;
     
-    // Social Media Links
+    // =====================================================
+    // SOCIAL MEDIA LINKS
+    // =====================================================
+    
     @Column
     private String linkedinUrl;
     
@@ -63,20 +76,17 @@ public abstract class Profile {
     private String instagramUrl;
     
     // =====================================================
-    // MISSING FIELDS NEEDED FOR COMPILATION
+    // VERIFICATION & STATUS
     // =====================================================
-    
-    @Column(name = "display_name", nullable = false)
-    private String displayName;
-    
-    @Column(name = "phone_number")
-    private String phoneNumber;
-    
-    @Column(name = "website_url")
-    private String websiteUrl;
     
     @Column(name = "is_verified")
     private Boolean isVerified = false;
+    
+    @Column(name = "verification_status")
+    private String verificationStatus = "UNVERIFIED";
+    
+    @Column(name = "verification_submitted_at")
+    private LocalDateTime verificationSubmittedAt;
     
     @Column(name = "is_active")
     private Boolean isActive = true;
@@ -87,35 +97,43 @@ public abstract class Profile {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
     
-    // Alias for profileVisibility to match other code references
-    @Enumerated(EnumType.STRING)
-    @Column(name = "visibility")
-    private ProfileVisibility visibility;
-    
     // =====================================================
-    // PRIVACY & VISIBILITY SETTINGS
+    // PRIVACY SETTINGS
     // =====================================================
     
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "visibility", nullable = false)
+    private ProfileVisibility visibility = ProfileVisibility.PUBLIC;
+    
+    @Enumerated(EnumType.STRING)
+    @Column(name = "profile_visibility", nullable = false)
     private ProfileVisibility profileVisibility = ProfileVisibility.PUBLIC;
     
-    @Column(nullable = false)
+    @Column(name = "show_email")
     private Boolean showEmail = false;
     
-    @Column(nullable = false)
+    @Column(name = "show_phone")
     private Boolean showPhone = false;
     
-    @Column(nullable = false)
+    @Column(name = "show_location")
     private Boolean showLocation = true;
     
-    @Column(nullable = false)
+    @Column(name = "show_social_media")
+    private Boolean showSocialMedia = true;
+    
+    @Column(name = "allow_messages")
+    private Boolean allowMessages = true;
+    
+    @Column(name = "allow_messaging")
     private Boolean allowMessaging = true;
     
-    @Column(nullable = false)
+    @Column(name = "allow_connections")
+    private Boolean allowConnections = true;
+    
+    @Column(name = "show_activity")
     private Boolean showActivity = true;
     
-    @Column(nullable = false)
+    @Column(name = "searchable")
     private Boolean searchable = true;
     
     // =====================================================
@@ -136,12 +154,41 @@ public abstract class Profile {
     
     protected Profile() {
         // Default constructor for JPA
-        this.visibility = ProfileVisibility.PUBLIC; // Initialize visibility
     }
     
     protected Profile(User user) {
         this.user = user;
-        setDefaultPrivacySettings();
+        // Set display name based on user type
+        if (user.isOrganization()) {
+            this.displayName = user.getOrganizationName() != null ? user.getOrganizationName() : "Organization";
+        } else {
+            this.displayName = user.getFirstName() + " " + user.getLastName();
+        }
+        setDefaults();
+    }
+    
+    protected Profile(User user, String displayName) {
+        this.user = user;
+        this.displayName = displayName;
+        setDefaults();
+    }
+    
+    private void setDefaults() {
+        if (this.isVerified == null) this.isVerified = false;
+        if (this.isActive == null) this.isActive = true;
+        if (this.isDeleted == null) this.isDeleted = false;
+        if (this.visibility == null) this.visibility = ProfileVisibility.PUBLIC;
+        if (this.profileVisibility == null) this.profileVisibility = ProfileVisibility.PUBLIC;
+        if (this.showEmail == null) this.showEmail = false;
+        if (this.showPhone == null) this.showPhone = false;
+        if (this.showLocation == null) this.showLocation = true;
+        if (this.showSocialMedia == null) this.showSocialMedia = true;
+        if (this.allowMessages == null) this.allowMessages = true;
+        if (this.allowMessaging == null) this.allowMessaging = true;
+        if (this.allowConnections == null) this.allowConnections = true;
+        if (this.showActivity == null) this.showActivity = true;
+        if (this.searchable == null) this.searchable = true;
+        if (this.verificationStatus == null) this.verificationStatus = "UNVERIFIED";
     }
     
     // =====================================================
@@ -149,78 +196,9 @@ public abstract class Profile {
     // =====================================================
     
     /**
-     * Get the profile type display string
-     * @return Profile type with icon (e.g., "🙋‍♀️ Volunteer")
+     * Get profile type as string
      */
-    public abstract String getProfileTypeDisplay();
-    
-    // =====================================================
-    // COMMON HELPER METHODS
-    // =====================================================
-    
-    /**
-     * Check if this is a volunteer profile
-     * @return true if VolunteerProfile instance
-     */
-    public boolean isVolunteerProfile() {
-        return this instanceof VolunteerProfile;
-    }
-    
-    /**
-     * Check if this is an organization profile
-     * @return true if OrganizationProfile instance
-     */
-    public boolean isOrganizationProfile() {
-        return this instanceof OrganizationProfile;
-    }
-    
-    /**
-     * Check if profile is publicly visible
-     * @return true if profile visibility is PUBLIC
-     */
-    public boolean isPubliclyVisible() {
-        return ProfileVisibility.PUBLIC.equals(profileVisibility);
-    }
-    
-    /**
-     * Check if profile is completely private
-     * @return true if profile visibility is PRIVATE
-     */
-    public boolean isPrivate() {
-        return ProfileVisibility.PRIVATE.equals(profileVisibility);
-    }
-    
-    /**
-     * Set default privacy settings for new profiles
-     */
-    private void setDefaultPrivacySettings() {
-        this.profileVisibility = ProfileVisibility.PUBLIC;
-        this.visibility = ProfileVisibility.PUBLIC;
-        this.showEmail = false;
-        this.showPhone = false;
-        this.showLocation = true;
-        this.allowMessaging = true;
-        this.showActivity = true;
-        this.searchable = true;
-    }
-    
-    /**
-     * Get formatted website URL with protocol
-     * @return Website URL with http/https protocol
-     */
-    public String getFormattedWebsite() {
-        String websiteToFormat = website != null ? website : websiteUrl;
-        if (websiteToFormat == null || websiteToFormat.trim().isEmpty()) {
-            return null;
-        }
-        
-        String trimmedWebsite = websiteToFormat.trim();
-        if (!trimmedWebsite.startsWith("http://") && !trimmedWebsite.startsWith("https://")) {
-            return "https://" + trimmedWebsite;
-        }
-        
-        return trimmedWebsite;
-    }
+    public abstract String getProfileType();
     
     // =====================================================
     // GETTERS AND SETTERS
@@ -242,6 +220,14 @@ public abstract class Profile {
         this.user = user;
     }
     
+    public String getDisplayName() {
+        return displayName;
+    }
+    
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
+    }
+    
     public String getBio() {
         return bio;
     }
@@ -258,6 +244,14 @@ public abstract class Profile {
         this.phone = phone;
     }
     
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+    
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
+    }
+    
     public String getLocation() {
         return location;
     }
@@ -272,6 +266,14 @@ public abstract class Profile {
     
     public void setWebsite(String website) {
         this.website = website;
+    }
+    
+    public String getWebsiteUrl() {
+        return websiteUrl;
+    }
+    
+    public void setWebsiteUrl(String websiteUrl) {
+        this.websiteUrl = websiteUrl;
     }
     
     public String getProfileImageUrl() {
@@ -322,13 +324,68 @@ public abstract class Profile {
         this.instagramUrl = instagramUrl;
     }
     
+    public Boolean getIsVerified() {
+        return isVerified;
+    }
+    
+    public void setIsVerified(Boolean isVerified) {
+        this.isVerified = isVerified;
+    }
+    
+    public String getVerificationStatus() {
+        return verificationStatus;
+    }
+    
+    public void setVerificationStatus(String verificationStatus) {
+        this.verificationStatus = verificationStatus;
+    }
+    
+    public LocalDateTime getVerificationSubmittedAt() {
+        return verificationSubmittedAt;
+    }
+    
+    public void setVerificationSubmittedAt(LocalDateTime verificationSubmittedAt) {
+        this.verificationSubmittedAt = verificationSubmittedAt;
+    }
+    
+    public Boolean getIsActive() {
+        return isActive;
+    }
+    
+    public void setIsActive(Boolean isActive) {
+        this.isActive = isActive;
+    }
+    
+    public Boolean getIsDeleted() {
+        return isDeleted;
+    }
+    
+    public void setIsDeleted(Boolean isDeleted) {
+        this.isDeleted = isDeleted;
+    }
+    
+    public LocalDateTime getDeletedAt() {
+        return deletedAt;
+    }
+    
+    public void setDeletedAt(LocalDateTime deletedAt) {
+        this.deletedAt = deletedAt;
+    }
+    
+    public ProfileVisibility getVisibility() {
+        return visibility;
+    }
+    
+    public void setVisibility(ProfileVisibility visibility) {
+        this.visibility = visibility;
+    }
+    
     public ProfileVisibility getProfileVisibility() {
         return profileVisibility;
     }
     
     public void setProfileVisibility(ProfileVisibility profileVisibility) {
         this.profileVisibility = profileVisibility;
-        this.visibility = profileVisibility; // Keep them in sync
     }
     
     public Boolean getShowEmail() {
@@ -355,12 +412,36 @@ public abstract class Profile {
         this.showLocation = showLocation;
     }
     
+    public Boolean getShowSocialMedia() {
+        return showSocialMedia;
+    }
+    
+    public void setShowSocialMedia(Boolean showSocialMedia) {
+        this.showSocialMedia = showSocialMedia;
+    }
+    
+    public Boolean getAllowMessages() {
+        return allowMessages;
+    }
+    
+    public void setAllowMessages(Boolean allowMessages) {
+        this.allowMessages = allowMessages;
+    }
+    
     public Boolean getAllowMessaging() {
         return allowMessaging;
     }
     
     public void setAllowMessaging(Boolean allowMessaging) {
         this.allowMessaging = allowMessaging;
+    }
+    
+    public Boolean getAllowConnections() {
+        return allowConnections;
+    }
+    
+    public void setAllowConnections(Boolean allowConnections) {
+        this.allowConnections = allowConnections;
     }
     
     public Boolean getShowActivity() {
@@ -396,79 +477,55 @@ public abstract class Profile {
     }
     
     // =====================================================
-    // MISSING GETTERS/SETTERS FOR COMPILATION
+    // BUSINESS LOGIC METHODS
     // =====================================================
     
-    // Override getDisplayName to return the displayName field if abstract method isn't implemented
-    public String getDisplayName() {
-        return displayName;
+    /**
+     * Check if profile is publicly viewable
+     */
+    public boolean isPubliclyViewable() {
+        return isActive && !isDeleted && visibility == ProfileVisibility.PUBLIC;
     }
     
-    public void setDisplayName(String displayName) {
-        this.displayName = displayName;
+    /**
+     * Check if profile is viewable by a specific user
+     */
+    public boolean isViewableBy(User user) {
+        if (!isActive || isDeleted) return false;
+        
+        switch (visibility) {
+            case PUBLIC:
+                return true;
+            case PRIVATE:
+                return user != null && user.equals(this.user);
+            case CONNECTIONS_ONLY:
+                // This would need connection checking logic
+                return user != null && user.equals(this.user);
+            default:
+                return false;
+        }
     }
     
-    public String getPhoneNumber() {
-        return phoneNumber != null ? phoneNumber : phone;
+    /**
+     * Soft delete the profile
+     */
+    public void softDelete() {
+        this.isDeleted = true;
+        this.isActive = false;
+        this.deletedAt = LocalDateTime.now();
     }
     
-    public void setPhoneNumber(String phoneNumber) {
-        this.phoneNumber = phoneNumber;
-        this.phone = phoneNumber; // Keep them in sync
-    }
-    
-    public String getWebsiteUrl() {
-        return websiteUrl != null ? websiteUrl : website;
-    }
-    
-    public void setWebsiteUrl(String websiteUrl) {
-        this.websiteUrl = websiteUrl;
-        this.website = websiteUrl; // Keep them in sync
-    }
-    
-    public Boolean getIsVerified() {
-        return isVerified;
-    }
-    
-    public void setIsVerified(Boolean isVerified) {
-        this.isVerified = isVerified;
-    }
-    
-    public Boolean getIsActive() {
-        return isActive;
-    }
-    
-    public void setIsActive(Boolean isActive) {
-        this.isActive = isActive;
-    }
-    
-    public Boolean getIsDeleted() {
-        return isDeleted;
-    }
-    
-    public void setIsDeleted(Boolean isDeleted) {
-        this.isDeleted = isDeleted;
-    }
-    
-    public LocalDateTime getDeletedAt() {
-        return deletedAt;
-    }
-    
-    public void setDeletedAt(LocalDateTime deletedAt) {
-        this.deletedAt = deletedAt;
-    }
-    
-    public ProfileVisibility getVisibility() {
-        return visibility != null ? visibility : profileVisibility;
-    }
-    
-    public void setVisibility(ProfileVisibility visibility) {
-        this.visibility = visibility;
-        this.profileVisibility = visibility; // Keep them in sync
+    /**
+     * Restore the profile from soft delete
+     */
+    public void restore() {
+        this.isDeleted = false;
+        this.isActive = true;
+        this.deletedAt = null;
     }
     
     // =====================================================
-    // EQUALS, HASHCODE, AND TOSTRING
+    // OBJECT METHODS
     // =====================================================
     
     @Override
@@ -482,18 +539,17 @@ public abstract class Profile {
     
     @Override
     public int hashCode() {
-        return getClass().hashCode();
+        return id != null ? id.hashCode() : 0;
     }
     
     @Override
     public String toString() {
-        return "Profile{" +
+        return getClass().getSimpleName() + "{" +
                 "id=" + id +
-                ", profileType='" + getClass().getSimpleName() + '\'' +
-                ", displayName='" + getDisplayName() + '\'' +
-                ", location='" + location + '\'' +
-                ", profileVisibility=" + profileVisibility +
-                ", createdAt=" + createdAt +
+                ", displayName='" + displayName + '\'' +
+                ", visibility=" + visibility +
+                ", isActive=" + isActive +
+                ", isDeleted=" + isDeleted +
                 '}';
     }
 }

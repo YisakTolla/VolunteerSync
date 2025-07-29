@@ -1,4 +1,4 @@
-package com.volunteersync.backend.entity;
+package com.volunteersync.backend.entity.user;
 
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
