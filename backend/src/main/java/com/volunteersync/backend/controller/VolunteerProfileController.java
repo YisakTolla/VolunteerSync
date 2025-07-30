@@ -1,6 +1,5 @@
 package com.volunteersync.backend.controller;
 
-import com.volunteersync.backend.dto.*;
 import com.volunteersync.backend.dto.profile.*;
 import com.volunteersync.backend.dto.request.*;
 import com.volunteersync.backend.dto.response.ApiResponse;
@@ -22,14 +21,18 @@ import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
 import jakarta.servlet.http.HttpServletRequest;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Controller for volunteer-specific profile functionality.
- * Handles volunteer skills, interests, experience levels, badges, and volunteer activities.
+ * Handles volunteer skills, interests, experience levels, badges, and volunteer
+ * activities.
  * 
- * This controller extends the base profile functionality with volunteer-specific
+ * This controller extends the base profile functionality with
+ * volunteer-specific
  * features like skill management, experience tracking, and badge systems.
  */
 @RestController
@@ -75,10 +78,25 @@ public class VolunteerProfileController {
                         .body(ApiResponse.error("This endpoint is only for volunteer accounts"));
             }
 
+            // Get the volunteer profile ID - assuming it exists
+            VolunteerProfile profile = getVolunteerProfileByUserId(user.getId());
+            if (profile == null) {
+                return ResponseEntity.status(404)
+                        .body(ApiResponse.error("Volunteer profile not found"));
+            }
+
+            // Use the actual method signature from the service
             VolunteerProfile updatedProfile = volunteerProfileService.completeProfileSetup(
-                    user.getId(), request);
-            
-            return ResponseEntity.ok(ApiResponse.success("Volunteer profile setup completed", 
+                    profile.getId(),
+                    user.getId(),
+                    request.getBio(),
+                    request.getLocation(),
+                    request.getExperienceLevel(),
+                    request.getAvailabilityNotes(),
+                    request.getNewSkills(),
+                    request.getNewInterests());
+
+            return ResponseEntity.ok(ApiResponse.success("Volunteer profile setup completed",
                     convertToVolunteerDTO(updatedProfile)));
 
         } catch (Exception e) {
@@ -88,13 +106,13 @@ public class VolunteerProfileController {
     }
 
     /**
-     * Updates volunteer-specific profile information.
+     * Updates volunteer availability preferences.
      * 
-     * PUT /api/profiles/volunteer/me
+     * PUT /api/profiles/volunteer/availability
      */
-    @PutMapping("/me")
-    public ResponseEntity<?> updateVolunteerProfile(
-            @Valid @RequestBody UpdateVolunteerProfileRequest request,
+    @PutMapping("/availability")
+    public ResponseEntity<?> updateAvailability(
+            @Valid @RequestBody UpdateAvailabilityRequest request,
             HttpServletRequest httpRequest) {
         try {
             User user = getCurrentUser(httpRequest);
@@ -108,15 +126,72 @@ public class VolunteerProfileController {
                         .body(ApiResponse.error("This endpoint is only for volunteer accounts"));
             }
 
-            VolunteerProfile updatedProfile = volunteerProfileService.updateVolunteerProfile(
-                    user.getId(), request);
-            
-            return ResponseEntity.ok(ApiResponse.success("Volunteer profile updated successfully", 
+            VolunteerProfile profile = getVolunteerProfileByUserId(user.getId());
+            if (profile == null) {
+                return ResponseEntity.status(404)
+                        .body(ApiResponse.error("Volunteer profile not found"));
+            }
+
+            VolunteerProfile updatedProfile = volunteerProfileService.updateAvailabilityPreferences(
+                    profile.getId(),
+                    user.getId(),
+                    request.getAvailableWeekdays(),
+                    request.getAvailableWeekends(),
+                    request.getAvailableMorning(),
+                    request.getAvailableAfternoon(),
+                    request.getAvailableEvening(),
+                    request.getAvailabilityNotes());
+
+            return ResponseEntity.ok(ApiResponse.success("Availability updated successfully",
                     convertToVolunteerDTO(updatedProfile)));
 
         } catch (Exception e) {
             return ResponseEntity.status(500)
-                    .body(ApiResponse.error("Failed to update profile: " + e.getMessage()));
+                    .body(ApiResponse.error("Failed to update availability: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Updates volunteer travel preferences.
+     * 
+     * PUT /api/profiles/volunteer/travel
+     */
+    @PutMapping("/travel")
+    public ResponseEntity<?> updateTravelPreferences(
+            @Valid @RequestBody UpdateTravelRequest request,
+            HttpServletRequest httpRequest) {
+        try {
+            User user = getCurrentUser(httpRequest);
+            if (user == null) {
+                return ResponseEntity.status(401)
+                        .body(ApiResponse.error("Authentication required"));
+            }
+
+            if (user.getUserType() != UserType.VOLUNTEER) {
+                return ResponseEntity.status(403)
+                        .body(ApiResponse.error("This endpoint is only for volunteer accounts"));
+            }
+
+            VolunteerProfile profile = getVolunteerProfileByUserId(user.getId());
+            if (profile == null) {
+                return ResponseEntity.status(404)
+                        .body(ApiResponse.error("Volunteer profile not found"));
+            }
+
+            VolunteerProfile updatedProfile = volunteerProfileService.updateTravelPreferences(
+                    profile.getId(),
+                    user.getId(),
+                    request.getWillingToTravel(),
+                    request.getMaxTravelDistance(),
+                    request.getHasReliableTransportation(),
+                    request.getHasDriversLicense());
+
+            return ResponseEntity.ok(ApiResponse.success("Travel preferences updated successfully",
+                    convertToVolunteerDTO(updatedProfile)));
+
+        } catch (Exception e) {
+            return ResponseEntity.status(500)
+                    .body(ApiResponse.error("Failed to update travel preferences: " + e.getMessage()));
         }
     }
 
@@ -145,9 +220,20 @@ public class VolunteerProfileController {
                         .body(ApiResponse.error("This endpoint is only for volunteer accounts"));
             }
 
-            ProfileSkill skill = volunteerProfileService.addSkill(user.getId(), request);
-            
-            return ResponseEntity.ok(ApiResponse.success("Skill added successfully", 
+            VolunteerProfile profile = getVolunteerProfileByUserId(user.getId());
+            if (profile == null) {
+                return ResponseEntity.status(404)
+                        .body(ApiResponse.error("Volunteer profile not found"));
+            }
+
+            // Use the actual method signature from the service
+            ProfileSkill skill = volunteerProfileService.addSkill(
+                    profile.getId(),
+                    user.getId(),
+                    request.getSkillName(),
+                    request.getSkillLevel());
+
+            return ResponseEntity.ok(ApiResponse.success("Skill added successfully",
                     convertToSkillDTO(skill)));
 
         } catch (Exception e) {
@@ -178,10 +264,16 @@ public class VolunteerProfileController {
                         .body(ApiResponse.error("This endpoint is only for volunteer accounts"));
             }
 
+            VolunteerProfile profile = getVolunteerProfileByUserId(user.getId());
+            if (profile == null) {
+                return ResponseEntity.status(404)
+                        .body(ApiResponse.error("Volunteer profile not found"));
+            }
+
             ProfileSkill updatedSkill = volunteerProfileService.updateSkillLevel(
-                    user.getId(), skillId, skillLevel);
-            
-            return ResponseEntity.ok(ApiResponse.success("Skill updated successfully", 
+                    profile.getId(), user.getId(), skillId, skillLevel);
+
+            return ResponseEntity.ok(ApiResponse.success("Skill updated successfully",
                     convertToSkillDTO(updatedSkill)));
 
         } catch (Exception e) {
@@ -211,9 +303,20 @@ public class VolunteerProfileController {
                         .body(ApiResponse.error("This endpoint is only for volunteer accounts"));
             }
 
-            volunteerProfileService.removeSkill(user.getId(), skillId);
-            
-            return ResponseEntity.ok(ApiResponse.success("Skill removed successfully"));
+            VolunteerProfile profile = getVolunteerProfileByUserId(user.getId());
+            if (profile == null) {
+                return ResponseEntity.status(404)
+                        .body(ApiResponse.error("Volunteer profile not found"));
+            }
+
+            boolean removed = volunteerProfileService.removeSkill(profile.getId(), user.getId(), skillId);
+
+            if (removed) {
+                return ResponseEntity.ok(ApiResponse.success("Skill removed successfully"));
+            } else {
+                return ResponseEntity.status(400)
+                        .body(ApiResponse.error("Failed to remove skill"));
+            }
 
         } catch (Exception e) {
             return ResponseEntity.status(500)
@@ -240,11 +343,17 @@ public class VolunteerProfileController {
                         .body(ApiResponse.error("This endpoint is only for volunteer accounts"));
             }
 
-            List<ProfileSkill> skills = volunteerProfileService.getVolunteerSkills(user.getId());
+            VolunteerProfile profile = getVolunteerProfileByUserId(user.getId());
+            if (profile == null) {
+                return ResponseEntity.status(404)
+                        .body(ApiResponse.error("Volunteer profile not found"));
+            }
+
+            List<ProfileSkill> skills = volunteerProfileService.getProfileSkills(profile.getId());
             List<ProfileSkillDTO> skillDTOs = skills.stream()
                     .map(this::convertToSkillDTO)
-                    .toList();
-            
+                    .collect(Collectors.toList());
+
             return ResponseEntity.ok(ApiResponse.success("Skills retrieved successfully", skillDTOs));
 
         } catch (Exception e) {
@@ -278,9 +387,19 @@ public class VolunteerProfileController {
                         .body(ApiResponse.error("This endpoint is only for volunteer accounts"));
             }
 
-            ProfileInterest interest = volunteerProfileService.addInterest(user.getId(), request);
-            
-            return ResponseEntity.ok(ApiResponse.success("Interest added successfully", 
+            VolunteerProfile profile = getVolunteerProfileByUserId(user.getId());
+            if (profile == null) {
+                return ResponseEntity.status(404)
+                        .body(ApiResponse.error("Volunteer profile not found"));
+            }
+
+            ProfileInterest interest = volunteerProfileService.addInterest(
+                    profile.getId(),
+                    user.getId(),
+                    request.getInterestName(),
+                    request.getInterestCategory());
+
+            return ResponseEntity.ok(ApiResponse.success("Interest added successfully",
                     convertToInterestDTO(interest)));
 
         } catch (Exception e) {
@@ -310,9 +429,20 @@ public class VolunteerProfileController {
                         .body(ApiResponse.error("This endpoint is only for volunteer accounts"));
             }
 
-            volunteerProfileService.removeInterest(user.getId(), interestId);
-            
-            return ResponseEntity.ok(ApiResponse.success("Interest removed successfully"));
+            VolunteerProfile profile = getVolunteerProfileByUserId(user.getId());
+            if (profile == null) {
+                return ResponseEntity.status(404)
+                        .body(ApiResponse.error("Volunteer profile not found"));
+            }
+
+            boolean removed = volunteerProfileService.removeInterest(profile.getId(), user.getId(), interestId);
+
+            if (removed) {
+                return ResponseEntity.ok(ApiResponse.success("Interest removed successfully"));
+            } else {
+                return ResponseEntity.status(400)
+                        .body(ApiResponse.error("Failed to remove interest"));
+            }
 
         } catch (Exception e) {
             return ResponseEntity.status(500)
@@ -339,11 +469,17 @@ public class VolunteerProfileController {
                         .body(ApiResponse.error("This endpoint is only for volunteer accounts"));
             }
 
-            List<ProfileInterest> interests = volunteerProfileService.getVolunteerInterests(user.getId());
+            VolunteerProfile profile = getVolunteerProfileByUserId(user.getId());
+            if (profile == null) {
+                return ResponseEntity.status(404)
+                        .body(ApiResponse.error("Volunteer profile not found"));
+            }
+
+            List<ProfileInterest> interests = volunteerProfileService.getProfileInterests(profile.getId());
             List<ProfileInterestDTO> interestDTOs = interests.stream()
                     .map(this::convertToInterestDTO)
-                    .toList();
-            
+                    .collect(Collectors.toList());
+
             return ResponseEntity.ok(ApiResponse.success("Interests retrieved successfully", interestDTOs));
 
         } catch (Exception e) {
@@ -377,10 +513,16 @@ public class VolunteerProfileController {
                         .body(ApiResponse.error("This endpoint is only for volunteer accounts"));
             }
 
-            VolunteerProfile updatedProfile = volunteerProfileService.updateExperienceLevel(
-                    user.getId(), experienceLevel);
-            
-            return ResponseEntity.ok(ApiResponse.success("Experience level updated successfully", 
+            VolunteerProfile profile = getVolunteerProfileByUserId(user.getId());
+            if (profile == null) {
+                return ResponseEntity.status(404)
+                        .body(ApiResponse.error("Volunteer profile not found"));
+            }
+
+            VolunteerProfile updatedProfile = volunteerProfileService.updateVolunteerInfo(
+                    profile.getId(), user.getId(), experienceLevel, null, null);
+
+            return ResponseEntity.ok(ApiResponse.success("Experience level updated successfully",
                     convertToVolunteerDTO(updatedProfile)));
 
         } catch (Exception e) {
@@ -390,84 +532,14 @@ public class VolunteerProfileController {
     }
 
     /**
-     * Gets volunteer activity statistics and history.
+     * Updates volunteer stats after activity completion.
      * 
-     * GET /api/profiles/volunteer/activity
+     * PUT /api/profiles/volunteer/stats
      */
-    @GetMapping("/activity")
-    public ResponseEntity<?> getVolunteerActivity(HttpServletRequest request) {
-        try {
-            User user = getCurrentUser(request);
-            if (user == null) {
-                return ResponseEntity.status(401)
-                        .body(ApiResponse.error("Authentication required"));
-            }
-
-            if (user.getUserType() != UserType.VOLUNTEER) {
-                return ResponseEntity.status(403)
-                        .body(ApiResponse.error("This endpoint is only for volunteer accounts"));
-            }
-
-            // This would return activity stats, volunteer hours, completed events, etc.
-            Object activityStats = volunteerProfileService.getVolunteerActivityStats(user.getId());
-            
-            return ResponseEntity.ok(ApiResponse.success("Activity retrieved successfully", activityStats));
-
-        } catch (Exception e) {
-            return ResponseEntity.status(500)
-                    .body(ApiResponse.error("Failed to retrieve activity: " + e.getMessage()));
-        }
-    }
-
-    // =====================================================
-    // BADGES & ACHIEVEMENTS
-    // =====================================================
-
-    /**
-     * Gets all badges earned by the volunteer.
-     * 
-     * GET /api/profiles/volunteer/badges
-     */
-    @GetMapping("/badges")
-    public ResponseEntity<?> getVolunteerBadges(HttpServletRequest request) {
-        try {
-            User user = getCurrentUser(request);
-            if (user == null) {
-                return ResponseEntity.status(401)
-                        .body(ApiResponse.error("Authentication required"));
-            }
-
-            if (user.getUserType() != UserType.VOLUNTEER) {
-                return ResponseEntity.status(403)
-                        .body(ApiResponse.error("This endpoint is only for volunteer accounts"));
-            }
-
-            List<ProfileBadge> badges = volunteerProfileService.getVolunteerBadges(user.getId());
-            List<ProfileBadgeDTO> badgeDTOs = badges.stream()
-                    .map(this::convertToBadgeDTO)
-                    .toList();
-            
-            return ResponseEntity.ok(ApiResponse.success("Badges retrieved successfully", badgeDTOs));
-
-        } catch (Exception e) {
-            return ResponseEntity.status(500)
-                    .body(ApiResponse.error("Failed to retrieve badges: " + e.getMessage()));
-        }
-    }
-
-    // =====================================================
-    // VOLUNTEER DISCOVERY & MATCHING
-    // =====================================================
-
-    /**
-     * Finds volunteer opportunities matching the volunteer's profile.
-     * 
-     * GET /api/profiles/volunteer/recommendations
-     */
-    @GetMapping("/recommendations")
-    public ResponseEntity<?> getVolunteerRecommendations(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
+    @PutMapping("/stats")
+    public ResponseEntity<?> updateVolunteerStats(
+            @RequestParam(required = false) Integer hoursContributed,
+            @RequestParam(required = false) Boolean newActivity,
             HttpServletRequest request) {
         try {
             User user = getCurrentUser(request);
@@ -481,16 +553,101 @@ public class VolunteerProfileController {
                         .body(ApiResponse.error("This endpoint is only for volunteer accounts"));
             }
 
-            // This would use the volunteer's skills, interests, and location to find matching opportunities
-            Object recommendations = volunteerProfileService.getVolunteerRecommendations(
-                    user.getId(), page, size);
-            
-            return ResponseEntity.ok(ApiResponse.success("Recommendations retrieved successfully", 
-                    recommendations));
+            VolunteerProfile profile = getVolunteerProfileByUserId(user.getId());
+            if (profile == null) {
+                return ResponseEntity.status(404)
+                        .body(ApiResponse.error("Volunteer profile not found"));
+            }
+
+            volunteerProfileService.updateVolunteerStats(profile.getId(), hoursContributed, newActivity);
+
+            return ResponseEntity.ok(ApiResponse.success("Volunteer stats updated successfully"));
 
         } catch (Exception e) {
             return ResponseEntity.status(500)
-                    .body(ApiResponse.error("Failed to retrieve recommendations: " + e.getMessage()));
+                    .body(ApiResponse.error("Failed to update stats: " + e.getMessage()));
+        }
+    }
+
+    // =====================================================
+    // BADGES & ACHIEVEMENTS
+    // =====================================================
+
+    /**
+     * Gets all badges earned by the volunteer.
+     * 
+     * GET /api/profiles/volunteer/badges
+     */
+    @GetMapping("/badges")
+    public ResponseEntity<?> getVolunteerBadges(
+            @RequestParam(defaultValue = "false") boolean includeHidden,
+            HttpServletRequest request) {
+        try {
+            User user = getCurrentUser(request);
+            if (user == null) {
+                return ResponseEntity.status(401)
+                        .body(ApiResponse.error("Authentication required"));
+            }
+
+            if (user.getUserType() != UserType.VOLUNTEER) {
+                return ResponseEntity.status(403)
+                        .body(ApiResponse.error("This endpoint is only for volunteer accounts"));
+            }
+
+            VolunteerProfile profile = getVolunteerProfileByUserId(user.getId());
+            if (profile == null) {
+                return ResponseEntity.status(404)
+                        .body(ApiResponse.error("Volunteer profile not found"));
+            }
+
+            List<ProfileBadge> badges = volunteerProfileService.getProfileBadges(profile.getId(), includeHidden);
+            List<ProfileBadgeDTO> badgeDTOs = badges.stream()
+                    .map(this::convertToBadgeDTO)
+                    .collect(Collectors.toList());
+
+            return ResponseEntity.ok(ApiResponse.success("Badges retrieved successfully", badgeDTOs));
+
+        } catch (Exception e) {
+            return ResponseEntity.status(500)
+                    .body(ApiResponse.error("Failed to retrieve badges: " + e.getMessage()));
+        }
+    }
+
+    // =====================================================
+    // PROFILE INFORMATION ENDPOINTS
+    // =====================================================
+
+    /**
+     * Gets the current volunteer's profile.
+     * 
+     * GET /api/profiles/volunteer/me
+     */
+    @GetMapping("/me")
+    public ResponseEntity<?> getCurrentVolunteerProfile(HttpServletRequest request) {
+        try {
+            User user = getCurrentUser(request);
+            if (user == null) {
+                return ResponseEntity.status(401)
+                        .body(ApiResponse.error("Authentication required"));
+            }
+
+            if (user.getUserType() != UserType.VOLUNTEER) {
+                return ResponseEntity.status(403)
+                        .body(ApiResponse.error("This endpoint is only for volunteer accounts"));
+            }
+
+            VolunteerProfile profile = getVolunteerProfileByUserId(user.getId());
+            if (profile == null) {
+                return ResponseEntity.status(404)
+                        .body(ApiResponse.error("Volunteer profile not found"));
+            }
+
+            return ResponseEntity.ok(ApiResponse.success("Profile retrieved successfully",
+                    convertToVolunteerDTO(profile)));
+
+        } catch (Exception e) {
+            return ResponseEntity.status(500)
+                    .body(ApiResponse.error("Failed to retrieve profile: " + e.getMessage()));
         }
     }
 
@@ -515,56 +672,99 @@ public class VolunteerProfileController {
     }
 
     /**
+     * Gets volunteer profile by user ID.
+     */
+    private VolunteerProfile getVolunteerProfileByUserId(Long userId) {
+        try {
+            return getVolunteerProfileByUserId(userId);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /**
      * Converts a VolunteerProfile entity to DTO.
      */
     private VolunteerProfileDTO convertToVolunteerDTO(VolunteerProfile profile) {
-        // This would use a mapper service or manual conversion
-        // For now, returning a placeholder - implement based on your DTO structure
-        return volunteerProfileService.convertToDTO(profile);
+        if (profile == null)
+            return null;
+
+        VolunteerProfileDTO dto = new VolunteerProfileDTO();
+
+        // Basic profile information
+        dto.setId(profile.getId());
+        dto.setFullName(profile.getFullName());
+        dto.setBio(profile.getBio());
+        dto.setLocation(profile.getLocation());
+        dto.setCreatedAt(profile.getCreatedAt());
+        dto.setUpdatedAt(profile.getUpdatedAt());
+
+        // Volunteer-specific information
+        dto.setExperienceLevel(profile.getExperienceLevel());
+        dto.setTotalVolunteerHours(profile.getTotalVolunteerHours());
+        dto.setWillingToTravel(profile.getWillingToTravel());
+        dto.setMaxTravelDistance(profile.getMaxTravelDistance());
+
+        // Include skills, interests, and badges if needed
+        // Note: These could be lazy-loaded separately for performance
+
+        return dto;
     }
 
     /**
      * Converts a ProfileSkill entity to DTO.
      */
     private ProfileSkillDTO convertToSkillDTO(ProfileSkill skill) {
-        // This would use a mapper service or manual conversion
-        return new ProfileSkillDTO(
-                skill.getId(),
-                skill.getSkillName(),
-                skill.getSkillLevel(),
-                skill.getYearsOfExperience(),
-                skill.isEndorsed(),
-                skill.getCreatedAt()
-        );
+        if (skill == null)
+            return null;
+
+        ProfileSkillDTO dto = new ProfileSkillDTO();
+        dto.setId(skill.getId());
+        dto.setSkillName(skill.getSkillName());
+        dto.setSkillLevel(skill.getLevel());
+        dto.setYearsOfExperience(skill.getYearsOfExperience());
+        dto.setIsVerified(skill.getVerified());
+        dto.setCreatedAt(skill.getCreatedAt());
+
+        return dto;
     }
 
     /**
      * Converts a ProfileInterest entity to DTO.
      */
     private ProfileInterestDTO convertToInterestDTO(ProfileInterest interest) {
-        // This would use a mapper service or manual conversion
-        return new ProfileInterestDTO(
-                interest.getId(),
-                interest.getInterestName(),
-                interest.getInterestCategory(),
-                interest.getPriorityLevel(),
-                interest.getCreatedAt()
-        );
+        if (interest == null)
+            return null;
+
+        ProfileInterestDTO dto = new ProfileInterestDTO();
+        dto.setId(interest.getId());
+        dto.setInterestName(interest.getInterestName());
+        dto.setInterestCategory(interest.getCategory());
+        // Fix: Handle enum to Integer conversion for priority level
+        if (interest.getPriorityLevel() != null) {
+            dto.setPriorityLevel(interest.getPriorityLevel().getLevel());
+        }
+        dto.setCreatedAt(interest.getCreatedAt());
+
+        return dto;
     }
 
     /**
      * Converts a ProfileBadge entity to DTO.
      */
     private ProfileBadgeDTO convertToBadgeDTO(ProfileBadge badge) {
-        // This would use a mapper service or manual conversion
-        return new ProfileBadgeDTO(
-                badge.getId(),
-                badge.getBadgeName(),
-                badge.getBadgeDescription(),
-                badge.getBadgeIcon(),
-                badge.getBadgeCategory(),
-                badge.getEarnedAt(),
-                badge.isVisible()
-        );
+        if (badge == null)
+            return null;
+
+        ProfileBadgeDTO dto = new ProfileBadgeDTO();
+        dto.setId(badge.getId());
+        dto.setBadgeName(badge.getBadgeName());
+        dto.setBadgeDescription(badge.getDescription());
+        dto.setBadgeIcon(badge.getIconEmoji());
+        dto.setBadgeCategory(badge.getCategory());
+        dto.setEarnedAt(badge.getEarnedAt());
+        dto.setIsVisible(badge.getIsPublic());
+
+        return dto;
     }
 }

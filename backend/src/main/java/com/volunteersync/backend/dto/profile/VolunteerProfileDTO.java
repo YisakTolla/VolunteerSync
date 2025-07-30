@@ -136,12 +136,12 @@ public class VolunteerProfileDTO extends ProfileDTO {
     }
 
     public VolunteerProfileDTO(Long id, Long userId, String userType, String bio, String location,
-                              ProfileVisibility visibility, Boolean isActive, Boolean isVerified,
-                              Boolean isCompleted, LocalDateTime createdAt, LocalDateTime updatedAt,
-                              String firstName, String lastName, ExperienceLevel experienceLevel,
-                              Integer totalVolunteerHours) {
-        super(id, userId, userType, bio, location, visibility, isActive, isVerified, 
-              isCompleted, createdAt, updatedAt);
+            ProfileVisibility visibility, Boolean isActive, Boolean isVerified,
+            Boolean isCompleted, LocalDateTime createdAt, LocalDateTime updatedAt,
+            String firstName, String lastName, ExperienceLevel experienceLevel,
+            Integer totalVolunteerHours) {
+        super(id, userId, userType, bio, location, visibility, isActive, isVerified,
+                isCompleted, createdAt, updatedAt);
         this.firstName = firstName;
         this.lastName = lastName;
         this.experienceLevel = experienceLevel;
@@ -450,12 +450,50 @@ public class VolunteerProfileDTO extends ProfileDTO {
         return null;
     }
 
+    // Add these methods to the VolunteerProfileDTO class
+    // Place them in the UTILITY METHODS section after the existing getFullName()
+    // method
+
+    /**
+     * Sets the volunteer's full name by parsing it into first and last name.
+     * This method handles various name formats and edge cases.
+     * 
+     * @param fullName The full name to parse (e.g., "John Doe", "John", "John
+     *                 Michael Doe")
+     */
+    public void setFullName(String fullName) {
+        if (fullName == null || fullName.trim().isEmpty()) {
+            this.firstName = null;
+            this.lastName = null;
+            return;
+        }
+
+        String trimmedName = fullName.trim();
+
+        // Split the name by spaces
+        String[] nameParts = trimmedName.split("\\s+");
+
+        if (nameParts.length == 1) {
+            // Only one name part - treat as first name
+            this.firstName = nameParts[0];
+            this.lastName = null;
+        } else if (nameParts.length == 2) {
+            // Two name parts - first and last name
+            this.firstName = nameParts[0];
+            this.lastName = nameParts[1];
+        } else if (nameParts.length > 2) {
+            // Multiple name parts - first name is first part, last name is everything else
+            this.firstName = nameParts[0];
+            this.lastName = String.join(" ", java.util.Arrays.copyOfRange(nameParts, 1, nameParts.length));
+        }
+    }
+
     /**
      * Checks if the volunteer has completed their background check.
      */
     public boolean isBackgroundCheckValid() {
         return backgroundCheckCompleted != null && backgroundCheckCompleted &&
-               "APPROVED".equals(backgroundCheckStatus);
+                "APPROVED".equals(backgroundCheckStatus);
     }
 
     /**
