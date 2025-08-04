@@ -9,10 +9,10 @@ import About from './components/About';
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
 import Profile from './components/Profile';
-import ProfileSetup from './components/ProfileSetup';
+// import ProfileSetup from './components/ProfileSetup';
 import Settings from './components/Settings';
 import Footer from './components/Footer';
-import { ProtectedRoute, ProfileSetupRoute } from './components/ProfileSetupRoute';
+import { ProtectedRoute /*, ProfileSetupRoute*/ } from './components/ProfileSetupRoute';
 
 function App() {
   return (
@@ -87,17 +87,6 @@ function App() {
             } 
           />
           
-          {/* Profile Setup Route - Only for incomplete profiles */}
-          <Route 
-            path="/profile-setup" 
-            element={
-              <ProfileSetupRoute>
-                <ProfileSetup />
-                <Footer />
-              </ProfileSetupRoute>
-            } 
-          />
-          
           {/* Protected Routes - Only for complete profiles */}
           <Route 
             path="/dashboard" 
@@ -130,6 +119,19 @@ function App() {
               </ProtectedRoute>
             } 
           />
+
+          {/* Profile Setup Route - COMMENTED OUT FOR NOW */}
+          {/* 
+          <Route 
+            path="/profile-setup" 
+            element={
+              <ProfileSetupRoute>
+                <ProfileSetup />
+                <Footer />
+              </ProfileSetupRoute>
+            } 
+          />
+          */}
           
           {/* Catch-all route for 404 */}
           <Route 
