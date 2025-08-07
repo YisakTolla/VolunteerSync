@@ -591,4 +591,14 @@ public class OrganizationProfile {
     public int hashCode() {
         return id != null ? id.hashCode() : 0;
     }
+
+    // Add getter method to OrganizationProfile.java
+    public String getFounded() {
+        return foundedYear != null ? foundedYear.toString() : null;
+    }
+
+    public String getEin() {
+        // Extract EIN from taxExemptStatus if it contains one
+        return taxExemptStatus;
+    }
 }

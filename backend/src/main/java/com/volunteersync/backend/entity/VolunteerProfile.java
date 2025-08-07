@@ -47,6 +47,16 @@ public class VolunteerProfile {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt = LocalDateTime.now();
 
+    // Add to VolunteerProfile.java
+    @Column(name = "skills")
+    private String skills; // Comma-separated: "JavaScript,React,Leadership"
+
+    @Column(name = "interests") 
+    private String interests; // Comma-separated: "Environment,Education,Healthcare"
+
+    @Column(name = "availability_preference")
+    private String availabilityPreference; // "weekends", "weekdays", "flexible"
+
     // Constructors
     public VolunteerProfile() {
     }

@@ -17,6 +17,11 @@ public class VolunteerProfileDTO {
     private Boolean isAvailable;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private String skills;
+    private List<String> skillsList;
+    private String interests;  
+    private List<String> interestsList;
+    private String availabilityPreference;
 
     // Constructors
     public VolunteerProfileDTO() {
