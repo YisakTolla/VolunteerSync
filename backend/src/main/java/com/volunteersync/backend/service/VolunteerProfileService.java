@@ -2,19 +2,26 @@
 package com.volunteersync.backend.service;
 
 import com.volunteersync.backend.entity.User;
+import com.volunteersync.backend.entity.Application;
 import com.volunteersync.backend.entity.VolunteerProfile;
 import com.volunteersync.backend.enums.UserType;
-import com.volunteersync.backend.repository.UserRepository;
 import com.volunteersync.backend.repository.VolunteerProfileRepository;
+import com.volunteersync.backend.repository.UserRepository;
 import com.volunteersync.backend.repository.ApplicationRepository;
 import com.volunteersync.backend.dto.VolunteerProfileDTO;
+import com.volunteersync.backend.service.BadgeService;
+import com.volunteersync.backend.dto.BadgeDTO;
+import com.volunteersync.backend.dto.VolunteerProfileDTO.ActivityEntry;
+import com.volunteersync.backend.dto.VolunteerProfileDTO.Connection;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -33,6 +40,9 @@ public class VolunteerProfileService {
     
     @Autowired
     private ApplicationRepository applicationRepository;
+
+    @Autowired
+    private BadgeService badgeService;
 
     // ==========================================
     // PROFILE MANAGEMENT METHODS
@@ -138,6 +148,179 @@ public class VolunteerProfileService {
         
         System.out.println("Volunteer profile updated successfully");
         return convertToDTO(savedProfile);
+    }
+
+    /**
+     * Get volunteer profile with all frontend data (badges, activities, connections)
+     */
+    public VolunteerProfileDTO getCompleteVolunteerProfile(Long userId) {
+        try {
+            User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+                
+            Optional<VolunteerProfile> profileOpt = volunteerProfileRepository.findByUser(user);
+            if (profileOpt.isEmpty()) {
+                throw new RuntimeException("Volunteer profile not found");
+            }
+            
+            VolunteerProfile profile = profileOpt.get();
+            VolunteerProfileDTO dto = convertToDTO(profile);
+            
+            // Add badges data
+            List<BadgeDTO> badges = badgeService.getUserBadges(userId);
+            dto.setBadges(badges);
+            
+            // Add recent activity
+            List<ActivityEntry> recentActivity = getVolunteerHistory(userId);
+            dto.setRecentActivity(recentActivity);
+            
+            // Add connections (mock data for now)
+            List<Connection> connections = getVolunteerConnections(userId);
+            dto.setConnections(connections);
+            
+            return dto;
+            
+        } catch (Exception e) {
+            System.err.println("Error getting complete volunteer profile: " + e.getMessage());
+            throw new RuntimeException("Failed to get volunteer profile: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Get volunteer activity history
+     */
+    public List<ActivityEntry> getVolunteerHistory(Long userId) {
+        try {
+            List<ActivityEntry> activities = new ArrayList<>();
+            
+            User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+                
+            Optional<VolunteerProfile> profileOpt = volunteerProfileRepository.findByUser(user);
+            if (profileOpt.isEmpty()) {
+                return activities; // Return empty list if no profile
+            }
+            
+            VolunteerProfile profile = profileOpt.get();
+            
+            // Get recent applications
+            List<Application> recentApplications = applicationRepository
+                .findByVolunteerOrderByAppliedAtDesc(profile)
+                .stream()
+                .limit(5)
+                .collect(Collectors.toList());
+                
+            for (Application app : recentApplications) {
+                activities.add(new ActivityEntry(
+                    "application",
+                    "Applied to " + app.getEvent().getTitle(),
+                    "Application status: " + app.getStatus().toString(),
+                    app.getAppliedAt(),
+                    app.getStatus().toString(),
+                    "📝"
+                ));
+            }
+            
+            // Get recent badges
+            List<BadgeDTO> recentBadges = badgeService.getUserBadges(userId)
+                .stream()
+                .filter(badge -> badge.getEarnedAt() != null)
+                .sorted((a, b) -> b.getEarnedAt().compareTo(a.getEarnedAt()))
+                .limit(3)
+                .collect(Collectors.toList());
+                
+            for (BadgeDTO badge : recentBadges) {
+                activities.add(new ActivityEntry(
+                    "badge",
+                    "Earned " + badge.getBadgeName(),
+                    badge.getBadgeDescription(),
+                    badge.getEarnedAt(),
+                    "EARNED",
+                    badge.getBadgeIcon()
+                ));
+            }
+            
+            // Sort all activities by timestamp
+            activities.sort((a, b) -> b.getTimestamp().compareTo(a.getTimestamp()));
+            
+            return activities.stream().limit(10).collect(Collectors.toList());
+            
+        } catch (Exception e) {
+            System.err.println("Error getting volunteer history: " + e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+
+    /**
+     * Get volunteer connections (mock data for now)
+     */
+    public List<Connection> getVolunteerConnections(Long userId) {
+        // For now, return mock data - you can implement real connections later
+        List<Connection> connections = new ArrayList<>();
+        
+        connections.add(new Connection(
+            "Sarah Chen",
+            "Event Organizer", 
+            "Local Food Bank",
+            "/api/images/profiles/sarah.jpg",
+            LocalDateTime.now().minusDays(10)
+        ));
+        
+        connections.add(new Connection(
+            "Mike Rodriguez",
+            "Volunteer Coordinator",
+            "Community Center",
+            "/api/images/profiles/mike.jpg", 
+            LocalDateTime.now().minusDays(15)
+        ));
+        
+        return connections;
+    }
+
+    /**
+     * Update volunteer skills
+     */
+    public VolunteerProfileDTO updateVolunteerSkills(Long userId, List<String> skills) {
+        try {
+            User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+                
+            VolunteerProfile profile = volunteerProfileRepository.findByUser(user)
+                .orElseThrow(() -> new RuntimeException("Volunteer profile not found"));
+            
+            profile.setSkillsList(skills);
+            profile.setUpdatedAt(LocalDateTime.now());
+            
+            VolunteerProfile savedProfile = volunteerProfileRepository.save(profile);
+            return convertToDTO(savedProfile);
+            
+        } catch (Exception e) {
+            System.err.println("Error updating volunteer skills: " + e.getMessage());
+            throw new RuntimeException("Failed to update skills: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Update volunteer interests
+     */
+    public VolunteerProfileDTO updateVolunteerInterests(Long userId, List<String> interests) {
+        try {
+            User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+                
+            VolunteerProfile profile = volunteerProfileRepository.findByUser(user)
+                .orElseThrow(() -> new RuntimeException("Volunteer profile not found"));
+            
+            profile.setInterestsList(interests);
+            profile.setUpdatedAt(LocalDateTime.now());
+            
+            VolunteerProfile savedProfile = volunteerProfileRepository.save(profile);
+            return convertToDTO(savedProfile);
+            
+        } catch (Exception e) {
+            System.err.println("Error updating volunteer interests: " + e.getMessage());
+            throw new RuntimeException("Failed to update interests: " + e.getMessage());
+        }
     }
 
     /**
@@ -506,7 +689,7 @@ public class VolunteerProfileService {
 
     private int calculateProfileCompleteness(VolunteerProfile profile) {
         int completeness = 0;
-        int totalFields = 7; // firstName, lastName, bio, location, phone, profileImage, availability
+        int totalFields = 9; // firstName, lastName, bio, location, phone, profileImage, availability, skills, interests
         
         if (profile.getFirstName() != null && !profile.getFirstName().trim().isEmpty()) completeness++;
         if (profile.getLastName() != null && !profile.getLastName().trim().isEmpty()) completeness++;
@@ -515,18 +698,23 @@ public class VolunteerProfileService {
         if (profile.getPhoneNumber() != null && !profile.getPhoneNumber().trim().isEmpty()) completeness++;
         if (profile.getProfileImageUrl() != null && !profile.getProfileImageUrl().trim().isEmpty()) completeness++;
         if (profile.getIsAvailable() != null) completeness++;
+        if (profile.getSkills() != null && !profile.getSkills().trim().isEmpty()) completeness++;
+        if (profile.getInterests() != null && !profile.getInterests().trim().isEmpty()) completeness++;
         
         return (completeness * 100) / totalFields;
     }
 
+    /**
+     * Enhanced convertToDTO method with all frontend data
+     */
     private VolunteerProfileDTO convertToDTO(VolunteerProfile profile) {
         VolunteerProfileDTO dto = new VolunteerProfileDTO();
         
+        // Existing fields
         dto.setId(profile.getId());
         dto.setUserId(profile.getUser().getId());
         dto.setFirstName(profile.getFirstName());
         dto.setLastName(profile.getLastName());
-        dto.setFullName(profile.getFullName());
         dto.setBio(profile.getBio());
         dto.setLocation(profile.getLocation());
         dto.setPhoneNumber(profile.getPhoneNumber());
@@ -536,6 +724,11 @@ public class VolunteerProfileService {
         dto.setIsAvailable(profile.getIsAvailable());
         dto.setCreatedAt(profile.getCreatedAt());
         dto.setUpdatedAt(profile.getUpdatedAt());
+        
+        // New fields
+        dto.setSkills(profile.getSkillsList());
+        dto.setInterests(profile.getInterestsList());
+        dto.setAvailabilityPreference(profile.getAvailabilityPreference());
         
         return dto;
     }

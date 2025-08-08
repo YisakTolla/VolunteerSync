@@ -1,6 +1,7 @@
 package com.volunteersync.backend.dto;
 
 import java.time.LocalDateTime;
+import java.util.*;
 
 public class VolunteerProfileDTO {
     private Long id;
@@ -17,13 +18,159 @@ public class VolunteerProfileDTO {
     private Boolean isAvailable;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    private String skills;
-    private List<String> skillsList;
-    private String interests;  
-    private List<String> interestsList;
-    private String availabilityPreference;
 
-    // Constructors
+    // NEW FIELDS FOR FRONTEND COMPATIBILITY
+    private List<String> skills;
+    private List<String> interests;
+    private String availabilityPreference;
+    
+    // FRONTEND INTEGRATION FIELDS
+    private List<BadgeDTO> badges; // Frontend expects user badges
+    private List<ActivityEntry> recentActivity; // Frontend expects recent activities
+    private List<Connection> connections; // Frontend expects user connections
+
+    // =====================================================
+    // SUPPORTING CLASSES
+    // =====================================================
+
+    public static class ActivityEntry {
+        private String type; // "event", "application", "badge"
+        private String title;
+        private String description;
+        private LocalDateTime timestamp;
+        private String status;
+        private String icon;
+
+        // Constructors
+        public ActivityEntry() {
+        }
+
+        public ActivityEntry(String type, String title, String description,
+                LocalDateTime timestamp, String status, String icon) {
+            this.type = type;
+            this.title = title;
+            this.description = description;
+            this.timestamp = timestamp;
+            this.status = status;
+            this.icon = icon;
+        }
+
+        // Getters and Setters
+        public String getType() {
+            return type;
+        }
+
+        public void setType(String type) {
+            this.type = type;
+        }
+
+        public String getTitle() {
+            return title;
+        }
+
+        public void setTitle(String title) {
+            this.title = title;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+
+        public void setDescription(String description) {
+            this.description = description;
+        }
+
+        public LocalDateTime getTimestamp() {
+            return timestamp;
+        }
+
+        public void setTimestamp(LocalDateTime timestamp) {
+            this.timestamp = timestamp;
+        }
+
+        public String getStatus() {
+            return status;
+        }
+
+        public void setStatus(String status) {
+            this.status = status;
+        }
+
+        public String getIcon() {
+            return icon;
+        }
+
+        public void setIcon(String icon) {
+            this.icon = icon;
+        }
+    }
+
+    public static class Connection {
+        private String name;
+        private String role;
+        private String organization;
+        private String profileImageUrl;
+        private LocalDateTime connectedAt;
+
+        // Constructors
+        public Connection() {
+        }
+
+        public Connection(String name, String role, String organization,
+                String profileImageUrl, LocalDateTime connectedAt) {
+            this.name = name;
+            this.role = role;
+            this.organization = organization;
+            this.profileImageUrl = profileImageUrl;
+            this.connectedAt = connectedAt;
+        }
+
+        // Getters and Setters
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public String getRole() {
+            return role;
+        }
+
+        public void setRole(String role) {
+            this.role = role;
+        }
+
+        public String getOrganization() {
+            return organization;
+        }
+
+        public void setOrganization(String organization) {
+            this.organization = organization;
+        }
+
+        public String getProfileImageUrl() {
+            return profileImageUrl;
+        }
+
+        public void setProfileImageUrl(String profileImageUrl) {
+            this.profileImageUrl = profileImageUrl;
+        }
+
+        public LocalDateTime getConnectedAt() {
+            return connectedAt;
+        }
+
+        public void setConnectedAt(LocalDateTime connectedAt) {
+            this.connectedAt = connectedAt;
+        }
+    }
+
+    // =====================================================
+    // CONSTRUCTORS
+    // =====================================================
+
     public VolunteerProfileDTO() {
     }
 
@@ -38,7 +185,10 @@ public class VolunteerProfileDTO {
         this.eventsParticipated = eventsParticipated;
     }
 
-    // Getters and Setters
+    // =====================================================
+    // GETTERS AND SETTERS - EXISTING FIELDS
+    // =====================================================
+
     public Long getId() {
         return id;
     }
@@ -155,5 +305,57 @@ public class VolunteerProfileDTO {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    // =====================================================
+    // GETTERS AND SETTERS - NEW FIELDS
+    // =====================================================
+
+    public List<String> getSkills() {
+        return skills;
+    }
+
+    public void setSkills(List<String> skills) {
+        this.skills = skills;
+    }
+
+    public List<String> getInterests() {
+        return interests;
+    }
+
+    public void setInterests(List<String> interests) {
+        this.interests = interests;
+    }
+
+    public String getAvailabilityPreference() {
+        return availabilityPreference;
+    }
+
+    public void setAvailabilityPreference(String availabilityPreference) {
+        this.availabilityPreference = availabilityPreference;
+    }
+
+    public List<BadgeDTO> getBadges() {
+        return badges;
+    }
+
+    public void setBadges(List<BadgeDTO> badges) {
+        this.badges = badges;
+    }
+
+    public List<ActivityEntry> getRecentActivity() {
+        return recentActivity;
+    }
+
+    public void setRecentActivity(List<ActivityEntry> recentActivity) {
+        this.recentActivity = recentActivity;
+    }
+
+    public List<Connection> getConnections() {
+        return connections;
+    }
+
+    public void setConnections(List<Connection> connections) {
+        this.connections = connections;
     }
 }

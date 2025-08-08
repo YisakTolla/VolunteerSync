@@ -3,7 +3,9 @@ package com.volunteersync.backend.entity;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 @Entity
 @Table(name = "organization_profiles")
@@ -124,6 +126,24 @@ public class OrganizationProfile {
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt = LocalDateTime.now();
+
+    @Column(name = "cover_image_url")
+    private String coverImageUrl;
+
+    @Column(name = "services", length = 1000)
+    private String services; // "Environmental Education,Community Cleanups,Tree Planting"
+
+    @Column(name = "causes", length = 1000)
+    private String causes; // "Climate Change,Wildlife Conservation,Clean Water"
+
+    @Column(name = "funding_goal")
+    private Integer fundingGoal;
+
+    @Column(name = "funding_raised")
+    private Integer fundingRaised;
+
+    @Column(name = "ein")
+    private String ein; // Separate EIN field
 
     // =====================================================
     // CONSTRUCTORS
@@ -472,6 +492,89 @@ public class OrganizationProfile {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public List<String> getServicesList() {
+        if (services == null || services.trim().isEmpty()) {
+            return new ArrayList<>();
+        }
+        return Arrays.asList(services.split(","))
+                .stream()
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .collect(Collectors.toList());
+    }
+
+    public void setServicesList(List<String> servicesList) {
+        if (servicesList == null || servicesList.isEmpty()) {
+            this.services = null;
+        } else {
+            this.services = String.join(",", servicesList);
+        }
+    }
+
+    public List<String> getCausesList() {
+        if (causes == null || causes.trim().isEmpty()) {
+            return new ArrayList<>();
+        }
+        return Arrays.asList(causes.split(","))
+                .stream()
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .collect(Collectors.toList());
+    }
+
+    public void setCausesList(List<String> causesList) {
+        if (causesList == null || causesList.isEmpty()) {
+            this.causes = null;
+        } else {
+            this.causes = String.join(",", causesList);
+        }
+    }
+
+    public void setEin(String ein) {
+        this.ein = ein;
+    }
+
+    // Add getters/setters for new fields
+    public String getCoverImageUrl() {
+        return coverImageUrl;
+    }
+
+    public void setCoverImageUrl(String coverImageUrl) {
+        this.coverImageUrl = coverImageUrl;
+    }
+
+    public String getServices() {
+        return services;
+    }
+
+    public void setServices(String services) {
+        this.services = services;
+    }
+
+    public String getCauses() {
+        return causes;
+    }
+
+    public void setCauses(String causes) {
+        this.causes = causes;
+    }
+
+    public Integer getFundingGoal() {
+        return fundingGoal;
+    }
+
+    public void setFundingGoal(Integer fundingGoal) {
+        this.fundingGoal = fundingGoal;
+    }
+
+    public Integer getFundingRaised() {
+        return fundingRaised;
+    }
+
+    public void setFundingRaised(Integer fundingRaised) {
+        this.fundingRaised = fundingRaised;
     }
 
     // =====================================================

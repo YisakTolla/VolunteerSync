@@ -25,7 +25,10 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Badge service - handles gamification and achievement system
@@ -114,14 +117,14 @@ public class BadgeService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         
-        List<BadgeDTO> result = List.of();
+        List<BadgeDTO> result = new ArrayList<>();
         Optional<Badge> existingBadge = badgeRepository.findByUserAndBadgeType(user, badgeType);
         
         if (existingBadge.isPresent()) {
             Badge badge = existingBadge.get();
             badge.updateProgress(newProgress);
             badgeRepository.save(badge);
-            result = List.of(convertToDTO(badge));
+            result.add(convertToDTO(badge));
         } else if (newProgress > 0) {
             // Create new badge with progress
             Badge newBadge = new Badge(user, badgeType, newProgress);
@@ -132,7 +135,7 @@ public class BadgeService {
             }
             
             Badge savedBadge = badgeRepository.save(newBadge);
-            result = List.of(convertToDTO(savedBadge));
+            result.add(convertToDTO(savedBadge));
         }
         
         return result;
@@ -223,7 +226,113 @@ public class BadgeService {
     }
 
     // ==========================================
-    // STATISTICS & LEADERBOARDS
+    // BADGE PROGRESS METHODS
+    // ==========================================
+
+    /**
+     * Get badge progress for user (shows progress toward unearned badges)
+     */
+    public List<BadgeDTO> getBadgeProgress(Long userId) {
+        System.out.println("Fetching badge progress for user ID: " + userId);
+        
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        List<Badge> earnedBadges = badgeRepository.findByUser(user);
+        List<BadgeType> earnedTypes = earnedBadges.stream()
+                .map(Badge::getBadgeType)
+                .collect(Collectors.toList());
+        
+        // Get progress for unearned badges
+        List<BadgeDTO> progressList = new ArrayList<>();
+        
+        for (BadgeType badgeType : BadgeType.values()) {
+            if (!earnedTypes.contains(badgeType) && isBadgeAvailableForUser(badgeType, user)) {
+                BadgeDTO progressDTO = createProgressDTO(user, badgeType);
+                if (progressDTO.getProgressValue() > 0) {
+                    progressList.add(progressDTO);
+                }
+            }
+        }
+        
+        // Also include earned badges for completeness
+        progressList.addAll(earnedBadges.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList()));
+        
+        return progressList;
+    }
+
+    /**
+     * Get progress for specific badge type
+     */
+    public BadgeDTO getSpecificBadgeProgress(Long userId, BadgeType badgeType) {
+        System.out.println("Fetching specific badge progress for user ID: " + userId + " and badge: " + badgeType);
+        
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        // Check if user already has this badge
+        Optional<Badge> existingBadge = badgeRepository.findByUserAndBadgeType(user, badgeType);
+        if (existingBadge.isPresent()) {
+            return convertToDTO(existingBadge.get());
+        }
+        
+        // Return progress toward this badge
+        return createProgressDTO(user, badgeType);
+    }
+
+    // ==========================================
+    // BADGE INFORMATION METHODS
+    // ==========================================
+
+    /**
+     * Get all available badge types as DTOs
+     */
+    public List<BadgeDTO> getAllBadgeTypes() {
+        System.out.println("Fetching all badge types");
+        
+        return Arrays.stream(BadgeType.values())
+                .map(badgeType -> {
+                    BadgeDTO dto = new BadgeDTO();
+                    dto.setBadgeType(badgeType);
+                    dto.setProgressValue(0);
+                    return dto;
+                })
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Get badge information by type
+     */
+    public BadgeDTO getBadgeByType(BadgeType badgeType) {
+        System.out.println("Fetching badge info for type: " + badgeType);
+        
+        BadgeDTO dto = new BadgeDTO();
+        dto.setBadgeType(badgeType);
+        dto.setProgressValue(0);
+        return dto;
+    }
+
+    /**
+     * Get badges by category
+     */
+    public List<BadgeDTO> getBadgesByCategory(String category) {
+        System.out.println("Fetching badges for category: " + category);
+        
+        return Arrays.stream(BadgeType.values())
+                .filter(badgeType -> badgeType.getCategory().equalsIgnoreCase(category))
+                .map(badgeType -> {
+                    BadgeDTO dto = new BadgeDTO();
+                    dto.setBadgeType(badgeType);
+                    dto.setProgressValue(0);
+                    return dto;
+                })
+                .collect(Collectors.toList());
+    }
+
+    // ==========================================
+    // LEADERBOARD METHODS
     // ==========================================
 
     /**
@@ -242,11 +351,66 @@ public class BadgeService {
                     
                     BadgeLeaderboardEntry entry = new BadgeLeaderboardEntry();
                     entry.setUserId(user.getId());
-                    entry.setUserEmail(user.getEmail()); // You might want to get display name from profile
+                    entry.setUserEmail(user.getEmail());
+                    entry.setDisplayName(getUserDisplayName(user));
                     entry.setBadgeCount(badgeCount.intValue());
                     
                     return entry;
                 })
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Get badge leaderboard with offset support
+     */
+    public List<BadgeLeaderboardEntry> getBadgeLeaderboard(int limit, int offset) {
+        System.out.println("Fetching badge leaderboard with limit: " + limit + " and offset: " + offset);
+        
+        List<Object[]> results = badgeRepository.findTopBadgeEarners();
+        
+        return results.stream()
+                .skip(offset)
+                .limit(limit)
+                .map(result -> {
+                    User user = (User) result[0];
+                    Long badgeCount = (Long) result[1];
+                    
+                    BadgeLeaderboardEntry entry = new BadgeLeaderboardEntry();
+                    entry.setUserId(user.getId());
+                    entry.setUserEmail(user.getEmail());
+                    entry.setDisplayName(getUserDisplayName(user));
+                    entry.setBadgeCount(badgeCount.intValue());
+                    
+                    return entry;
+                })
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Get recent badges with limit
+     */
+    public List<BadgeDTO> getRecentBadges(int limit) {
+        System.out.println("Fetching recent badges with limit: " + limit);
+        
+        LocalDateTime since = LocalDateTime.now().minusDays(7);
+        List<Badge> recentBadges = badgeRepository.findRecentBadges(since);
+        
+        return recentBadges.stream()
+                .limit(limit)
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Get badges earned today
+     */
+    public List<BadgeDTO> getTodaysBadges() {
+        System.out.println("Fetching today's badges");
+        
+        List<Badge> todaysBadges = badgeRepository.findBadgesEarnedToday(LocalDateTime.now());
+        
+        return todaysBadges.stream()
+                .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
 
@@ -262,6 +426,49 @@ public class BadgeService {
         return recentBadges.stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
+    }
+
+    // ==========================================
+    // STATISTICS METHODS
+    // ==========================================
+
+    /**
+     * Get badge statistics for specific user
+     */
+    public BadgeStatsResponse getBadgeStats(Long userId) {
+        System.out.println("Fetching badge stats for user ID: " + userId);
+        
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        BadgeStatsResponse stats = new BadgeStatsResponse();
+        
+        // User's badge count
+        long userBadgeCount = badgeRepository.countByUser(user);
+        stats.setTotalBadgesEarned(userBadgeCount);
+        
+        // User's badge distribution
+        List<Badge> userBadges = badgeRepository.findByUser(user);
+        Map<String, Integer> userDistribution = userBadges.stream()
+                .collect(Collectors.groupingBy(
+                        badge -> badge.getBadgeType().getDisplayName(),
+                        Collectors.collectingAndThen(Collectors.counting(), Math::toIntExact)
+                ));
+        stats.setBadgeDistribution(userDistribution);
+        
+        // Set empty rare badges for user stats
+        stats.setRareBadges(new HashMap<>());
+        
+        return stats;
+    }
+
+    /**
+     * Get global badge statistics
+     */
+    public BadgeStatsResponse getGlobalBadgeStats() {
+        System.out.println("Fetching global badge statistics");
+        
+        return getBadgeStatistics(); // Reuse existing method
     }
 
     /**
@@ -296,22 +503,62 @@ public class BadgeService {
         return stats;
     }
 
+    /**
+     * Get badge distribution as separate objects
+     */
+    public List<BadgeStatsResponse.BadgeDistribution> getBadgeDistribution() {
+        System.out.println("Fetching badge distribution");
+        
+        List<Object[]> distribution = badgeRepository.getBadgeDistributionStats();
+        
+        return distribution.stream()
+                .map(result -> {
+                    BadgeType badgeType = (BadgeType) result[0];
+                    Long count = (Long) result[1];
+                    
+                    BadgeStatsResponse.BadgeDistribution dist = new BadgeStatsResponse.BadgeDistribution();
+                    dist.setBadgeType(badgeType.getDisplayName());
+                    dist.setCount(count.intValue());
+                    dist.setCategory(badgeType.getCategory());
+                    
+                    return dist;
+                })
+                .collect(Collectors.toList());
+    }
+
+    // ==========================================
+    // ADMIN METHODS
+    // ==========================================
+
+    /**
+     * Remove badge (admin function)
+     */
+    public void removeBadge(Long badgeId) {
+        System.out.println("Removing badge with ID: " + badgeId);
+        
+        Badge badge = badgeRepository.findById(badgeId)
+                .orElseThrow(() -> new RuntimeException("Badge not found"));
+        
+        badgeRepository.delete(badge);
+        System.out.println("Badge removed successfully");
+    }
+
     // ==========================================
     // PRIVATE BADGE CHECKING METHODS
     // ==========================================
 
     private List<Badge> checkVolunteerHoursBadges(User user) {
         if (user.getUserType() != UserType.VOLUNTEER) {
-            return List.of();
+            return new ArrayList<>();
         }
         
         VolunteerProfile profile = volunteerProfileRepository.findByUser(user).orElse(null);
         if (profile == null) {
-            return List.of();
+            return new ArrayList<>();
         }
         
         int totalHours = profile.getTotalVolunteerHours();
-        List<Badge> newBadges = List.of();
+        List<Badge> newBadges = new ArrayList<>();
         
         // Check hour-based badges
         BadgeType[] hourBadges = {
@@ -337,16 +584,16 @@ public class BadgeService {
 
     private List<Badge> checkEventBadges(User user) {
         if (user.getUserType() != UserType.VOLUNTEER) {
-            return List.of();
+            return new ArrayList<>();
         }
         
         VolunteerProfile profile = volunteerProfileRepository.findByUser(user).orElse(null);
         if (profile == null) {
-            return List.of();
+            return new ArrayList<>();
         }
         
         int eventsParticipated = profile.getEventsParticipated();
-        List<Badge> newBadges = List.of();
+        List<Badge> newBadges = new ArrayList<>();
         
         // Check event-based badges
         BadgeType[] eventBadges = {
@@ -370,17 +617,17 @@ public class BadgeService {
 
     private List<Badge> checkOrganizationBadges(User user) {
         if (user.getUserType() != UserType.ORGANIZATION) {
-            return List.of();
+            return new ArrayList<>();
         }
         
         OrganizationProfile profile = organizationProfileRepository.findByUser(user).orElse(null);
         if (profile == null) {
-            return List.of();
+            return new ArrayList<>();
         }
         
         // Count events created by this organization
         long eventsCreated = eventRepository.countByOrganization(profile);
-        List<Badge> newBadges = List.of();
+        List<Badge> newBadges = new ArrayList<>();
         
         // Check organization badges
         BadgeType[] orgBadges = {
@@ -403,7 +650,7 @@ public class BadgeService {
     }
 
     private List<Badge> checkProfileBadges(User user) {
-        List<Badge> newBadges = List.of();
+        List<Badge> newBadges = new ArrayList<>();
         
         // Check if profile is complete and award SKILL_SHARER badge
         if (isProfileComplete(user) && 
@@ -418,7 +665,7 @@ public class BadgeService {
     }
 
     private List<Badge> checkRegistrationBadges(User user) {
-        List<Badge> newBadges = List.of();
+        List<Badge> newBadges = new ArrayList<>();
         
         // Check if user registered within the first year (Early Adopter)
         LocalDateTime oneYearAgo = LocalDateTime.now().minusYears(1);
@@ -436,6 +683,77 @@ public class BadgeService {
     // ==========================================
     // HELPER METHODS
     // ==========================================
+
+    /**
+     * Create progress DTO for a badge type
+     */
+    private BadgeDTO createProgressDTO(User user, BadgeType badgeType) {
+        BadgeDTO dto = new BadgeDTO();
+        dto.setBadgeType(badgeType);
+        dto.setUserId(user.getId());
+        
+        // Calculate current progress based on badge type
+        int currentProgress = calculateCurrentProgress(user, badgeType);
+        dto.setProgressValue(currentProgress);
+        
+        return dto;
+    }
+
+    /**
+     * Calculate current progress for a badge type
+     */
+    private int calculateCurrentProgress(User user, BadgeType badgeType) {
+        if (user.getUserType() == UserType.VOLUNTEER) {
+            VolunteerProfile profile = volunteerProfileRepository.findByUser(user).orElse(null);
+            if (profile == null) return 0;
+            
+            return switch (badgeType) {
+                case FIRST_VOLUNTEER, HELPING_HAND, DEDICATED_HELPER, COMMUNITY_CHAMPION, VOLUNTEER_HERO ->
+                    profile.getTotalVolunteerHours();
+                case EVENT_STARTER, REGULAR_VOLUNTEER, EVENT_ENTHUSIAST ->
+                    profile.getEventsParticipated();
+                case SOCIAL_BUTTERFLY -> 
+                    0; // Would need to implement organization connection tracking
+                case SKILL_SHARER ->
+                    isProfileComplete(user) ? 1 : 0;
+                case EARLY_ADOPTER ->
+                    user.getCreatedAt().isAfter(LocalDateTime.now().minusYears(1)) ? 1 : 0;
+                default -> 0;
+            };
+        } else if (user.getUserType() == UserType.ORGANIZATION) {
+            OrganizationProfile profile = organizationProfileRepository.findByUser(user).orElse(null);
+            if (profile == null) return 0;
+            
+            return switch (badgeType) {
+                case FIRST_EVENT, EVENT_ORGANIZER, COMMUNITY_BUILDER ->
+                    profile.getTotalEventsHosted();
+                case EARLY_ADOPTER ->
+                    user.getCreatedAt().isAfter(LocalDateTime.now().minusYears(1)) ? 1 : 0;
+                default -> 0;
+            };
+        }
+        
+        return 0;
+    }
+
+    /**
+     * Get user display name for leaderboard
+     */
+    private String getUserDisplayName(User user) {
+        if (user.getUserType() == UserType.VOLUNTEER) {
+            VolunteerProfile profile = volunteerProfileRepository.findByUser(user).orElse(null);
+            if (profile != null && profile.getFirstName() != null && profile.getLastName() != null) {
+                return profile.getFirstName() + " " + profile.getLastName();
+            }
+        } else if (user.getUserType() == UserType.ORGANIZATION) {
+            OrganizationProfile profile = organizationProfileRepository.findByUser(user).orElse(null);
+            if (profile != null && profile.getOrganizationName() != null) {
+                return profile.getOrganizationName();
+            }
+        }
+        
+        return user.getEmail().split("@")[0]; // Fallback to email prefix
+    }
 
     private boolean isBadgeAvailableForUser(BadgeType badgeType, User user) {
         // Check if badge is appropriate for user type
@@ -537,15 +855,28 @@ public class BadgeService {
 
     public static class BadgeStatsResponse {
         private Long totalBadgesEarned;
-        private java.util.Map<String, Integer> badgeDistribution;
-        private java.util.Map<String, Integer> rareBadges;
+        private Map<String, Integer> badgeDistribution;
+        private Map<String, Integer> rareBadges;
         
         // Getters and setters
         public Long getTotalBadgesEarned() { return totalBadgesEarned; }
         public void setTotalBadgesEarned(Long totalBadgesEarned) { this.totalBadgesEarned = totalBadgesEarned; }
-        public java.util.Map<String, Integer> getBadgeDistribution() { return badgeDistribution; }
-        public void setBadgeDistribution(java.util.Map<String, Integer> badgeDistribution) { this.badgeDistribution = badgeDistribution; }
-        public java.util.Map<String, Integer> getRareBadges() { return rareBadges; }
-        public void setRareBadges(java.util.Map<String, Integer> rareBadges) { this.rareBadges = rareBadges; }
+        public Map<String, Integer> getBadgeDistribution() { return badgeDistribution; }
+        public void setBadgeDistribution(Map<String, Integer> badgeDistribution) { this.badgeDistribution = badgeDistribution; }
+        public Map<String, Integer> getRareBadges() { return rareBadges; }
+        public void setRareBadges(Map<String, Integer> rareBadges) { this.rareBadges = rareBadges; }
+        
+        public static class BadgeDistribution {
+            private String badgeType;
+            private Integer count;
+            private String category;
+            
+            public String getBadgeType() { return badgeType; }
+            public void setBadgeType(String badgeType) { this.badgeType = badgeType; }
+            public Integer getCount() { return count; }
+            public void setCount(Integer count) { this.count = count; }
+            public String getCategory() { return category; }
+            public void setCategory(String category) { this.category = category; }
+        }
     }
 }

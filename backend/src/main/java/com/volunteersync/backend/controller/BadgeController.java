@@ -260,7 +260,7 @@ public class BadgeController {
     // ==========================================
 
     /**
-     * Get badge statistics
+     * Get badge statistics for current user
      * GET /api/badges/stats
      */
     @GetMapping("/stats")
@@ -316,7 +316,7 @@ public class BadgeController {
         try {
             // Verify admin permissions here
             BadgeDTO badge = badgeService.awardBadge(request.getUserId(), request.getBadgeType(), 
-                                                   request.getProgressValue(), request.getNotes());
+                                                   request.getNotes());
             return ResponseEntity.ok(badge);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
@@ -473,17 +473,15 @@ public class BadgeController {
     public static class AwardBadgeRequest {
         private Long userId;
         private BadgeType badgeType;
-        private Integer progressValue;
         private String notes;
 
         // Constructors
         public AwardBadgeRequest() {
         }
 
-        public AwardBadgeRequest(Long userId, BadgeType badgeType, Integer progressValue, String notes) {
+        public AwardBadgeRequest(Long userId, BadgeType badgeType, String notes) {
             this.userId = userId;
             this.badgeType = badgeType;
-            this.progressValue = progressValue;
             this.notes = notes;
         }
 
@@ -502,14 +500,6 @@ public class BadgeController {
 
         public void setBadgeType(BadgeType badgeType) {
             this.badgeType = badgeType;
-        }
-
-        public Integer getProgressValue() {
-            return progressValue;
-        }
-
-        public void setProgressValue(Integer progressValue) {
-            this.progressValue = progressValue;
         }
 
         public String getNotes() {

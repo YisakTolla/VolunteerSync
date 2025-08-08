@@ -2,6 +2,10 @@ package com.volunteersync.backend.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "volunteer_profiles")
@@ -47,16 +51,78 @@ public class VolunteerProfile {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt = LocalDateTime.now();
 
-    // Add to VolunteerProfile.java
     @Column(name = "skills")
-    private String skills; // Comma-separated: "JavaScript,React,Leadership"
+    private String skills; // "JavaScript,React,Leadership,Communication"
 
     @Column(name = "interests") 
-    private String interests; // Comma-separated: "Environment,Education,Healthcare"
+    private String interests; // "Environment,Education,Healthcare,Technology"
 
     @Column(name = "availability_preference")
     private String availabilityPreference; // "weekends", "weekdays", "flexible"
 
+    // Add these getter/setter methods:
+
+    public String getSkills() {
+        return skills;
+    }
+
+    public void setSkills(String skills) {
+        this.skills = skills;
+    }
+
+    public List<String> getSkillsList() {
+        if (skills == null || skills.trim().isEmpty()) {
+            return new ArrayList<>();
+        }
+        return Arrays.asList(skills.split(","))
+                    .stream()
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
+                    .collect(Collectors.toList());
+    }
+
+    public void setSkillsList(List<String> skillsList) {
+        if (skillsList == null || skillsList.isEmpty()) {
+            this.skills = null;
+        } else {
+            this.skills = String.join(",", skillsList);
+        }
+    }
+
+    public String getInterests() {
+        return interests;
+    }
+
+    public void setInterests(String interests) {
+        this.interests = interests;
+    }
+
+    public List<String> getInterestsList() {
+        if (interests == null || interests.trim().isEmpty()) {
+            return new ArrayList<>();
+        }
+        return Arrays.asList(interests.split(","))
+                    .stream()
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
+                    .collect(Collectors.toList());
+    }
+
+    public void setInterestsList(List<String> interestsList) {
+        if (interestsList == null || interestsList.isEmpty()) {
+            this.interests = null;
+        } else {
+            this.interests = String.join(",", interestsList);
+        }
+    }
+
+    public String getAvailabilityPreference() {
+        return availabilityPreference;
+    }
+
+    public void setAvailabilityPreference(String availabilityPreference) {
+        this.availabilityPreference = availabilityPreference;
+    }
     // Constructors
     public VolunteerProfile() {
     }

@@ -2,6 +2,10 @@
 package com.volunteersync.backend.controller;
 
 import com.volunteersync.backend.service.VolunteerProfileService;
+import com.volunteersync.backend.service.BadgeService;
+import com.volunteersync.backend.repository.UserRepository;
+import com.volunteersync.backend.entity.User;
+import com.volunteersync.backend.dto.BadgeDTO;
 import com.volunteersync.backend.dto.VolunteerProfileDTO;
 import com.volunteersync.backend.service.VolunteerProfileService.CreateVolunteerProfileRequest;
 import com.volunteersync.backend.service.VolunteerProfileService.UpdateVolunteerProfileRequest;
@@ -32,6 +36,12 @@ public class VolunteerProfileController {
     @Autowired
     private VolunteerProfileService volunteerProfileService;
 
+    @Autowired
+    private BadgeService badgeService;
+
+    @Autowired
+    private UserRepository userRepository;
+
     // ==========================================
     // PROFILE MANAGEMENT
     // ==========================================
@@ -42,7 +52,7 @@ public class VolunteerProfileController {
      */
     @PostMapping
     public ResponseEntity<?> createProfile(@Valid @RequestBody CreateVolunteerProfileRequest request,
-                                         Authentication authentication) {
+            Authentication authentication) {
         try {
             Long userId = getCurrentUserId(authentication);
             VolunteerProfileDTO profile = volunteerProfileService.createProfile(request, userId);
@@ -53,16 +63,102 @@ public class VolunteerProfileController {
     }
 
     /**
-     * Get current user's volunteer profile
+     * Get current user's volunteer profile (UPDATED to include all frontend data)
      * GET /api/volunteer-profiles/me
      */
     @GetMapping("/me")
     public ResponseEntity<?> getMyProfile(Authentication authentication) {
         try {
             Long userId = getCurrentUserId(authentication);
-            VolunteerProfileDTO profile = volunteerProfileService.getProfileByUserId(userId);
+            // Use the complete profile method instead of basic profile
+            VolunteerProfileDTO profile = volunteerProfileService.getCompleteVolunteerProfile(userId);
             return ResponseEntity.ok(profile);
         } catch (Exception e) {
+            System.err.println("Error getting volunteer profile: " + e.getMessage());
+            return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
+        }
+    }
+
+    /**
+     * Get complete volunteer profile with badges, activities, and connections
+     * GET /api/volunteer-profiles/me/complete
+     */
+    @GetMapping("/me/complete")
+    public ResponseEntity<?> getCompleteProfile(Authentication authentication) {
+        try {
+            Long userId = getCurrentUserId(authentication);
+            VolunteerProfileDTO completeProfile = volunteerProfileService.getCompleteVolunteerProfile(userId);
+            return ResponseEntity.ok(completeProfile);
+        } catch (Exception e) {
+            System.err.println("Error getting complete volunteer profile: " + e.getMessage());
+            return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
+        }
+    }
+
+    /**
+     * Get user badges (integrates with existing BadgeService)
+     * GET /api/volunteer-profiles/me/badges
+     */
+    @GetMapping("/me/badges")
+    public ResponseEntity<?> getMyBadges(Authentication authentication) {
+        try {
+            Long userId = getCurrentUserId(authentication);
+            List<BadgeDTO> badges = badgeService.getUserBadges(userId);
+            return ResponseEntity.ok(badges);
+        } catch (Exception e) {
+            System.err.println("Error getting user badges: " + e.getMessage());
+            return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
+        }
+    }
+
+    /**
+     * Get user activity history
+     * GET /api/volunteer-profiles/me/activity
+     */
+    @GetMapping("/me/activity")
+    public ResponseEntity<?> getMyActivity(Authentication authentication) {
+        try {
+            Long userId = getCurrentUserId(authentication);
+            List<VolunteerProfileDTO.ActivityEntry> activity = volunteerProfileService.getVolunteerHistory(userId);
+            return ResponseEntity.ok(activity);
+        } catch (Exception e) {
+            System.err.println("Error getting user activity: " + e.getMessage());
+            return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
+        }
+    }
+
+    /**
+     * Update volunteer skills
+     * PUT /api/volunteer-profiles/me/skills
+     */
+    @PutMapping("/me/skills")
+    public ResponseEntity<?> updateSkills(@RequestBody UpdateSkillsRequest request,
+            Authentication authentication) {
+        try {
+            Long userId = getCurrentUserId(authentication);
+            VolunteerProfileDTO updatedProfile = volunteerProfileService.updateVolunteerSkills(userId,
+                    request.getSkills());
+            return ResponseEntity.ok(updatedProfile);
+        } catch (Exception e) {
+            System.err.println("Error updating volunteer skills: " + e.getMessage());
+            return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
+        }
+    }
+
+    /**
+     * Update volunteer interests
+     * PUT /api/volunteer-profiles/me/interests
+     */
+    @PutMapping("/me/interests")
+    public ResponseEntity<?> updateInterests(@RequestBody UpdateInterestsRequest request,
+            Authentication authentication) {
+        try {
+            Long userId = getCurrentUserId(authentication);
+            VolunteerProfileDTO updatedProfile = volunteerProfileService.updateVolunteerInterests(userId,
+                    request.getInterests());
+            return ResponseEntity.ok(updatedProfile);
+        } catch (Exception e) {
+            System.err.println("Error updating volunteer interests: " + e.getMessage());
             return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
         }
     }
@@ -87,7 +183,7 @@ public class VolunteerProfileController {
      */
     @PutMapping("/me")
     public ResponseEntity<?> updateMyProfile(@Valid @RequestBody UpdateVolunteerProfileRequest request,
-                                           Authentication authentication) {
+            Authentication authentication) {
         try {
             Long userId = getCurrentUserId(authentication);
             VolunteerProfileDTO profile = volunteerProfileService.updateProfile(userId, request);
@@ -97,39 +193,9 @@ public class VolunteerProfileController {
         }
     }
 
-    /**
-     * Delete volunteer profile
-     * DELETE /api/volunteer-profiles/me
-     */
-    @DeleteMapping("/me")
-    public ResponseEntity<?> deleteMyProfile(Authentication authentication) {
-        try {
-            Long userId = getCurrentUserId(authentication);
-            volunteerProfileService.deleteProfile(userId);
-            return ResponseEntity.ok(new SuccessResponse("Profile deleted successfully"));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
-        }
-    }
-
     // ==========================================
     // SEARCH AND DISCOVERY
     // ==========================================
-
-    /**
-     * Get all volunteer profiles (with pagination)
-     * GET /api/volunteer-profiles?page={page}&size={size}
-     */
-    @GetMapping
-    public ResponseEntity<?> getAllProfiles(@RequestParam(defaultValue = "0") int page,
-                                          @RequestParam(defaultValue = "20") int size) {
-        try {
-            List<VolunteerProfileDTO> profiles = volunteerProfileService.getAllProfiles(page, size);
-            return ResponseEntity.ok(profiles);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
-        }
-    }
 
     /**
      * Search volunteers by name
@@ -253,7 +319,7 @@ public class VolunteerProfileController {
      */
     @GetMapping("/experienced")
     public ResponseEntity<?> getExperiencedVolunteers(@RequestParam(required = false) Integer minHours,
-                                                    @RequestParam(required = false) Integer minEvents) {
+            @RequestParam(required = false) Integer minEvents) {
         try {
             List<VolunteerProfileDTO> profiles = volunteerProfileService.getExperiencedVolunteers(minHours, minEvents);
             return ResponseEntity.ok(profiles);
@@ -323,140 +389,6 @@ public class VolunteerProfileController {
         }
     }
 
-    /**
-     * Get volunteer stats by location
-     * GET /api/volunteer-profiles/stats/location/{location}
-     */
-    @GetMapping("/stats/location/{location}")
-    public ResponseEntity<?> getStatsByLocation(@PathVariable String location) {
-        try {
-            VolunteerStatsResponse stats = volunteerProfileService.getStatsByLocation(location);
-            return ResponseEntity.ok(stats);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
-        }
-    }
-
-    // ==========================================
-    // PROFILE FEATURES
-    // ==========================================
-
-    /**
-     * Update volunteer availability
-     * PUT /api/volunteer-profiles/availability
-     */
-    @PutMapping("/availability")
-    public ResponseEntity<?> updateAvailability(@RequestParam Boolean isAvailable, 
-                                               Authentication authentication) {
-        try {
-            Long userId = getCurrentUserId(authentication);
-            VolunteerProfileDTO profile = volunteerProfileService.updateAvailability(userId, isAvailable);
-            return ResponseEntity.ok(profile);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
-        }
-    }
-
-    /**
-     * Update profile image
-     * PUT /api/volunteer-profiles/image
-     */
-    @PutMapping("/image")
-    public ResponseEntity<?> updateProfileImage(@RequestParam String imageUrl,
-                                              Authentication authentication) {
-        try {
-            Long userId = getCurrentUserId(authentication);
-            VolunteerProfileDTO profile = volunteerProfileService.updateProfileImage(userId, imageUrl);
-            return ResponseEntity.ok(profile);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
-        }
-    }
-
-    /**
-     * Add volunteer hours
-     * POST /api/volunteer-profiles/hours
-     */
-    @PostMapping("/hours")
-    public ResponseEntity<?> addVolunteerHours(@RequestParam Integer hours,
-                                             @RequestParam(required = false) String description,
-                                             Authentication authentication) {
-        try {
-            Long userId = getCurrentUserId(authentication);
-            VolunteerProfileDTO profile = volunteerProfileService.addVolunteerHours(userId, hours, description);
-            return ResponseEntity.ok(profile);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
-        }
-    }
-
-    /**
-     * Get volunteer history
-     * GET /api/volunteer-profiles/history/me
-     */
-    @GetMapping("/history/me")
-    public ResponseEntity<?> getMyVolunteerHistory(Authentication authentication) {
-        try {
-            Long userId = getCurrentUserId(authentication);
-            List<VolunteerProfileService.VolunteerHistoryEntry> history = 
-                volunteerProfileService.getVolunteerHistory(userId);
-            return ResponseEntity.ok(history);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
-        }
-    }
-
-    /**
-     * Get recommended events for volunteer
-     * GET /api/volunteer-profiles/recommendations/events
-     */
-    @GetMapping("/recommendations/events")
-    public ResponseEntity<?> getRecommendedEvents(Authentication authentication) {
-        try {
-            Long userId = getCurrentUserId(authentication);
-            List<VolunteerProfileService.RecommendedEvent> events = 
-                volunteerProfileService.getRecommendedEvents(userId);
-            return ResponseEntity.ok(events);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
-        }
-    }
-
-    // ==========================================
-    // ADMIN ENDPOINTS
-    // ==========================================
-
-    /**
-     * Get all profiles for admin (with detailed info)
-     * GET /api/volunteer-profiles/admin/all
-     */
-    @GetMapping("/admin/all")
-    public ResponseEntity<?> getAllProfilesForAdmin(@RequestParam(defaultValue = "0") int page,
-                                                   @RequestParam(defaultValue = "50") int size) {
-        try {
-            // TODO: Add admin authorization check
-            List<VolunteerProfileDTO> profiles = volunteerProfileService.getAllProfilesForAdmin(page, size);
-            return ResponseEntity.ok(profiles);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
-        }
-    }
-
-    /**
-     * Get profile analytics for admin
-     * GET /api/volunteer-profiles/admin/analytics
-     */
-    @GetMapping("/admin/analytics")
-    public ResponseEntity<?> getProfileAnalytics() {
-        try {
-            // TODO: Add admin authorization check
-            VolunteerStatsResponse analytics = volunteerProfileService.getProfileAnalytics();
-            return ResponseEntity.ok(analytics);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
-        }
-    }
-
     // ==========================================
     // HELPER METHODS
     // ==========================================
@@ -468,29 +400,68 @@ public class VolunteerProfileController {
         if (authentication == null || authentication.getPrincipal() == null) {
             throw new RuntimeException("User not authenticated");
         }
-        
+
         Object principal = authentication.getPrincipal();
-        
-        // Handle UserPrincipal if implemented
-        if (principal instanceof UserPrincipal) {
-            return ((UserPrincipal) principal).getId();
-        }
-        
+
         // Handle UserDetails
         if (principal instanceof UserDetails) {
             UserDetails userDetails = (UserDetails) principal;
-            try {
-                return Long.parseLong(userDetails.getUsername());
-            } catch (NumberFormatException e) {
-                throw new RuntimeException("Unable to determine user ID from authentication");
-            }
+            String email = userDetails.getUsername();
+
+            // Find user by email
+            User user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
+
+            return user.getId();
         }
-        
+
         // Fallback - extract from name if it's the user ID
         try {
             return Long.parseLong(authentication.getName());
         } catch (NumberFormatException e) {
             throw new RuntimeException("Invalid user authentication");
+        }
+    }
+
+    // ==========================================
+    // REQUEST CLASSES
+    // ==========================================
+
+    public static class UpdateSkillsRequest {
+        private List<String> skills;
+
+        public UpdateSkillsRequest() {
+        }
+
+        public UpdateSkillsRequest(List<String> skills) {
+            this.skills = skills;
+        }
+
+        public List<String> getSkills() {
+            return skills;
+        }
+
+        public void setSkills(List<String> skills) {
+            this.skills = skills;
+        }
+    }
+
+    public static class UpdateInterestsRequest {
+        private List<String> interests;
+
+        public UpdateInterestsRequest() {
+        }
+
+        public UpdateInterestsRequest(List<String> interests) {
+            this.interests = interests;
+        }
+
+        public List<String> getInterests() {
+            return interests;
+        }
+
+        public void setInterests(List<String> interests) {
+            this.interests = interests;
         }
     }
 
@@ -510,20 +481,20 @@ public class VolunteerProfileController {
             this.timestamp = System.currentTimeMillis();
         }
 
-        public String getError() { 
-            return error; 
+        public String getError() {
+            return error;
         }
-        
-        public void setError(String error) { 
-            this.error = error; 
+
+        public void setError(String error) {
+            this.error = error;
         }
-        
-        public long getTimestamp() { 
-            return timestamp; 
+
+        public long getTimestamp() {
+            return timestamp;
         }
-        
-        public void setTimestamp(long timestamp) { 
-            this.timestamp = timestamp; 
+
+        public void setTimestamp(long timestamp) {
+            this.timestamp = timestamp;
         }
     }
 
@@ -539,30 +510,21 @@ public class VolunteerProfileController {
             this.timestamp = System.currentTimeMillis();
         }
 
-        public String getMessage() { 
-            return message; 
+        public String getMessage() {
+            return message;
         }
-        
-        public void setMessage(String message) { 
-            this.message = message; 
-        }
-        
-        public long getTimestamp() { 
-            return timestamp; 
-        }
-        
-        public void setTimestamp(long timestamp) { 
-            this.timestamp = timestamp; 
-        }
-    }
 
-    /**
-     * Placeholder for UserPrincipal - should be implemented based on your security setup
-     * This interface represents the authenticated user principal
-     */
-    public interface UserPrincipal {
-        Long getId();
-        String getUsername();
-        String getUserType();
+        public void setMessage(String message) {
+            this.message = message;
+        }
+
+        public long getTimestamp() {
+            return timestamp;
+        }
+
+        public void setTimestamp(long timestamp) {
+            this.timestamp = timestamp;
+        }
+
     }
 }

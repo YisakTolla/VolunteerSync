@@ -2,14 +2,17 @@ package com.volunteersync.backend.dto;
 
 import java.time.LocalDateTime;
 import java.util.List;
+
+import com.volunteersync.backend.dto.VolunteerProfileDTO.ActivityEntry;
+
 import java.util.ArrayList;
 
 public class OrganizationProfileDTO {
-    
+
     // =====================================================
     // EXISTING FIELDS
     // =====================================================
-    
+
     private Long id;
     private Long userId;
     private String organizationName;
@@ -28,11 +31,11 @@ public class OrganizationProfileDTO {
     private Integer totalVolunteersServed;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    
+
     // =====================================================
     // NEW FIELDS FOR ENHANCED FILTERING
     // =====================================================
-    
+
     private String categories;
     private List<String> categoryList;
     private String primaryCategory;
@@ -45,11 +48,11 @@ public class OrganizationProfileDTO {
     private Integer foundedYear;
     private String taxExemptStatus;
     private String verificationLevel;
-    
+
     // =====================================================
     // COMPUTED FIELDS FOR FRONTEND
     // =====================================================
-    
+
     private String locationString;
     private String sizeDisplayName;
     private Integer organizationAge;
@@ -58,10 +61,24 @@ public class OrganizationProfileDTO {
     private Boolean isInternational;
     private Boolean wasRecentlyUpdated;
 
+    private String coverImageUrl;
+    private List<String> services;
+    private List<String> causes;
+    private Integer fundingGoal;
+    private Integer fundingRaised;
+    private String ein;
+    private String founded; // Frontend-compatible founded field
+
+    // Add these fields for frontend compatibility:
+    private List<Achievement> achievements;
+    private List<Partnership> partnerships;
+    private List<VolunteerSummary> volunteers;
+    private List<ActivityEntry> recentActivity;
+
     // =====================================================
     // CONSTRUCTORS
     // =====================================================
-    
+
     public OrganizationProfileDTO() {
         this.categoryList = new ArrayList<>();
         this.languageList = new ArrayList<>();
@@ -78,7 +95,7 @@ public class OrganizationProfileDTO {
         this.totalEventsHosted = totalEventsHosted;
         updateComputedFields();
     }
-    
+
     /**
      * Enhanced constructor with filtering fields
      */
@@ -105,7 +122,7 @@ public class OrganizationProfileDTO {
     // =====================================================
     // COMPUTED FIELD UPDATES
     // =====================================================
-    
+
     private void updateComputedFields() {
         updateFullAddress();
         updateLocationString();
@@ -113,7 +130,7 @@ public class OrganizationProfileDTO {
         updateLanguageList();
         updateComputedProperties();
     }
-    
+
     private void updateFullAddress() {
         StringBuilder sb = new StringBuilder();
         if (address != null && !address.trim().isEmpty())
@@ -128,15 +145,18 @@ public class OrganizationProfileDTO {
             sb.append(sb.length() > 0 ? ", " : "").append(country);
         this.fullAddress = sb.toString();
     }
-    
+
     private void updateLocationString() {
         StringBuilder location = new StringBuilder();
-        if (city != null) location.append(city);
-        if (state != null) location.append(location.length() > 0 ? ", " : "").append(state);
-        if (country != null) location.append(location.length() > 0 ? ", " : "").append(country);
+        if (city != null)
+            location.append(city);
+        if (state != null)
+            location.append(location.length() > 0 ? ", " : "").append(state);
+        if (country != null)
+            location.append(location.length() > 0 ? ", " : "").append(country);
         this.locationString = location.toString();
     }
-    
+
     private void updateCategoryList() {
         this.categoryList = new ArrayList<>();
         if (categories != null && !categories.trim().isEmpty()) {
@@ -149,7 +169,7 @@ public class OrganizationProfileDTO {
             }
         }
     }
-    
+
     private void updateLanguageList() {
         this.languageList = new ArrayList<>();
         if (languagesSupported != null && !languagesSupported.trim().isEmpty()) {
@@ -162,40 +182,40 @@ public class OrganizationProfileDTO {
             }
         }
     }
-    
+
     private void updateComputedProperties() {
         // Calculate organization age
         if (foundedYear != null) {
             this.organizationAge = LocalDateTime.now().getYear() - foundedYear;
         }
-        
+
         // Check if non-profit
-        this.isNonProfit = organizationType != null && 
-                          (organizationType.toLowerCase().contains("non-profit") ||
-                           organizationType.toLowerCase().contains("nonprofit") ||
-                           (taxExemptStatus != null && taxExemptStatus.startsWith("501(c)")));
-        
+        this.isNonProfit = organizationType != null &&
+                (organizationType.toLowerCase().contains("non-profit") ||
+                        organizationType.toLowerCase().contains("nonprofit") ||
+                        (taxExemptStatus != null && taxExemptStatus.startsWith("501(c)")));
+
         // Check verification level
-        this.isHighlyVerified = isVerified != null && isVerified && 
-                               ("Verified".equals(verificationLevel) || "Premium".equals(verificationLevel));
-        
+        this.isHighlyVerified = isVerified != null && isVerified &&
+                ("Verified".equals(verificationLevel) || "Premium".equals(verificationLevel));
+
         // Check if international
-        this.isInternational = languagesSupported != null && 
-                              languagesSupported.contains(",") && 
-                              !languagesSupported.equals("English");
-        
+        this.isInternational = languagesSupported != null &&
+                languagesSupported.contains(",") &&
+                !languagesSupported.equals("English");
+
         // Set size display name
         this.sizeDisplayName = organizationSize != null ? organizationSize : "Unknown";
-        
+
         // Check if recently updated (within 7 days)
-        this.wasRecentlyUpdated = updatedAt != null && 
-                                 updatedAt.isAfter(LocalDateTime.now().minusDays(7));
+        this.wasRecentlyUpdated = updatedAt != null &&
+                updatedAt.isAfter(LocalDateTime.now().minusDays(7));
     }
 
     // =====================================================
     // EXISTING GETTERS AND SETTERS
     // =====================================================
-    
+
     public Long getId() {
         return id;
     }
@@ -349,7 +369,7 @@ public class OrganizationProfileDTO {
     // =====================================================
     // NEW GETTERS AND SETTERS
     // =====================================================
-    
+
     public String getCategories() {
         return categories;
     }
@@ -463,7 +483,7 @@ public class OrganizationProfileDTO {
     // =====================================================
     // COMPUTED FIELD GETTERS
     // =====================================================
-    
+
     public String getLocationString() {
         return locationString;
     }
@@ -495,21 +515,21 @@ public class OrganizationProfileDTO {
     // =====================================================
     // UTILITY METHODS
     // =====================================================
-    
+
     /**
      * Check if organization has a specific category
      */
     public boolean hasCategory(String category) {
         return categoryList != null && categoryList.contains(category);
     }
-    
+
     /**
      * Check if organization supports a specific language
      */
     public boolean supportsLanguage(String language) {
         return languageList != null && languageList.contains(language);
     }
-    
+
     /**
      * Get primary location (city, state or country)
      */
@@ -525,16 +545,17 @@ public class OrganizationProfileDTO {
         }
         return "Location not specified";
     }
-    
+
     /**
      * Check if organization was updated within specified days
      */
     public boolean wasUpdatedWithinDays(int days) {
-        if (updatedAt == null) return false;
+        if (updatedAt == null)
+            return false;
         LocalDateTime cutoff = LocalDateTime.now().minusDays(days);
         return updatedAt.isAfter(cutoff);
     }
-    
+
     /**
      * Get verification status display text
      */
@@ -547,7 +568,7 @@ public class OrganizationProfileDTO {
             return "Unverified";
         }
     }
-    
+
     /**
      * Get activity level based on events hosted
      */
@@ -578,4 +599,334 @@ public class OrganizationProfileDTO {
                 ", totalVolunteersServed=" + totalVolunteersServed +
                 '}';
     }
+
+    // Add supporting classes:
+    public static class Achievement {
+        private Long id;
+        private String name;
+        private String icon;
+        private String description;
+
+        // Constructors, getters, setters
+        public Achievement() {
+        }
+
+        public Achievement(Long id, String name, String icon, String description) {
+            this.id = id;
+            this.name = name;
+            this.icon = icon;
+            this.description = description;
+        }
+
+        public Long getId() {
+            return id;
+        }
+
+        public void setId(Long id) {
+            this.id = id;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public String getIcon() {
+            return icon;
+        }
+
+        public void setIcon(String icon) {
+            this.icon = icon;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+
+        public void setDescription(String description) {
+            this.description = description;
+        }
+    }
+
+    public static class Partnership {
+        private Long id;
+        private String name;
+        private String type;
+        private String since;
+        private String logo;
+
+        // Constructors, getters, setters
+        public Partnership() {
+        }
+
+        public Partnership(Long id, String name, String type, String since, String logo) {
+            this.id = id;
+            this.name = name;
+            this.type = type;
+            this.since = since;
+            this.logo = logo;
+        }
+
+        public Long getId() {
+            return id;
+        }
+
+        public void setId(Long id) {
+            this.id = id;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public String getType() {
+            return type;
+        }
+
+        public void setType(String type) {
+            this.type = type;
+        }
+
+        public String getSince() {
+            return since;
+        }
+
+        public void setSince(String since) {
+            this.since = since;
+        }
+
+        public String getLogo() {
+            return logo;
+        }
+
+        public void setLogo(String logo) {
+            this.logo = logo;
+        }
+    }
+
+    public static class VolunteerSummary {
+        private Long id;
+        private String name;
+        private String role;
+        private Integer hoursContributed;
+        private String avatar;
+
+        // Constructors, getters, setters
+        public VolunteerSummary() {
+        }
+
+        public VolunteerSummary(Long id, String name, String role, Integer hoursContributed, String avatar) {
+            this.id = id;
+            this.name = name;
+            this.role = role;
+            this.hoursContributed = hoursContributed;
+            this.avatar = avatar;
+        }
+
+        public Long getId() {
+            return id;
+        }
+
+        public void setId(Long id) {
+            this.id = id;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public String getRole() {
+            return role;
+        }
+
+        public void setRole(String role) {
+            this.role = role;
+        }
+
+        public Integer getHoursContributed() {
+            return hoursContributed;
+        }
+
+        public void setHoursContributed(Integer hoursContributed) {
+            this.hoursContributed = hoursContributed;
+        }
+
+        public String getAvatar() {
+            return avatar;
+        }
+
+        public void setAvatar(String avatar) {
+            this.avatar = avatar;
+        }
+    }
+
+    public static class ActivityEntry {
+        private Long id;
+        private String type;
+        private String title;
+        private String date;
+        private String organization;
+        private Integer volunteers;
+
+        // Constructors, getters, setters
+        public ActivityEntry() {
+        }
+
+        public ActivityEntry(Long id, String type, String title, String date, Integer volunteers) {
+            this.id = id;
+            this.type = type;
+            this.title = title;
+            this.date = date;
+            this.volunteers = volunteers;
+        }
+
+        public Long getId() {
+            return id;
+        }
+
+        public void setId(Long id) {
+            this.id = id;
+        }
+
+        public String getType() {
+            return type;
+        }
+
+        public void setType(String type) {
+            this.type = type;
+        }
+
+        public String getTitle() {
+            return title;
+        }
+
+        public void setTitle(String title) {
+            this.title = title;
+        }
+
+        public String getDate() {
+            return date;
+        }
+
+        public void setDate(String date) {
+            this.date = date;
+        }
+
+        public String getOrganization() {
+            return organization;
+        }
+
+        public void setOrganization(String organization) {
+            this.organization = organization;
+        }
+
+        public Integer getVolunteers() {
+            return volunteers;
+        }
+
+        public void setVolunteers(Integer volunteers) {
+            this.volunteers = volunteers;
+        }
+    }
+
+    // Add getters/setters for all new DTO fields:
+    public String getCoverImageUrl() {
+        return coverImageUrl;
+    }
+
+    public void setCoverImageUrl(String coverImageUrl) {
+        this.coverImageUrl = coverImageUrl;
+    }
+
+    public List<String> getServices() {
+        return services;
+    }
+
+    public void setServices(List<String> services) {
+        this.services = services;
+    }
+
+    public List<String> getCauses() {
+        return causes;
+    }
+
+    public void setCauses(List<String> causes) {
+        this.causes = causes;
+    }
+
+    public Integer getFundingGoal() {
+        return fundingGoal;
+    }
+
+    public void setFundingGoal(Integer fundingGoal) {
+        this.fundingGoal = fundingGoal;
+    }
+
+    public Integer getFundingRaised() {
+        return fundingRaised;
+    }
+
+    public void setFundingRaised(Integer fundingRaised) {
+        this.fundingRaised = fundingRaised;
+    }
+
+    public String getEin() {
+        return ein;
+    }
+
+    public void setEin(String ein) {
+        this.ein = ein;
+    }
+
+    public String getFounded() {
+        return founded;
+    }
+
+    public void setFounded(String founded) {
+        this.founded = founded;
+    }
+
+    public List<Achievement> getAchievements() {
+        return achievements;
+    }
+
+    public void setAchievements(List<Achievement> achievements) {
+        this.achievements = achievements;
+    }
+
+    public List<Partnership> getPartnerships() {
+        return partnerships;
+    }
+
+    public void setPartnerships(List<Partnership> partnerships) {
+        this.partnerships = partnerships;
+    }
+
+    public List<VolunteerSummary> getVolunteers() {
+        return volunteers;
+    }
+
+    public void setVolunteers(List<VolunteerSummary> volunteers) {
+        this.volunteers = volunteers;
+    }
+
+    public List<ActivityEntry> getRecentActivity() {
+        return recentActivity;
+    }
+
+    public void setRecentActivity(List<ActivityEntry> recentActivity) {
+        this.recentActivity = recentActivity;
+    }
+
 }
