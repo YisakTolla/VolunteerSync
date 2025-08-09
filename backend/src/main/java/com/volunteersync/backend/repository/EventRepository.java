@@ -612,4 +612,5 @@ public interface EventRepository extends JpaRepository<Event, Long> {
            "((e.endDate IS NOT NULL AND e.endDate < :now) OR " +
            "(e.endDate IS NULL AND e.startDate < :dayAgo))")
     List<Event> findOverdueEvents(@Param("now") LocalDateTime now, @Param("dayAgo") LocalDateTime dayAgo);
+
 }
