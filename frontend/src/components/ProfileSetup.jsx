@@ -1,385 +1,633 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { isLoggedIn } from '../services/authService';
-import {
-  User,
-  Building,
-  MapPin,
-  Phone,
-  Camera,
-  ArrowRight,
-  CheckCircle
-} from 'lucide-react';
-import './ProfileSetup.css';
+import { isLoggedIn, getCurrentUser } from '../services/authService';
+import { createProfile } from '../services/profileService';
 
 const ProfileSetup = () => {
   const navigate = useNavigate();
-  const [currentStep, setCurrentStep] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [user, setUser] = useState(null);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [formData, setFormData] = useState({
-    profilePicture: null,
-    phone: '',
-    location: '',
     bio: '',
-    interests: [],
-    skills: [],
+    location: '',
+    interests: '',
+    skills: '',
+    phoneNumber: '',
+    // Organization-specific fields
+    organizationName: '',
+    organizationType: '',
+    website: '',
+    missionStatement: '',
+    categories: '',
+    services: '',
+    // Volunteer-specific fields
+    firstName: '',
+    lastName: '',
     availability: 'flexible'
   });
-  const [loading, setLoading] = useState(false);
 
-  // Redirect if not logged in
   useEffect(() => {
+    // Redirect if not logged in
     if (!isLoggedIn()) {
       navigate('/login');
+      return;
+    }
+
+    // Get current user data and pre-populate form
+    const currentUser = getCurrentUser();
+    setUser(currentUser);
+
+    // Pre-populate form with existing user data
+    if (currentUser) {
+      setFormData(prev => ({
+        ...prev,
+        firstName: currentUser.firstName || '',
+        lastName: currentUser.lastName || '',
+        organizationName: currentUser.organizationName || '',
+        // Keep other fields as empty for user to fill
+      }));
     }
   }, [navigate]);
 
-  const totalSteps = 3;
-
-  const availableInterests = [
-    'Environment', 'Education', 'Healthcare', 'Community Service',
-    'Animal Welfare', 'Senior Care', 'Youth Development', 'Arts & Culture',
-    'Technology', 'Disaster Relief', 'Food Security', 'Homelessness'
-  ];
-
-  const availableSkills = [
-    'Communication', 'Leadership', 'Teaching', 'Event Planning',
-    'Marketing', 'Photography', 'Writing', 'Translation',
-    'Technology Support', 'First Aid', 'Fundraising', 'Administrative'
-  ];
-
-  const handleInputChange = (field, value) => {
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [field]: value
+      [name]: value
     }));
+    
+    // Clear error when user starts typing
+    if (error) setError('');
   };
 
-  const handleArrayToggle = (field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: prev[field].includes(value)
-        ? prev[field].filter(item => item !== value)
-        : [...prev[field], value]
-    }));
-  };
+  const validateForm = () => {
+    if (!user) return false;
 
-  const handleNext = () => {
-    if (currentStep < totalSteps) {
-      setCurrentStep(currentStep + 1);
+    // Basic validation
+    if (!formData.bio.trim()) {
+      setError('Please tell us about yourself');
+      return false;
     }
-  };
 
-  const handlePrevious = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
+    if (!formData.location.trim()) {
+      setError('Please provide your location');
+      return false;
     }
+
+    // User type specific validation
+    if (user.userType === 'VOLUNTEER') {
+      if (!formData.interests.trim()) {
+        setError('Please share your interests and causes');
+        return false;
+      }
+    } else if (user.userType === 'ORGANIZATION') {
+      if (!formData.categories.trim()) {
+        setError('Please specify your organization focus areas');
+        return false;
+      }
+    }
+
+    return true;
   };
 
-  const handleSkip = () => {
-    navigate('/dashboard');
-  };
-
-  const handleComplete = async () => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     setLoading(true);
+    setError('');
+    setSuccess('');
+
     try {
-      // TODO: Send profile data to backend
-      console.log('Profile setup data:', formData);
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      navigate('/dashboard');
+      // Validate form
+      if (!validateForm()) {
+        setLoading(false);
+        return;
+      }
+
+      console.log('Submitting profile setup:', formData);
+
+      // Create profile using the service
+      const result = await createProfile(formData);
+
+      if (result.success) {
+        setSuccess('Profile created successfully! Redirecting...');
+        
+        // Wait a moment to show success message, then redirect
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 2000);
+      } else {
+        setError(result.message || 'Failed to create profile. Please try again.');
+      }
+
     } catch (error) {
-      console.error('Profile setup failed:', error);
+      console.error('Profile setup error:', error);
+      setError('Something went wrong. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
-  const renderStep1 = () => (
-    <div className="setup-step">
-      <div className="step-header">
-        <h2 className="step-title">Welcome! Let's set up your profile</h2>
-        <p className="step-description">
-          Add a photo and basic information to help others connect with you
-        </p>
-      </div>
+  const handleSkip = () => {
+    // Skip for now - go to dashboard
+    navigate('/dashboard');
+  };
 
-      <div className="step-content">
-        {/* Profile Picture */}
-        <div className="form-group">
-          <label className="form-label">Profile Picture</label>
-          <div className="profile-picture-upload">
-            <div className="profile-picture-preview">
-              {formData.profilePicture ? (
-                <img src={formData.profilePicture} alt="Profile" />
-              ) : (
-                <div className="profile-picture-placeholder">
-                  <Camera />
-                  <span>Add Photo</span>
-                </div>
-              )}
-            </div>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => {
-                const file = e.target.files[0];
-                if (file) {
-                  const reader = new FileReader();
-                  reader.onload = (e) => {
-                    handleInputChange('profilePicture', e.target.result);
-                  };
-                  reader.readAsDataURL(file);
-                }
-              }}
-              className="file-input"
-            />
-          </div>
-        </div>
-
-        {/* Phone */}
-        <div className="form-group">
-          <label className="form-label">
-            <Phone className="input-icon" />
-            Phone Number
-          </label>
-          <input
-            type="tel"
-            className="form-input"
-            value={formData.phone}
-            onChange={(e) => handleInputChange('phone', e.target.value)}
-            placeholder="Enter your phone number"
-          />
-        </div>
-
-        {/* Location */}
-        <div className="form-group">
-          <label className="form-label">
-            <MapPin className="input-icon" />
-            Location
-          </label>
-          <input
-            type="text"
-            className="form-input"
-            value={formData.location}
-            onChange={(e) => handleInputChange('location', e.target.value)}
-            placeholder="City, State"
-          />
+  if (!user) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        minHeight: '50vh' 
+      }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '1rem'
+        }}>
+          <div style={{
+            width: '32px',
+            height: '32px',
+            border: '3px solid #e5e7eb',
+            borderTop: '3px solid #10b981',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite'
+          }}></div>
+          <span style={{ color: '#6b7280' }}>Loading...</span>
         </div>
       </div>
-    </div>
-  );
-
-  const renderStep2 = () => (
-    <div className="setup-step">
-      <div className="step-header">
-        <h2 className="step-title">Tell us about yourself</h2>
-        <p className="step-description">
-          Share your interests and skills to help us match you with the right opportunities
-        </p>
-      </div>
-
-      <div className="step-content">
-        {/* Bio */}
-        <div className="form-group">
-          <label className="form-label">Bio</label>
-          <textarea
-            className="form-textarea"
-            value={formData.bio}
-            onChange={(e) => handleInputChange('bio', e.target.value)}
-            placeholder="Tell us a bit about yourself and what motivates you to volunteer..."
-            rows={4}
-          />
-        </div>
-
-        {/* Interests */}
-        <div className="form-group">
-          <label className="form-label">Interests</label>
-          <p className="form-help">Select causes you're passionate about</p>
-          <div className="tag-grid">
-            {availableInterests.map(interest => (
-              <button
-                key={interest}
-                type="button"
-                className={`tag-btn ${formData.interests.includes(interest) ? 'active' : ''}`}
-                onClick={() => handleArrayToggle('interests', interest)}
-              >
-                {interest}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Skills */}
-        <div className="form-group">
-          <label className="form-label">Skills</label>
-          <p className="form-help">What skills can you bring to volunteer work?</p>
-          <div className="tag-grid">
-            {availableSkills.map(skill => (
-              <button
-                key={skill}
-                type="button"
-                className={`tag-btn ${formData.skills.includes(skill) ? 'active' : ''}`}
-                onClick={() => handleArrayToggle('skills', skill)}
-              >
-                {skill}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderStep3 = () => (
-    <div className="setup-step">
-      <div className="step-header">
-        <h2 className="step-title">Availability & Preferences</h2>
-        <p className="step-description">
-          Help organizations understand when and how you'd like to volunteer
-        </p>
-      </div>
-
-      <div className="step-content">
-        {/* Availability */}
-        <div className="form-group">
-          <label className="form-label">Availability</label>
-          <div className="radio-group">
-            <label className="radio-option">
-              <input
-                type="radio"
-                name="availability"
-                value="weekends"
-                checked={formData.availability === 'weekends'}
-                onChange={(e) => handleInputChange('availability', e.target.value)}
-              />
-              <span className="radio-label">Weekends only</span>
-            </label>
-            <label className="radio-option">
-              <input
-                type="radio"
-                name="availability"
-                value="weekdays"
-                checked={formData.availability === 'weekdays'}
-                onChange={(e) => handleInputChange('availability', e.target.value)}
-              />
-              <span className="radio-label">Weekdays only</span>
-            </label>
-            <label className="radio-option">
-              <input
-                type="radio"
-                name="availability"
-                value="flexible"
-                checked={formData.availability === 'flexible'}
-                onChange={(e) => handleInputChange('availability', e.target.value)}
-              />
-              <span className="radio-label">Flexible schedule</span>
-            </label>
-          </div>
-        </div>
-
-        {/* Summary */}
-        <div className="setup-summary">
-          <h3 className="summary-title">Profile Summary</h3>
-          <div className="summary-grid">
-            <div className="summary-item">
-              <strong>Location:</strong>
-              <span>{formData.location || 'Not specified'}</span>
-            </div>
-            <div className="summary-item">
-              <strong>Interests:</strong>
-              <span>{formData.interests.length} selected</span>
-            </div>
-            <div className="summary-item">
-              <strong>Skills:</strong>
-              <span>{formData.skills.length} selected</span>
-            </div>
-            <div className="summary-item">
-              <strong>Availability:</strong>
-              <span>{formData.availability}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+    );
+  }
 
   return (
-    <div className="profile-setup-page">
-      <div className="setup-container">
-        {/* Progress Bar */}
-        <div className="setup-progress">
-          <div className="progress-steps">
-            {Array.from({ length: totalSteps }, (_, i) => i + 1).map(step => (
-              <div
-                key={step}
-                className={`progress-step ${step <= currentStep ? 'active' : ''} ${step < currentStep ? 'completed' : ''}`}
-              >
-                {step < currentStep ? <CheckCircle /> : <span>{step}</span>}
-              </div>
-            ))}
+    <div style={{
+      minHeight: '80vh',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: '2rem',
+      background: 'linear-gradient(135deg, #f0f9ff 0%, #ffffff 100%)'
+    }}>
+      <div style={{
+        background: 'white',
+        borderRadius: '16px',
+        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+        padding: '3rem',
+        width: '100%',
+        maxWidth: '700px'
+      }}>
+        {/* Header */}
+        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+          <h1 style={{
+            fontSize: '2.25rem',
+            fontWeight: '700',
+            color: '#1f2937',
+            marginBottom: '0.5rem'
+          }}>
+            Complete Your Profile
+          </h1>
+          <p style={{
+            fontSize: '1.125rem',
+            color: '#6b7280',
+            marginBottom: '0.5rem'
+          }}>
+            Welcome, {user.firstName || user.organizationName || user.email}!
+          </p>
+          <p style={{
+            fontSize: '1rem',
+            color: '#6b7280'
+          }}>
+            Help us personalize your experience by completing your profile.
+          </p>
+        </div>
+
+        {/* Error/Success Messages */}
+        {error && (
+          <div style={{
+            background: '#fef2f2',
+            border: '1px solid #fecaca',
+            color: '#dc2626',
+            padding: '0.75rem 1rem',
+            borderRadius: '8px',
+            marginBottom: '1.5rem',
+            fontSize: '0.875rem'
+          }}>
+            {error}
           </div>
-          <div className="progress-bar">
-            <div
-              className="progress-fill"
-              style={{ width: `${(currentStep / totalSteps) * 100}%` }}
+        )}
+
+        {success && (
+          <div style={{
+            background: '#f0fdf4',
+            border: '1px solid #bbf7d0',
+            color: '#166534',
+            padding: '0.75rem 1rem',
+            borderRadius: '8px',
+            marginBottom: '1.5rem',
+            fontSize: '0.875rem'
+          }}>
+            {success}
+          </div>
+        )}
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          {/* Bio */}
+          <div>
+            <label style={{
+              display: 'block',
+              fontSize: '0.875rem',
+              fontWeight: '600',
+              color: '#374151',
+              marginBottom: '0.5rem'
+            }}>
+              Tell us about yourself *
+            </label>
+            <textarea
+              name="bio"
+              value={formData.bio}
+              onChange={handleInputChange}
+              placeholder={user.userType === 'VOLUNTEER' 
+                ? "Share your interests, passions, and what motivates you to volunteer..."
+                : "Describe your organization's mission and the impact you're making..."
+              }
+              rows={4}
+              required
+              style={{
+                width: '100%',
+                padding: '0.75rem',
+                border: '1px solid #d1d5db',
+                borderRadius: '8px',
+                fontSize: '1rem',
+                resize: 'vertical',
+                fontFamily: 'inherit'
+              }}
             />
           </div>
-        </div>
 
-        {/* Step Content */}
-        <div className="setup-content">
-          {currentStep === 1 && renderStep1()}
-          {currentStep === 2 && renderStep2()}
-          {currentStep === 3 && renderStep3()}
-        </div>
+          {/* Location */}
+          <div>
+            <label style={{
+              display: 'block',
+              fontSize: '0.875rem',
+              fontWeight: '600',
+              color: '#374151',
+              marginBottom: '0.5rem'
+            }}>
+              Location *
+            </label>
+            <input
+              type="text"
+              name="location"
+              value={formData.location}
+              onChange={handleInputChange}
+              placeholder="City, State"
+              required
+              style={{
+                width: '100%',
+                padding: '0.75rem',
+                border: '1px solid #d1d5db',
+                borderRadius: '8px',
+                fontSize: '1rem'
+              }}
+            />
+          </div>
 
-        {/* Navigation */}
-        <div className="setup-navigation">
-          <div className="nav-left">
-            {currentStep > 1 && (
-              <button
-                type="button"
-                onClick={handlePrevious}
-                className="btn-secondary"
-              >
-                Previous
-              </button>
-            )}
+          {/* Conditional fields based on user type */}
+          {user.userType === 'VOLUNTEER' ? (
+            <>
+              {/* Interests */}
+              <div>
+                <label style={{
+                  display: 'block',
+                  fontSize: '0.875rem',
+                  fontWeight: '600',
+                  color: '#374151',
+                  marginBottom: '0.5rem'
+                }}>
+                  Interests & Causes *
+                </label>
+                <input
+                  type="text"
+                  name="interests"
+                  value={formData.interests}
+                  onChange={handleInputChange}
+                  placeholder="e.g., Environment, Education, Healthcare, Community Service"
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '8px',
+                    fontSize: '1rem'
+                  }}
+                />
+              </div>
+
+              {/* Skills */}
+              <div>
+                <label style={{
+                  display: 'block',
+                  fontSize: '0.875rem',
+                  fontWeight: '600',
+                  color: '#374151',
+                  marginBottom: '0.5rem'
+                }}>
+                  Skills & Abilities
+                </label>
+                <input
+                  type="text"
+                  name="skills"
+                  value={formData.skills}
+                  onChange={handleInputChange}
+                  placeholder="e.g., Communication, Teaching, Event Planning, Photography"
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '8px',
+                    fontSize: '1rem'
+                  }}
+                />
+              </div>
+
+              {/* Availability */}
+              <div>
+                <label style={{
+                  display: 'block',
+                  fontSize: '0.875rem',
+                  fontWeight: '600',
+                  color: '#374151',
+                  marginBottom: '0.5rem'
+                }}>
+                  Availability Preference
+                </label>
+                <select
+                  name="availability"
+                  value={formData.availability}
+                  onChange={handleInputChange}
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '8px',
+                    fontSize: '1rem',
+                    backgroundColor: 'white'
+                  }}
+                >
+                  <option value="flexible">Flexible</option>
+                  <option value="weekdays">Weekdays Only</option>
+                  <option value="weekends">Weekends Only</option>
+                  <option value="evenings">Evenings</option>
+                  <option value="mornings">Mornings</option>
+                </select>
+              </div>
+            </>
+          ) : (
+            /* Organization-specific fields */
+            <>
+              {/* Organization Focus Areas */}
+              <div>
+                <label style={{
+                  display: 'block',
+                  fontSize: '0.875rem',
+                  fontWeight: '600',
+                  color: '#374151',
+                  marginBottom: '0.5rem'
+                }}>
+                  Organization Focus Areas *
+                </label>
+                <input
+                  type="text"
+                  name="categories"
+                  value={formData.categories}
+                  onChange={handleInputChange}
+                  placeholder="e.g., Community Development, Education, Healthcare, Environment"
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '8px',
+                    fontSize: '1rem'
+                  }}
+                />
+              </div>
+
+              {/* Organization Type */}
+              <div>
+                <label style={{
+                  display: 'block',
+                  fontSize: '0.875rem',
+                  fontWeight: '600',
+                  color: '#374151',
+                  marginBottom: '0.5rem'
+                }}>
+                  Organization Type
+                </label>
+                <select
+                  name="organizationType"
+                  value={formData.organizationType}
+                  onChange={handleInputChange}
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '8px',
+                    fontSize: '1rem',
+                    backgroundColor: 'white'
+                  }}
+                >
+                  <option value="">Select type...</option>
+                  <option value="nonprofit">Non-Profit</option>
+                  <option value="charity">Charity</option>
+                  <option value="government">Government</option>
+                  <option value="religious">Religious Organization</option>
+                  <option value="educational">Educational Institution</option>
+                  <option value="community">Community Group</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+
+              {/* Website */}
+              <div>
+                <label style={{
+                  display: 'block',
+                  fontSize: '0.875rem',
+                  fontWeight: '600',
+                  color: '#374151',
+                  marginBottom: '0.5rem'
+                }}>
+                  Website
+                </label>
+                <input
+                  type="url"
+                  name="website"
+                  value={formData.website}
+                  onChange={handleInputChange}
+                  placeholder="https://yourorganization.org"
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '8px',
+                    fontSize: '1rem'
+                  }}
+                />
+              </div>
+
+              {/* Services */}
+              <div>
+                <label style={{
+                  display: 'block',
+                  fontSize: '0.875rem',
+                  fontWeight: '600',
+                  color: '#374151',
+                  marginBottom: '0.5rem'
+                }}>
+                  Services Provided
+                </label>
+                <input
+                  type="text"
+                  name="services"
+                  value={formData.services}
+                  onChange={handleInputChange}
+                  placeholder="e.g., Food distribution, Education programs, Healthcare services"
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '8px',
+                    fontSize: '1rem'
+                  }}
+                />
+              </div>
+            </>
+          )}
+
+          {/* Phone Number */}
+          <div>
+            <label style={{
+              display: 'block',
+              fontSize: '0.875rem',
+              fontWeight: '600',
+              color: '#374151',
+              marginBottom: '0.5rem'
+            }}>
+              Phone Number (Optional)
+            </label>
+            <input
+              type="tel"
+              name="phoneNumber"
+              value={formData.phoneNumber}
+              onChange={handleInputChange}
+              placeholder="(555) 123-4567"
+              style={{
+                width: '100%',
+                padding: '0.75rem',
+                border: '1px solid #d1d5db',
+                borderRadius: '8px',
+                fontSize: '1rem'
+              }}
+            />
+          </div>
+
+          {/* Buttons */}
+          <div style={{
+            display: 'flex',
+            gap: '1rem',
+            marginTop: '1.5rem',
+            flexDirection: 'column'
+          }}>
+            <button
+              type="submit"
+              disabled={loading}
+              style={{
+                width: '100%',
+                backgroundColor: loading ? '#9ca3af' : '#10b981',
+                color: 'white',
+                padding: '1rem 1.5rem',
+                borderRadius: '8px',
+                border: 'none',
+                fontSize: '1rem',
+                fontWeight: '600',
+                cursor: loading ? 'not-allowed' : 'pointer',
+                transition: 'background-color 0.2s',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem'
+              }}
+            >
+              {loading && (
+                <div style={{
+                  width: '16px',
+                  height: '16px',
+                  border: '2px solid transparent',
+                  borderTop: '2px solid white',
+                  borderRadius: '50%',
+                  animation: 'spin 1s linear infinite'
+                }}></div>
+              )}
+              {loading ? 'Creating Profile...' : 'Complete Profile'}
+            </button>
+
             <button
               type="button"
               onClick={handleSkip}
-              className="btn-text"
+              disabled={loading}
+              style={{
+                width: '100%',
+                backgroundColor: 'transparent',
+                color: '#6b7280',
+                padding: '1rem 1.5rem',
+                borderRadius: '8px',
+                border: '1px solid #d1d5db',
+                fontSize: '1rem',
+                fontWeight: '500',
+                cursor: loading ? 'not-allowed' : 'pointer',
+                transition: 'all 0.2s'
+              }}
+              onMouseOver={(e) => {
+                if (!loading) {
+                  e.target.style.backgroundColor = '#f9fafb';
+                  e.target.style.borderColor = '#9ca3af';
+                }
+              }}
+              onMouseOut={(e) => {
+                if (!loading) {
+                  e.target.style.backgroundColor = 'transparent';
+                  e.target.style.borderColor = '#d1d5db';
+                }
+              }}
             >
               Skip for now
             </button>
           </div>
+        </form>
 
-          <div className="nav-right">
-            {currentStep < totalSteps ? (
-              <button
-                type="button"
-                onClick={handleNext}
-                className="btn-primary"
-              >
-                Next
-                <ArrowRight />
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={handleComplete}
-                disabled={loading}
-                className="btn-primary"
-              >
-                {loading ? 'Completing...' : 'Complete Setup'}
-                {!loading && <CheckCircle />}
-              </button>
-            )}
-          </div>
-        </div>
+        {/* Footer note */}
+        <p style={{
+          textAlign: 'center',
+          fontSize: '0.875rem',
+          color: '#9ca3af',
+          marginTop: '1.5rem',
+          lineHeight: '1.4'
+        }}>
+          You can always update this information later in your profile settings.
+          Fields marked with * are required.
+        </p>
       </div>
+
+      {/* Add spinner animation */}
+      <style>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 };
