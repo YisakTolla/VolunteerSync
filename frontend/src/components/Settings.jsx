@@ -278,18 +278,6 @@ const SettingsPage = () => {
             <button className="btn-secondary">Enable</button>
           </div>
         </div>
-
-        {/* Active Sessions */}
-        <div className="security-section">
-          <h3 className="subsection-title">Active Sessions</h3>
-          <div className="session-item">
-            <div className="session-info">
-              <h4>Current Session</h4>
-              <p>Chrome on macOS • Sterling, VA</p>
-              <span className="session-status active">Active now</span>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );

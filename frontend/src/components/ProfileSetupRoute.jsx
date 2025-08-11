@@ -1,29 +1,58 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import { isLoggedIn } from '../services/authService';
+import { isLoggedIn, getCurrentUser } from '../services/authService';
+import './ProfileSetupRoute.css';
 
 // Helper function to check if user has completed profile setup
 const isProfileComplete = () => {
   try {
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const user = getCurrentUser();
     
-    // Basic profile completion checks
-    if (!user.id) return false;
+    console.log('=== PROFILE COMPLETION CHECK ===');
+    console.log('User data:', user);
     
-    // Check if user has completed essential profile information
-    // You can customize these requirements based on your needs
+    if (!user || !user.id) {
+      console.log('No user or user ID found');
+      return false;
+    }
+    
+    // Check if profileComplete flag is explicitly set by backend
+    if (user.profileComplete !== undefined) {
+      console.log('Using profileComplete flag:', user.profileComplete);
+      return user.profileComplete;
+    }
+    
+    // Manual checks based on user type
     const hasBasicInfo = user.email;
+    console.log('Has basic info (email):', hasBasicInfo);
     
-    // For volunteers, check if they have first/last name
     if (user.userType === 'VOLUNTEER') {
-      return hasBasicInfo && user.firstName && user.lastName;
+      const isComplete = hasBasicInfo && user.firstName && user.lastName && user.bio && user.location;
+      console.log('Volunteer profile complete check:', {
+        hasBasicInfo,
+        firstName: !!user.firstName,
+        lastName: !!user.lastName,
+        bio: !!user.bio,
+        location: !!user.location,
+        result: isComplete
+      });
+      return isComplete;
     }
     
-    // For organizations, check if they have organization name
     if (user.userType === 'ORGANIZATION') {
-      return hasBasicInfo && user.organizationName;
+      const isComplete = hasBasicInfo && user.organizationName && user.bio && user.location;
+      console.log('Organization profile complete check:', {
+        hasBasicInfo,
+        organizationName: !!user.organizationName,
+        bio: !!user.bio,
+        location: !!user.location,
+        result: isComplete
+      });
+      return isComplete;
     }
     
+    // Default: just check basic info
+    console.log('Defaulting to basic info check:', hasBasicInfo);
     return hasBasicInfo;
   } catch (error) {
     console.error('Error checking profile completion:', error);
@@ -33,8 +62,14 @@ const isProfileComplete = () => {
 
 // Check if user needs profile setup
 const needsProfileSetup = () => {
-  if (!isLoggedIn()) return false;
-  return !isProfileComplete();
+  if (!isLoggedIn()) {
+    console.log('User not logged in, no profile setup needed');
+    return false;
+  }
+  
+  const needs = !isProfileComplete();
+  console.log('User needs profile setup:', needs);
+  return needs;
 };
 
 /**
@@ -48,46 +83,43 @@ export const ProfileSetupRoute = ({ children }) => {
 
   useEffect(() => {
     const checkAccess = () => {
-      if (!isLoggedIn()) {
-        // Not logged in - send to login
+      console.log('=== PROFILE SETUP ROUTE CHECK ===');
+      
+      try {
+        if (!isLoggedIn()) {
+          // Not logged in - send to login
+          console.log('User not logged in, redirecting to login');
+          setRedirectTo('/login');
+        } else if (isProfileComplete()) {
+          // Profile already complete - send to dashboard
+          console.log('Profile complete, redirecting to dashboard');
+          setRedirectTo('/dashboard');
+        } else {
+          // Profile incomplete - allow access to profile setup
+          console.log('Profile incomplete, allowing access to setup');
+          setRedirectTo(null);
+        }
+      } catch (error) {
+        console.error('Error in ProfileSetupRoute check:', error);
+        // On error, redirect to login to be safe
         setRedirectTo('/login');
-      } else if (isProfileComplete()) {
-        // Profile already complete - send to dashboard
-        setRedirectTo('/dashboard');
-      } else {
-        // Profile incomplete - allow access to profile setup
-        setRedirectTo(null);
       }
+      
       setLoading(false);
     };
 
-    checkAccess();
+    // Add a small delay to ensure localStorage is ready
+    const timeoutId = setTimeout(checkAccess, 100);
+    
+    return () => clearTimeout(timeoutId);
   }, []);
 
   if (loading) {
     return (
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        minHeight: '100vh',
-        backgroundColor: '#f9fafb'
-      }}>
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '1rem'
-        }}>
-          <div style={{
-            width: '40px',
-            height: '40px',
-            border: '4px solid #e5e7eb',
-            borderTop: '4px solid #10b981',
-            borderRadius: '50%',
-            animation: 'spin 1s linear infinite'
-          }}></div>
-          <p style={{ color: '#6b7280', fontSize: '0.875rem' }}>
+      <div className="route-loading-container">
+        <div className="route-loading-content">
+          <div className="route-loading-spinner"></div>
+          <p className="route-loading-text">
             Setting up your profile...
           </p>
         </div>
@@ -96,6 +128,7 @@ export const ProfileSetupRoute = ({ children }) => {
   }
 
   if (redirectTo) {
+    console.log('ProfileSetupRoute redirecting to:', redirectTo);
     return <Navigate to={redirectTo} replace />;
   }
 
@@ -113,46 +146,43 @@ export const ProtectedRoute = ({ children }) => {
 
   useEffect(() => {
     const checkAccess = () => {
-      if (!isLoggedIn()) {
-        // Not logged in - send to login
+      console.log('=== PROTECTED ROUTE CHECK ===');
+      
+      try {
+        if (!isLoggedIn()) {
+          // Not logged in - send to login
+          console.log('User not logged in, redirecting to login');
+          setRedirectTo('/login');
+        } else if (needsProfileSetup()) {
+          // Profile incomplete - send to profile setup
+          console.log('Profile incomplete, redirecting to setup');
+          setRedirectTo('/profile-setup');
+        } else {
+          // All good - allow access
+          console.log('All checks passed, allowing access');
+          setRedirectTo(null);
+        }
+      } catch (error) {
+        console.error('Error in ProtectedRoute check:', error);
+        // On error, redirect to login to be safe
         setRedirectTo('/login');
-      } else if (needsProfileSetup()) {
-        // Profile incomplete - send to profile setup
-        setRedirectTo('/profile-setup');
-      } else {
-        // All good - allow access
-        setRedirectTo(null);
       }
+      
       setLoading(false);
     };
 
-    checkAccess();
+    // Add a small delay to ensure localStorage is ready
+    const timeoutId = setTimeout(checkAccess, 100);
+    
+    return () => clearTimeout(timeoutId);
   }, []);
 
   if (loading) {
     return (
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        minHeight: '100vh',
-        backgroundColor: '#f9fafb'
-      }}>
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '1rem'
-        }}>
-          <div style={{
-            width: '40px',
-            height: '40px',
-            border: '4px solid #e5e7eb',
-            borderTop: '4px solid #10b981',
-            borderRadius: '50%',
-            animation: 'spin 1s linear infinite'
-          }}></div>
-          <p style={{ color: '#6b7280', fontSize: '0.875rem' }}>
+      <div className="route-loading-container">
+        <div className="route-loading-content">
+          <div className="route-loading-spinner"></div>
+          <p className="route-loading-text">
             Loading...
           </p>
         </div>
@@ -161,6 +191,7 @@ export const ProtectedRoute = ({ children }) => {
   }
 
   if (redirectTo) {
+    console.log('ProtectedRoute redirecting to:', redirectTo);
     return <Navigate to={redirectTo} replace />;
   }
 
@@ -169,13 +200,3 @@ export const ProtectedRoute = ({ children }) => {
 
 // Export utility functions for use in other components
 export { isProfileComplete, needsProfileSetup };
-
-// Add CSS for spinner animation (you can move this to a CSS file if preferred)
-const style = document.createElement('style');
-style.textContent = `
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }
-`;
-document.head.appendChild(style);

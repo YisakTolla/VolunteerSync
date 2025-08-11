@@ -86,7 +86,7 @@ function App() {
               </>
             } 
           />
-          
+
           {/* Profile Setup Route - For new users who need to complete their profile */}
           <Route 
             path="/profile-setup" 
@@ -98,7 +98,7 @@ function App() {
               </ProfileSetupRoute>
             } 
           />
-
+          
           {/* Protected Routes - Only for users with complete profiles */}
           <Route 
             path="/dashboard" 
@@ -110,7 +110,6 @@ function App() {
               </ProtectedRoute>
             } 
           />
-          
           <Route 
             path="/profile" 
             element={

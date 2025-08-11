@@ -1,6 +1,6 @@
 import React from 'react';
 import { Heart, Users, Globe, Award, Target, Zap, Shield, ArrowRight } from 'lucide-react';
-import './About.css';
+import './About.css'; // Assuming you have a CSS file for styling
 
 const About = () => {
   const stats = [
