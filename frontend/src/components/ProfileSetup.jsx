@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { isLoggedIn, getCurrentUser } from '../services/authService';
+import { isLoggedIn, getCurrentUser, ensureValidToken, isTokenExpired } from '../services/authService';
 import { createProfile } from '../services/profileService';
 
 const ProfileSetup = () => {
@@ -9,6 +9,7 @@ const ProfileSetup = () => {
   const [user, setUser] = useState(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [selectedInterests, setSelectedInterests] = useState([]);
   const [formData, setFormData] = useState({
     bio: '',
     location: '',
@@ -28,9 +29,35 @@ const ProfileSetup = () => {
     availability: 'flexible'
   });
 
+  // Interest/Cause options based on your enum
+  const interestOptions = [
+    { value: 'COMMUNITY_CLEANUP', label: 'Community Cleanup', emoji: '🧹' },
+    { value: 'FOOD_SERVICE', label: 'Food Service', emoji: '🍽️' },
+    { value: 'TUTORING_EDUCATION', label: 'Tutoring & Education', emoji: '📚' },
+    { value: 'ANIMAL_CARE', label: 'Animal Care', emoji: '🐾' },
+    { value: 'ENVIRONMENTAL_CONSERVATION', label: 'Environmental Conservation', emoji: '🌱' },
+    { value: 'SENIOR_SUPPORT', label: 'Senior Support', emoji: '👴' },
+    { value: 'YOUTH_MENTORING', label: 'Youth Mentoring', emoji: '👥' },
+    { value: 'HEALTHCARE_SUPPORT', label: 'Healthcare Support', emoji: '🏥' },
+    { value: 'ARTS_CULTURE', label: 'Arts & Culture', emoji: '🎨' },
+    { value: 'TECHNOLOGY_DIGITAL', label: 'Technology & Digital', emoji: '💻' },
+    { value: 'DISASTER_RELIEF', label: 'Disaster Relief', emoji: '🚑' },
+    { value: 'COMMUNITY_BUILDING', label: 'Community Building', emoji: '🏘️' },
+    { value: 'OTHER', label: 'Other', emoji: '📋' }
+  ];
+
   useEffect(() => {
-    // Redirect if not logged in
+    // Check authentication first
     if (!isLoggedIn()) {
+      navigate('/login');
+      return;
+    }
+
+    // Check if token is expired
+    if (isTokenExpired()) {
+      console.log('Token expired, redirecting to login');
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('user');
       navigate('/login');
       return;
     }
@@ -62,6 +89,21 @@ const ProfileSetup = () => {
     if (error) setError('');
   };
 
+  const handleInterestToggle = (interestValue) => {
+    setSelectedInterests(prev => {
+      if (prev.includes(interestValue)) {
+        // Remove interest
+        return prev.filter(interest => interest !== interestValue);
+      } else {
+        // Add interest
+        return [...prev, interestValue];
+      }
+    });
+    
+    // Clear error when user selects interests
+    if (error) setError('');
+  };
+
   const validateForm = () => {
     if (!user) return false;
 
@@ -78,8 +120,8 @@ const ProfileSetup = () => {
 
     // User type specific validation
     if (user.userType === 'VOLUNTEER') {
-      if (!formData.interests.trim()) {
-        setError('Please share your interests and causes');
+      if (selectedInterests.length === 0) {
+        setError('Please select at least one interest or cause');
         return false;
       }
     } else if (user.userType === 'ORGANIZATION') {
@@ -99,16 +141,36 @@ const ProfileSetup = () => {
     setSuccess('');
 
     try {
+      // Ensure token is valid before making request
+      await ensureValidToken();
+
       // Validate form
       if (!validateForm()) {
         setLoading(false);
         return;
       }
 
-      console.log('Submitting profile setup:', formData);
+      // Prepare form data with interests formatted as comma-separated string
+      const submissionData = {
+        ...formData,
+        interests: selectedInterests.join(',') // Convert array to comma-separated string
+      };
+
+      console.log('=== DETAILED SUBMISSION DEBUG ===');
+      console.log('Selected interests array:', selectedInterests);
+      console.log('Interests as string:', selectedInterests.join(','));
+      console.log('Current user:', user);
+      console.log('User type:', user?.userType);
+      console.log('Form data before submission:', formData);
+      console.log('Final submission data:', submissionData);
+      console.log('Auth token exists:', !!localStorage.getItem('authToken'));
+      console.log('Auth token preview:', localStorage.getItem('authToken')?.substring(0, 20) + '...');
 
       // Create profile using the service
-      const result = await createProfile(formData);
+      const result = await createProfile(submissionData);
+
+      console.log('=== PROFILE CREATION RESULT ===');
+      console.log('Result:', result);
 
       if (result.success) {
         setSuccess('Profile created successfully! Redirecting...');
@@ -118,20 +180,78 @@ const ProfileSetup = () => {
           navigate('/dashboard');
         }, 2000);
       } else {
+        console.error('Profile creation failed:', result);
         setError(result.message || 'Failed to create profile. Please try again.');
       }
 
     } catch (error) {
-      console.error('Profile setup error:', error);
-      setError('Something went wrong. Please try again.');
+      console.error('=== PROFILE SETUP CATCH ERROR ===');
+      console.error('Error object:', error);
+      console.error('Error message:', error.message);
+      
+      if (error.message.includes('Token expired') || error.message.includes('not authenticated')) {
+        setError('Your session has expired. Please log in again.');
+        setTimeout(() => {
+          navigate('/login');
+        }, 2000);
+      } else {
+        setError('Something went wrong. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSkip = () => {
-    // Skip for now - go to dashboard
-    navigate('/dashboard');
+  const handleSkip = async () => {
+    try {
+      // Ensure token is valid before making request
+      await ensureValidToken();
+
+      // Send minimal/null data to backend to mark profile as "skipped"
+      const skipData = {
+        bio: '', // Empty string instead of null
+        location: '',
+        interests: '',
+        skills: '',
+        phoneNumber: '',
+        // Add user type specific empty fields
+        ...(user?.userType === 'VOLUNTEER' ? {
+          firstName: user?.firstName || '',
+          lastName: user?.lastName || '',
+          availability: 'flexible'
+        } : {}),
+        ...(user?.userType === 'ORGANIZATION' ? {
+          organizationName: user?.organizationName || '',
+          organizationType: '',
+          website: '',
+          missionStatement: '',
+          categories: '',
+          services: ''
+        } : {})
+      };
+
+      console.log('Skipping profile setup with minimal data:', skipData);
+
+      // Create profile with empty/minimal data
+      const result = await createProfile(skipData);
+      
+      if (result.success) {
+        navigate('/dashboard');
+      } else {
+        console.error('Skip profile failed:', result);
+        // Just navigate anyway if skip fails
+        navigate('/dashboard');
+      }
+    } catch (error) {
+      console.error('Skip profile error:', error);
+      
+      if (error.message.includes('Token expired') || error.message.includes('not authenticated')) {
+        navigate('/login');
+      } else {
+        // Just navigate to dashboard if skip fails for other reasons
+        navigate('/dashboard');
+      }
+    }
   };
 
   if (!user) {
@@ -283,7 +403,7 @@ const ProfileSetup = () => {
               name="location"
               value={formData.location}
               onChange={handleInputChange}
-              placeholder="City, State"
+              placeholder="City, Country (e.g., San Francisco, USA)"
               required
               style={{
                 width: '100%',
@@ -298,7 +418,7 @@ const ProfileSetup = () => {
           {/* Conditional fields based on user type */}
           {user.userType === 'VOLUNTEER' ? (
             <>
-              {/* Interests */}
+              {/* Interests & Causes with Tags */}
               <div>
                 <label style={{
                   display: 'block',
@@ -309,21 +429,68 @@ const ProfileSetup = () => {
                 }}>
                   Interests & Causes *
                 </label>
-                <input
-                  type="text"
-                  name="interests"
-                  value={formData.interests}
-                  onChange={handleInputChange}
-                  placeholder="e.g., Environment, Education, Healthcare, Community Service"
-                  required
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '8px',
-                    fontSize: '1rem'
-                  }}
-                />
+                <p style={{
+                  fontSize: '0.75rem',
+                  color: '#6b7280',
+                  marginBottom: '0.75rem'
+                }}>
+                  Select the causes you're passionate about (choose one or more):
+                </p>
+                <div style={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: '0.5rem',
+                  padding: '0.75rem',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '8px',
+                  backgroundColor: '#f9fafb',
+                  minHeight: '3rem'
+                }}>
+                  {interestOptions.map((interest) => {
+                    const isSelected = selectedInterests.includes(interest.value);
+                    return (
+                      <button
+                        key={interest.value}
+                        type="button"
+                        onClick={() => handleInterestToggle(interest.value)}
+                        className={`interest-tag ${isSelected ? 'selected' : ''}`}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.375rem',
+                          padding: '0.5rem 0.75rem',
+                          border: isSelected 
+                            ? '2px solid #10b981' 
+                            : '1px solid #d1d5db',
+                          borderRadius: '20px',
+                          fontSize: '0.875rem',
+                          fontWeight: '500',
+                          backgroundColor: isSelected 
+                            ? '#10b981' 
+                            : 'white',
+                          color: isSelected 
+                            ? 'white' 
+                            : '#374151',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                          outline: 'none'
+                        }}
+                      >
+                        <span>{interest.emoji}</span>
+                        <span>{interest.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                {selectedInterests.length > 0 && (
+                  <p style={{
+                    fontSize: '0.75rem',
+                    color: '#10b981',
+                    marginTop: '0.5rem'
+                  }}>
+                    Selected: {selectedInterests.length} cause{selectedInterests.length !== 1 ? 's' : ''}
+                  </p>
+                )}
               </div>
 
               {/* Skills */}
@@ -621,11 +788,27 @@ const ProfileSetup = () => {
         </p>
       </div>
 
-      {/* Add spinner animation */}
+      {/* Add spinner animation and hover styles */}
       <style>{`
         @keyframes spin {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
+        }
+        
+        .interest-tag:not(.selected):hover {
+          background-color: #f3f4f6 !important;
+          border-color: #9ca3af !important;
+        }
+        
+        .interest-tag.selected {
+          background-color: #10b981 !important;
+          color: white !important;
+          border-color: #10b981 !important;
+        }
+        
+        .interest-tag.selected:hover {
+          background-color: #059669 !important;
+          border-color: #059669 !important;
         }
       `}</style>
     </div>

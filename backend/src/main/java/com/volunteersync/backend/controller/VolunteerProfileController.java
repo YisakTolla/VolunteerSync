@@ -31,7 +31,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/volunteer-profiles")
 @CrossOrigin(origins = "*", maxAge = 3600)
-public class VolunteerProfileController {
+public class VolunteerProfileController extends BaseController {
 
     @Autowired
     private VolunteerProfileService volunteerProfileService;
@@ -396,32 +396,32 @@ public class VolunteerProfileController {
     /**
      * Extract user ID from authentication context
      */
-    private Long getCurrentUserId(Authentication authentication) {
-        if (authentication == null || authentication.getPrincipal() == null) {
-            throw new RuntimeException("User not authenticated");
-        }
+    // private Long getCurrentUserId(Authentication authentication) {
+    //     if (authentication == null || authentication.getPrincipal() == null) {
+    //         throw new RuntimeException("User not authenticated");
+    //     }
 
-        Object principal = authentication.getPrincipal();
+    //     Object principal = authentication.getPrincipal();
 
-        // Handle UserDetails
-        if (principal instanceof UserDetails) {
-            UserDetails userDetails = (UserDetails) principal;
-            String email = userDetails.getUsername();
+    //     // Handle UserDetails
+    //     if (principal instanceof UserDetails) {
+    //         UserDetails userDetails = (UserDetails) principal;
+    //         String email = userDetails.getUsername();
 
-            // Find user by email
-            User user = userRepository.findByEmail(email)
-                    .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
+    //         // Find user by email
+    //         User user = userRepository.findByEmail(email)
+    //                 .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
 
-            return user.getId();
-        }
+    //         return user.getId();
+    //     }
 
-        // Fallback - extract from name if it's the user ID
-        try {
-            return Long.parseLong(authentication.getName());
-        } catch (NumberFormatException e) {
-            throw new RuntimeException("Invalid user authentication");
-        }
-    }
+    //     // Fallback - extract from name if it's the user ID
+    //     try {
+    //         return Long.parseLong(authentication.getName());
+    //     } catch (NumberFormatException e) {
+    //         throw new RuntimeException("Invalid user authentication");
+    //     }
+    // }
 
     // ==========================================
     // REQUEST CLASSES

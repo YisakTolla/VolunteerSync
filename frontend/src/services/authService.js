@@ -14,35 +14,186 @@ const api = axios.create({
   },
 });
 
+// 🔧 FIXED: Proper token interceptor with refresh handling
+let isRefreshing = false;
+let failedQueue = [];
+
+const processQueue = (error, token = null) => {
+  failedQueue.forEach(prom => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  
+  failedQueue = [];
+};
+
 // Add token to requests if available
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('authToken');
-  if (token) {
+  if (token && token !== 'undefined' && token !== 'null') {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
 
-// Add response interceptor for debugging
+// 🔧 FIXED: Proper response interceptor with automatic token refresh
 api.interceptors.response.use(
   (response) => {
-    console.log('API Response:', response);
     return response;
   },
-  (error) => {
-    console.error('API Error:', error.response?.data || error.message);
+  async (error) => {
+    const originalRequest = error.config;
 
-    // Handle authentication errors globally
-    if (error.response?.status === 401 || error.response?.status === 403) {
-      console.warn('Authentication error - clearing local storage');
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('user');
-      // Don't auto-redirect here to avoid infinite loops
+    // Handle 401 unauthorized errors
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      if (isRefreshing) {
+        // If we're already refreshing, queue this request
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        }).then(token => {
+          originalRequest.headers.Authorization = `Bearer ${token}`;
+          return api(originalRequest);
+        }).catch(err => {
+          return Promise.reject(err);
+        });
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      try {
+        // Attempt to refresh the token
+        const refreshResult = await performTokenRefresh();
+        
+        if (refreshResult.success) {
+          const newToken = refreshResult.token;
+          localStorage.setItem('authToken', newToken);
+          
+          // Update the original request with new token
+          originalRequest.headers.Authorization = `Bearer ${newToken}`;
+          
+          // Process all queued requests
+          processQueue(null, newToken);
+          
+          // Retry the original request
+          return api(originalRequest);
+        } else {
+          // Refresh failed, clear auth and redirect
+          processQueue(error, null);
+          logoutWithCleanup();
+          window.location.href = '/login';
+          return Promise.reject(error);
+        }
+      } catch (refreshError) {
+        processQueue(refreshError, null);
+        logoutWithCleanup();
+        window.location.href = '/login';
+        return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
+      }
     }
 
+    // For other errors, just reject
     return Promise.reject(error);
   }
 );
+
+// ==========================================
+// TOKEN MANAGEMENT - 🔧 FIXED
+// ==========================================
+
+/**
+ * 🔧 FIXED: Separate function for token refresh that doesn't use the interceptor
+ */
+async function performTokenRefresh() {
+  try {
+    const currentToken = localStorage.getItem('authToken');
+    
+    if (!currentToken || currentToken === 'undefined' || currentToken === 'null') {
+      throw new Error('No token available for refresh');
+    }
+
+    // Create a separate axios instance for refresh to avoid interceptor loops
+    const refreshApi = axios.create({
+      baseURL: API_BASE_URL,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${currentToken}`
+      },
+    });
+
+    console.log('🔄 Attempting token refresh...');
+    const response = await refreshApi.post('/auth/refresh');
+
+    if (response.data && response.data.token) {
+      console.log('✅ Token refresh successful');
+      
+      // Update user data if provided
+      if (response.data.user) {
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+      }
+
+      return { 
+        success: true, 
+        token: response.data.token,
+        data: response.data 
+      };
+    }
+
+    throw new Error('No token in refresh response');
+  } catch (error) {
+    console.error('❌ Token refresh failed:', error.response?.data || error.message);
+    return {
+      success: false,
+      message: error.response?.data?.error || error.message || 'Token refresh failed'
+    };
+  }
+}
+
+export function getAuthToken() {
+  return localStorage.getItem('authToken');
+}
+
+export function isTokenExpired(token = null) {
+  const authToken = token || localStorage.getItem('authToken');
+  if (!authToken || authToken === 'undefined' || authToken === 'null') return true;
+
+  try {
+    const payload = JSON.parse(atob(authToken.split('.')[1]));
+    return payload.exp * 1000 < Date.now();
+  } catch (error) {
+    console.error('Error checking token expiry:', error);
+    return true;
+  }
+}
+
+export function getTokenTimeRemaining(token = null) {
+  const authToken = token || localStorage.getItem('authToken');
+  if (!authToken || authToken === 'undefined' || authToken === 'null') return 0;
+
+  try {
+    const payload = JSON.parse(atob(authToken.split('.')[1]));
+    const timeRemaining = payload.exp * 1000 - Date.now();
+    return Math.max(0, timeRemaining);
+  } catch (error) {
+    return 0;
+  }
+}
+
+export function shouldRefreshToken(token = null) {
+  const timeRemaining = getTokenTimeRemaining(token);
+  // Refresh if less than 5 minutes remaining
+  return timeRemaining > 0 && timeRemaining < 5 * 60 * 1000;
+}
+
+// 🔧 FIXED: Public refresh function
+export async function refreshToken() {
+  return await performTokenRefresh();
+}
 
 // ==========================================
 // REGISTRATION FUNCTIONS
@@ -52,10 +203,10 @@ export async function registerUser(userData) {
   try {
     // Build request payload based on user type
     let requestPayload = {
-      email: userData.email.trim().toLowerCase(), // 🔧 FIX: Always normalize email to lowercase
+      email: userData.email.trim().toLowerCase(),
       password: userData.password,
       confirmPassword: userData.confirmPassword,
-      userType: userData.userType // "VOLUNTEER" or "ORGANIZATION"
+      userType: userData.userType
     };
 
     // Add type-specific fields
@@ -66,38 +217,28 @@ export async function registerUser(userData) {
       requestPayload.organizationName = userData.organizationName.trim();
     }
 
-    console.log('=== REGISTRATION DEBUG ===');
-    console.log('Original email:', userData.email);
-    console.log('Normalized email:', requestPayload.email);
-    console.log('Sending registration data:', requestPayload);
+    console.log('🔄 Registering user...', { email: requestPayload.email, userType: requestPayload.userType });
 
     const response = await api.post('/auth/register', requestPayload);
 
-    console.log('Registration response:', response.data);
-    console.log('Full response structure:', response);
+    console.log('✅ Registration successful:', response.data);
 
     // Handle successful registration
     if (response.data && response.data.token) {
       const token = response.data.token;
-
-      // 🔧 FIX: Extract user data correctly from JwtResponse structure
-      const user = response.data; // The user data is directly in response.data, not nested
+      const user = response.data;
 
       localStorage.setItem('authToken', token);
       localStorage.setItem('user', JSON.stringify(user));
 
-      console.log('Registration successful! Saved to localStorage.');
-      console.log('Token:', token);
-      console.log('User data being saved:', user);
-      console.log('User ID:', user.id);
+      console.log('💾 Saved auth data to localStorage');
 
       return { success: true, data: response.data };
     }
 
     return { success: false, message: 'Registration successful but no token received' };
   } catch (error) {
-    console.error('=== REGISTRATION ERROR ===');
-    console.error('Registration error:', error.response?.data);
+    console.error('❌ Registration error:', error.response?.data);
     return {
       success: false,
       message: error.response?.data?.error || error.response?.data?.message || 'Registration failed'
@@ -107,28 +248,28 @@ export async function registerUser(userData) {
 
 export async function registerWithGoogle(googleIdToken, userType) {
   try {
-    console.log('Sending Google registration with token:', googleIdToken.substring(0, 20) + '...');
-    console.log('User type:', userType);
+    console.log('🔄 Google registration...', { userType });
 
     const response = await api.post('/auth/google', {
       googleToken: googleIdToken,
-      userType: userType // "VOLUNTEER" or "ORGANIZATION"
+      userType: userType
     });
 
-    console.log('Google registration response:', response.data);
+    console.log('✅ Google registration successful:', response.data);
 
-    if (response.data && (response.data.token || response.data.data?.token)) {
-      const token = response.data.token || response.data.data.token;
-      const user = response.data.user || response.data.data?.user || response.data.data;
+    if (response.data && response.data.token) {
+      const token = response.data.token;
+      const user = response.data;
 
       localStorage.setItem('authToken', token);
       localStorage.setItem('user', JSON.stringify(user));
+
       return { success: true, data: response.data };
     }
 
     return { success: false, message: 'Google registration successful but no token received' };
   } catch (error) {
-    console.error('Google registration error:', error.response?.data);
+    console.error('❌ Google registration error:', error.response?.data);
     return {
       success: false,
       message: error.response?.data?.error || error.response?.data?.message || 'Google registration failed'
@@ -137,47 +278,37 @@ export async function registerWithGoogle(googleIdToken, userType) {
 }
 
 // ==========================================
-// LOGIN FUNCTIONS - 🔧 FIXED WITH EMAIL NORMALIZATION
+// LOGIN FUNCTIONS - 🔧 FIXED
 // ==========================================
 
 export async function loginUser(email, password) {
   try {
-    const normalizedEmail = email.trim().toLowerCase(); // 🔧 FIX: Always normalize email to lowercase
+    const normalizedEmail = email.trim().toLowerCase();
 
-    console.log('=== LOGIN DEBUG ===');
-    console.log('Original email:', email);
-    console.log('Normalized email:', normalizedEmail);
-    console.log('Attempting login...');
+    console.log('🔄 Logging in user...', { email: normalizedEmail });
 
     const response = await api.post('/auth/login', {
-      email: normalizedEmail, // 🔧 FIX: Use normalized email
+      email: normalizedEmail,
       password: password
     });
 
-    console.log('Login response:', response.data);
-    console.log('Full response structure:', response);
+    console.log('✅ Login successful:', response.data);
 
     if (response.data && response.data.token) {
       const token = response.data.token;
-
-      // 🔧 FIX: Extract user data correctly from JwtResponse structure
-      const user = response.data; // The user data is directly in response.data, not nested
+      const user = response.data;
 
       localStorage.setItem('authToken', token);
       localStorage.setItem('user', JSON.stringify(user));
 
-      console.log('Login successful! Saved to localStorage.');
-      console.log('Token:', token);
-      console.log('User data being saved:', user);
-      console.log('User ID:', user.id);
+      console.log('💾 Saved auth data to localStorage');
 
       return { success: true, data: response.data };
     }
 
     return { success: false, message: 'Login successful but no token received' };
   } catch (error) {
-    console.error('=== LOGIN ERROR ===');
-    console.error('Login error:', error.response?.data);
+    console.error('❌ Login error:', error.response?.data);
     return {
       success: false,
       message: error.response?.data?.error || error.response?.data?.message || 'Login failed'
@@ -187,28 +318,28 @@ export async function loginUser(email, password) {
 
 export async function loginWithGoogle(googleIdToken, userType) {
   try {
-    console.log('Sending Google login with token:', googleIdToken.substring(0, 20) + '...');
-    console.log('User type:', userType);
+    console.log('🔄 Google login...', { userType });
 
     const response = await api.post('/auth/google', {
       googleToken: googleIdToken,
-      userType: userType // "VOLUNTEER" or "ORGANIZATION"
+      userType: userType
     });
 
-    console.log('Google login response:', response.data);
+    console.log('✅ Google login successful:', response.data);
 
-    if (response.data && (response.data.token || response.data.data?.token)) {
-      const token = response.data.token || response.data.data.token;
-      const user = response.data.user || response.data.data?.user || response.data.data;
+    if (response.data && response.data.token) {
+      const token = response.data.token;
+      const user = response.data;
 
       localStorage.setItem('authToken', token);
       localStorage.setItem('user', JSON.stringify(user));
+
       return { success: true, data: response.data };
     }
 
     return { success: false, message: 'Google login successful but no token received' };
   } catch (error) {
-    console.error('Google login error:', error.response?.data);
+    console.error('❌ Google login error:', error.response?.data);
     return {
       success: false,
       message: error.response?.data?.error || error.response?.data?.message || 'Google login failed'
@@ -223,7 +354,7 @@ export async function loginWithGoogle(googleIdToken, userType) {
 export function getCurrentUser() {
   try {
     const user = localStorage.getItem('user');
-    return user ? JSON.parse(user) : null;
+    return user && user !== 'undefined' && user !== 'null' ? JSON.parse(user) : null;
   } catch (error) {
     console.error('Error parsing user data from localStorage:', error);
     return null;
@@ -246,37 +377,50 @@ export function updateCurrentUser(userData) {
 }
 
 export function isLoggedIn() {
-  console.log('=== AUTH STATUS CHECK ===');
   const token = localStorage.getItem('authToken');
   const user = getCurrentUser();
-  console.log('Token exists:', !!token);
-  console.log('User exists:', !!user);
-  console.log('User ID:', user?.id);
-  console.log('========================');
-
-  // Check that both token exists and is not the string "undefined"
-  return token && token !== 'undefined' && token !== 'null' && user !== null;
+  
+  const hasValidToken = token && token !== 'undefined' && token !== 'null' && !isTokenExpired(token);
+  const hasUser = user !== null;
+  
+  console.log('🔍 Auth status:', { hasValidToken, hasUser, userId: user?.id });
+  
+  return hasValidToken && hasUser;
 }
 
 export function logout() {
-  console.log('=== LOGOUT ===');
+  console.log('🚪 Logging out...');
   localStorage.removeItem('authToken');
   localStorage.removeItem('user');
   localStorage.removeItem('googleUser');
-  console.log('Cleared localStorage');
+  console.log('🧹 Cleared localStorage');
+}
+
+export function logoutWithCleanup() {
+  logout();
 }
 
 // ==========================================
-// PROFILE DATA FETCHING
+// PROFILE DATA FETCHING - 🔧 FIXED
 // ==========================================
 
 export async function getUserProfile() {
   try {
-    console.log('=== FETCHING USER PROFILE ===');
+    console.log('🔄 Fetching user profile...');
 
     const user = getCurrentUser();
     if (!user) {
       throw new Error('No user logged in');
+    }
+
+    // Ensure we have a valid token before making the request
+    const token = getAuthToken();
+    if (!token || isTokenExpired(token)) {
+      console.log('Token invalid, attempting refresh...');
+      const refreshResult = await refreshToken();
+      if (!refreshResult.success) {
+        throw new Error('Token refresh failed');
+      }
     }
 
     let response;
@@ -288,11 +432,10 @@ export async function getUserProfile() {
     } else if (userType === 'ORGANIZATION') {
       response = await api.get('/organization-profiles/me');
     } else {
-      // Fallback to user endpoint
       response = await api.get('/users/me');
     }
 
-    console.log('Profile fetch response:', response.data);
+    console.log('✅ Profile fetch successful:', response.data);
 
     // Update local storage with fresh user data
     if (response.data) {
@@ -306,38 +449,12 @@ export async function getUserProfile() {
 
     return { success: true, data: response.data };
   } catch (error) {
-    console.error('Get profile error:', error.response?.data);
+    console.error('❌ Get profile error:', error.response?.data);
 
-    // If unauthorized, clear local storage
-    if (error.response?.status === 401 || error.response?.status === 403) {
-      console.warn('Authentication failed - clearing storage');
-      logout();
-    }
-
+    // If unauthorized, the interceptor will handle it
     return {
       success: false,
       message: error.response?.data?.error || error.response?.data?.message || 'Failed to get profile'
-    };
-  }
-}
-
-export async function refreshUserData() {
-  try {
-    console.log('=== REFRESHING USER DATA ===');
-
-    const result = await getUserProfile();
-    if (result.success) {
-      console.log('User data refreshed successfully');
-      return result;
-    } else {
-      console.warn('Failed to refresh user data:', result.message);
-      return result;
-    }
-  } catch (error) {
-    console.error('Error refreshing user data:', error);
-    return {
-      success: false,
-      message: 'Failed to refresh user data'
     };
   }
 }
@@ -346,127 +463,59 @@ export async function refreshUserData() {
 // PROFILE COMPLETION FUNCTIONS
 // ==========================================
 
-export function isProfileComplete(user) {
-  if (!user) return false;
+export function isProfileComplete(user = null) {
+  const currentUser = user || getCurrentUser();
 
-  // Check if profileComplete flag is explicitly set
-  if (user.profileComplete !== undefined) {
-    return user.profileComplete;
+  if (!currentUser) {
+    return false;
   }
 
-  // Fallback to manual checks based on user type
-  if (user.userType === 'VOLUNTEER') {
-    return !!(
-      user.firstName &&
-      user.lastName &&
-      user.email &&
-      user.bio && // Profile completion indicator
-      user.location // Basic profile info
-    );
-  } else if (user.userType === 'ORGANIZATION') {
-    return !!(
-      user.organizationName &&
-      user.email &&
-      user.bio && // Profile completion indicator
-      user.location // Basic profile info
-    );
+  // Check if profileComplete flag is explicitly set by backend
+  if (currentUser.profileComplete !== undefined) {
+    return currentUser.profileComplete;
   }
 
-  return false;
-}
+  // Manual checks based on user type
+  const hasBasicInfo = currentUser.email;
 
-export function needsProfileSetup(user) {
-  return user && !isProfileComplete(user);
-}
-
-export function shouldRedirectToProfileSetup() {
-  const user = getCurrentUser();
-  return needsProfileSetup(user);
-}
-
-// Complete user profile after signup
-export async function completeProfile(profileData) {
-  try {
-    const response = await api.put('/auth/complete-profile', profileData);
-
-    if (response.data && response.data.user) {
-      // Update localStorage with complete user data
-      localStorage.setItem('user', JSON.stringify(response.data.user));
-      return { success: true, data: response.data };
-    }
-
-    return { success: false, message: 'Profile update failed' };
-  } catch (error) {
-    console.error('Profile completion error:', error.response?.data);
-    return {
-      success: false,
-      message: error.response?.data?.error || error.response?.data?.message || 'Failed to complete profile'
+  if (currentUser.userType === 'VOLUNTEER') {
+    const required = {
+      firstName: !!currentUser.firstName,
+      lastName: !!currentUser.lastName,
+      email: !!currentUser.email
     };
+    return Object.values(required).every(Boolean);
   }
-}
 
-// ==========================================
-// TOKEN MANAGEMENT
-// ==========================================
-
-export async function refreshToken() {
-  try {
-    const response = await api.post('/auth/refresh');
-
-    if (response.data && response.data.token) {
-      localStorage.setItem('authToken', response.data.token);
-
-      // Update user data if provided
-      if (response.data.user) {
-        localStorage.setItem('user', JSON.stringify(response.data.user));
-      }
-
-      return { success: true, data: response.data };
-    }
-
-    return { success: false, message: 'Token refresh failed' };
-  } catch (error) {
-    console.error('Token refresh error:', error.response?.data);
-    logout(); // Clear invalid tokens
-    return {
-      success: false,
-      message: error.response?.data?.error || error.response?.data?.message || 'Token refresh failed'
+  if (currentUser.userType === 'ORGANIZATION') {
+    const required = {
+      organizationName: !!currentUser.organizationName,
+      email: !!currentUser.email
     };
+    return Object.values(required).every(Boolean);
   }
+
+  return hasBasicInfo;
 }
 
-export function getAuthToken() {
-  return localStorage.getItem('authToken');
-}
+export function needsProfileSetup(user = null) {
+  const currentUser = user || getCurrentUser();
 
-export function isTokenExpired() {
-  const token = getAuthToken();
-  if (!token) return true;
-
-  try {
-    // Simple JWT expiry check (this is a basic implementation)
-    const payload = JSON.parse(atob(token.split('.')[1]));
-    const currentTime = Date.now() / 1000;
-    return payload.exp < currentTime;
-  } catch (error) {
-    console.error('Error checking token expiry:', error);
-    return true; // Assume expired if we can't parse
+  if (!currentUser || !isLoggedIn()) {
+    return false;
   }
+
+  return !isProfileComplete(currentUser);
 }
 
-// ==========================================
-// HELPER FUNCTIONS FOR DEBUGGING
-// ==========================================
+export function shouldRedirectToProfileSetup(user = null) {
+  const currentUser = user || getCurrentUser();
 
-export function debugAuthState() {
-  console.log('=== Auth Debug Info ===');
-  console.log('Token:', localStorage.getItem('authToken')?.substring(0, 20) + '...');
-  console.log('User:', getCurrentUser());
-  console.log('Is Logged In:', isLoggedIn());
-  console.log('Profile Complete:', isProfileComplete(getCurrentUser()));
-  console.log('Needs Setup:', needsProfileSetup(getCurrentUser()));
-  console.log('Token Expired:', isTokenExpired());
-  console.log('=====================');
+  if (!isLoggedIn()) {
+    return false;
+  }
+
+  return needsProfileSetup(currentUser);
 }
 
 // ==========================================
@@ -512,112 +561,36 @@ export function getUserInitials(user = null) {
   return 'U';
 }
 
-export function getUserTypeDisplay(user = null) {
-  const currentUser = user || getCurrentUser();
-  if (!currentUser) return '';
-
-  switch (currentUser.userType) {
-    case 'ORGANIZATION':
-      return '🏢 Organization';
-    case 'VOLUNTEER':
-      return '🙋‍♀️ Volunteer';
-    default:
-      return currentUser.userType;
-  }
+export function debugAuthState() {
+  console.log('🔍 === Auth Debug Info ===');
+  console.log('Token:', localStorage.getItem('authToken')?.substring(0, 20) + '...');
+  console.log('User:', getCurrentUser());
+  console.log('Is Logged In:', isLoggedIn());
+  console.log('Profile Complete:', isProfileComplete(getCurrentUser()));
+  console.log('Needs Setup:', needsProfileSetup(getCurrentUser()));
+  console.log('Token Expired:', isTokenExpired());
+  console.log('========================');
 }
-
-
-// Add these updated functions to your existing authService.js
 
 // ==========================================
-// IMPROVED PROFILE COMPLETION FUNCTIONS
+// REGISTRATION SUCCESS HANDLER
 // ==========================================
 
-export function isProfileComplete(user = null) {
-  const currentUser = user || getCurrentUser();
+export function handleRegistrationSuccess(userData) {
+  console.log('=== HANDLING REGISTRATION SUCCESS ===');
+  console.log('User data:', userData);
 
-  console.log('=== CHECKING PROFILE COMPLETION ===');
-  console.log('User data:', currentUser);
+  // Mark user as needing profile setup since they just registered
+  const userWithFlags = {
+    ...userData,
+    profileComplete: false, // Explicitly mark as incomplete
+    isNewUser: true // Flag for new user
+  };
 
-  if (!currentUser) {
-    console.log('No user found');
-    return false;
-  }
+  localStorage.setItem('user', JSON.stringify(userWithFlags));
+  console.log('Updated user data in localStorage:', userWithFlags);
 
-  // Check if profileComplete flag is explicitly set by backend
-  if (currentUser.profileComplete !== undefined) {
-    console.log('Backend profileComplete flag:', currentUser.profileComplete);
-    return currentUser.profileComplete;
-  }
-
-  // Manual checks based on user type
-  const hasBasicInfo = currentUser.email;
-
-  if (currentUser.userType === 'VOLUNTEER') {
-    const required = {
-      firstName: !!currentUser.firstName,
-      lastName: !!currentUser.lastName,
-      email: !!currentUser.email,
-      bio: !!currentUser.bio,
-      location: !!currentUser.location
-    };
-
-    const isComplete = Object.values(required).every(Boolean);
-
-    console.log('Volunteer profile completion check:', {
-      required,
-      isComplete
-    });
-
-    return isComplete;
-  }
-
-  if (currentUser.userType === 'ORGANIZATION') {
-    const required = {
-      organizationName: !!currentUser.organizationName,
-      email: !!currentUser.email,
-      bio: !!currentUser.bio,
-      location: !!currentUser.location
-    };
-
-    const isComplete = Object.values(required).every(Boolean);
-
-    console.log('Organization profile completion check:', {
-      required,
-      isComplete
-    });
-
-    return isComplete;
-  }
-
-  console.log('Fallback to basic info check:', hasBasicInfo);
-  return hasBasicInfo;
-}
-
-export function needsProfileSetup(user = null) {
-  const currentUser = user || getCurrentUser();
-
-  if (!currentUser || !isLoggedIn()) {
-    console.log('No user or not logged in, no profile setup needed');
-    return false;
-  }
-
-  const needs = !isProfileComplete(currentUser);
-  console.log('User needs profile setup:', needs);
-  return needs;
-}
-
-export function shouldRedirectToProfileSetup(user = null) {
-  const currentUser = user || getCurrentUser();
-
-  if (!isLoggedIn()) {
-    console.log('Not logged in, should redirect to login');
-    return false;
-  }
-
-  const shouldRedirect = needsProfileSetup(currentUser);
-  console.log('Should redirect to profile setup:', shouldRedirect);
-  return shouldRedirect;
+  return userWithFlags;
 }
 
 // ==========================================
@@ -700,24 +673,102 @@ export function getProfileCompletionStatus(user = null) {
 }
 
 // ==========================================
-// REGISTRATION SUCCESS HANDLER
+// ADDITIONAL UTILITY FUNCTIONS
 // ==========================================
 
-export function handleRegistrationSuccess(userData) {
-  console.log('=== HANDLING REGISTRATION SUCCESS ===');
-  console.log('User data:', userData);
+export function getUserTypeDisplay(user = null) {
+  const currentUser = user || getCurrentUser();
+  if (!currentUser) return '';
 
-  // Mark user as needing profile setup since they just registered
-  const userWithFlags = {
-    ...userData,
-    profileComplete: false, // Explicitly mark as incomplete
-    isNewUser: true // Flag for new user
-  };
+  switch (currentUser.userType) {
+    case 'ORGANIZATION':
+      return '🏢 Organization';
+    case 'VOLUNTEER':
+      return '🙋‍♀️ Volunteer';
+    default:
+      return currentUser.userType;
+  }
+}
 
-  localStorage.setItem('user', JSON.stringify(userWithFlags));
-  console.log('Updated user data in localStorage:', userWithFlags);
+export async function refreshUserData() {
+  try {
+    console.log('=== REFRESHING USER DATA ===');
 
-  return userWithFlags;
+    const result = await getUserProfile();
+    if (result.success) {
+      console.log('User data refreshed successfully');
+      return result;
+    } else {
+      console.warn('Failed to refresh user data:', result.message);
+      return result;
+    }
+  } catch (error) {
+    console.error('Error refreshing user data:', error);
+    return {
+      success: false,
+      message: 'Failed to refresh user data'
+    };
+  }
+}
+
+// Complete user profile after signup
+export async function completeProfile(profileData) {
+  try {
+    const response = await api.put('/auth/complete-profile', profileData);
+
+    if (response.data && response.data.user) {
+      // Update localStorage with complete user data
+      localStorage.setItem('user', JSON.stringify(response.data.user));
+      return { success: true, data: response.data };
+    }
+
+    return { success: false, message: 'Profile update failed' };
+  } catch (error) {
+    console.error('Profile completion error:', error.response?.data);
+    return {
+      success: false,
+      message: error.response?.data?.error || error.response?.data?.message || 'Failed to complete profile'
+    };
+  }
+}
+
+// ==========================================
+// ENSURE VALID TOKEN UTILITY
+// ==========================================
+
+export async function ensureValidToken() {
+  const token = localStorage.getItem('authToken');
+
+  if (!token || token === 'undefined' || token === 'null') {
+    throw new Error('No token found');
+  }
+
+  if (isTokenExpired(token)) {
+    console.log('🔄 Token expired, refreshing...');
+    const refreshResult = await refreshToken();
+    if (!refreshResult.success) {
+      logoutWithCleanup();
+      window.location.href = '/login';
+      throw new Error('Token expired and refresh failed');
+    }
+    return refreshResult.token;
+  }
+
+  // Check if token expires soon and refresh proactively
+  if (shouldRefreshToken(token)) {
+    console.log('🔄 Token expiring soon, refreshing proactively...');
+    try {
+      const refreshResult = await refreshToken();
+      if (refreshResult.success) {
+        return refreshResult.token;
+      }
+    } catch (error) {
+      console.warn('Proactive token refresh failed:', error);
+      // Continue with current token if proactive refresh fails
+    }
+  }
+
+  return token;
 }
 
 // ==========================================

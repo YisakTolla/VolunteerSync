@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { ensureValidToken, getCurrentUser, logoutWithCleanup } from './authService';
 
 // ==========================================
 // API BASE CONFIGURATION
@@ -6,7 +7,7 @@ import axios from 'axios';
 
 const API_BASE_URL = 'http://localhost:8080/api';
 
-// Create axios instance with base configuration
+// 🔧 FIXED: Create axios instance with enhanced error handling
 const profileApi = axios.create({
   baseURL: API_BASE_URL,
   headers: {
@@ -14,29 +15,58 @@ const profileApi = axios.create({
   },
 });
 
-// Add token to requests if available
-profileApi.interceptors.request.use((config) => {
-  const token = localStorage.getItem('authToken');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+// 🔧 FIXED: Enhanced request interceptor that ensures valid token
+profileApi.interceptors.request.use(async (config) => {
+  try {
+    // Ensure we have a valid token before making the request
+    const token = await ensureValidToken();
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  } catch (error) {
+    console.error('Token validation failed in profile service:', error);
+    // If token validation fails, redirect to login
+    logoutWithCleanup();
+    window.location.href = '/login';
+    return Promise.reject(error);
   }
-  return config;
 });
 
-// Add response interceptor for debugging and error handling
+// 🔧 FIXED: Enhanced response interceptor
 profileApi.interceptors.response.use(
   (response) => {
-    console.log('Profile API Response:', response);
+    console.log('✅ Profile API Response:', response.status, response.config.url);
     return response;
   },
-  (error) => {
-    console.error('Profile API Error:', error.response?.data || error.message);
+  async (error) => {
+    const originalRequest = error.config;
     
+    console.error('❌ Profile API Error:', {
+      status: error.response?.status,
+      url: error.config?.url,
+      data: error.response?.data,
+      message: error.message
+    });
+
     // Handle authentication errors
-    if (error.response?.status === 401) {
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      console.log('🔄 401 error in profile service, attempting token refresh...');
+      
+      try {
+        originalRequest._retry = true;
+        const token = await ensureValidToken();
+        
+        if (token) {
+          originalRequest.headers.Authorization = `Bearer ${token}`;
+          return profileApi(originalRequest);
+        }
+      } catch (refreshError) {
+        console.error('❌ Token refresh failed in profile service:', refreshError);
+        logoutWithCleanup();
+        window.location.href = '/login';
+        return Promise.reject(refreshError);
+      }
     }
     
     return Promise.reject(error);
@@ -48,19 +78,6 @@ profileApi.interceptors.response.use(
 // ==========================================
 
 /**
- * Get current user data from localStorage
- */
-const getCurrentUser = () => {
-  try {
-    const user = localStorage.getItem('user');
-    return user ? JSON.parse(user) : null;
-  } catch (error) {
-    console.error('Error parsing user data:', error);
-    return null;
-  }
-};
-
-/**
  * Update user data in localStorage
  */
 const updateLocalUser = (updatedData) => {
@@ -69,10 +86,13 @@ const updateLocalUser = (updatedData) => {
     if (currentUser) {
       const updatedUser = { ...currentUser, ...updatedData };
       localStorage.setItem('user', JSON.stringify(updatedUser));
+      console.log('💾 Updated local user data:', updatedUser);
       return updatedUser;
     }
+    return null;
   } catch (error) {
     console.error('Error updating local user data:', error);
+    return null;
   }
 };
 
@@ -80,6 +100,9 @@ const updateLocalUser = (updatedData) => {
  * Determine user type and format profile data accordingly
  */
 const formatProfileData = (profileData, userType) => {
+  console.log('🔄 Formatting profile data for type:', userType);
+  console.log('Raw profile data:', profileData);
+
   const baseData = {
     bio: profileData.bio || '',
     location: profileData.location || '',
@@ -87,7 +110,7 @@ const formatProfileData = (profileData, userType) => {
   };
 
   if (userType === 'VOLUNTEER') {
-    return {
+    const formattedData = {
       ...baseData,
       firstName: profileData.firstName || '',
       lastName: profileData.lastName || '',
@@ -96,8 +119,10 @@ const formatProfileData = (profileData, userType) => {
       availability: profileData.availability || 'flexible',
       profileImageUrl: profileData.profileImageUrl || null,
     };
+    console.log('📝 Formatted volunteer data:', formattedData);
+    return formattedData;
   } else if (userType === 'ORGANIZATION') {
-    return {
+    const formattedData = {
       ...baseData,
       organizationName: profileData.organizationName || '',
       organizationType: profileData.organizationType || '',
@@ -108,8 +133,11 @@ const formatProfileData = (profileData, userType) => {
       profileImageUrl: profileData.profileImageUrl || null,
       coverImageUrl: profileData.coverImageUrl || null,
     };
+    console.log('🏢 Formatted organization data:', formattedData);
+    return formattedData;
   }
 
+  console.log('📝 Formatted base data:', baseData);
   return baseData;
 };
 
@@ -118,39 +146,44 @@ const formatProfileData = (profileData, userType) => {
 // ==========================================
 
 /**
- * Create initial profile during profile setup
+ * 🔧 FIXED: Create initial profile during profile setup
  * @param {Object} profileData - Profile information from setup form
  * @returns {Object} - Success/error response with profile data
  */
 export async function createProfile(profileData) {
   try {
     console.log('=== CREATING PROFILE ===');
-    console.log('Profile data:', profileData);
+    console.log('📝 Profile data received:', profileData);
 
     const user = getCurrentUser();
     if (!user) {
       throw new Error('User not logged in');
     }
 
+    console.log('👤 Current user:', user);
+    console.log('🎯 User type:', user.userType);
+
     const userType = user.userType;
     const formattedData = formatProfileData(profileData, userType);
 
-    console.log('Formatted profile data:', formattedData);
-    console.log('User type:', userType);
+    console.log('📋 Formatted profile data:', formattedData);
 
     let response;
+    let endpoint;
 
     if (userType === 'VOLUNTEER') {
-      // Create volunteer profile
-      response = await profileApi.post('/volunteer-profiles', formattedData);
+      endpoint = '/volunteer-profiles';
+      console.log('🙋‍♀️ Creating volunteer profile...');
+      response = await profileApi.post(endpoint, formattedData);
     } else if (userType === 'ORGANIZATION') {
-      // Create organization profile
-      response = await profileApi.post('/organization-profiles', formattedData);
+      endpoint = '/organization-profiles';
+      console.log('🏢 Creating organization profile...');
+      response = await profileApi.post(endpoint, formattedData);
     } else {
-      throw new Error('Invalid user type');
+      throw new Error(`Invalid user type: ${userType}`);
     }
 
-    console.log('Profile creation response:', response.data);
+    console.log('✅ Profile creation response:', response.data);
 
     // Update local user data with profile completion
     const updatedUser = updateLocalUser({
@@ -166,12 +199,63 @@ export async function createProfile(profileData) {
     };
 
   } catch (error) {
-    console.error('=== PROFILE CREATION ERROR ===');
-    console.error('Error:', error.response?.data || error.message);
+    console.error('=== PROFILE CREATION ERROR - DETAILED ===');
+    console.error('Error type:', error.constructor.name);
+    console.error('Error message:', error.message);
+    
+    if (error.response) {
+      console.error('Response status:', error.response.status);
+      console.error('Response statusText:', error.response.statusText);
+      console.error('Response headers:', error.response.headers);
+      console.error('Response data type:', typeof error.response.data);
+      console.error('Response data:', error.response.data);
+      
+      if (error.response.data && typeof error.response.data === 'object') {
+        console.error('Response data constructor:', error.response.data.constructor.name);
+        console.error('Response data stringified:', JSON.stringify(error.response.data));
+        
+        // Try to parse error data if it's an object
+        try {
+          const errorData = error.response.data;
+          console.error('Error data parsed:', errorData);
+          
+          // Get all properties of the error data
+          const dataProperties = Object.keys(errorData);
+          console.error('Data properties:', dataProperties);
+          
+          // Log specific error properties
+          if (errorData.error) {
+            console.error('data.error:', errorData.error);
+          }
+          if (errorData.message) {
+            console.error('data.message:', errorData.message);
+          }
+          if (errorData.timestamp) {
+            console.error('data.timestamp:', errorData.timestamp);
+          }
+          
+          // Extract the final error message
+          const finalErrorMessage = errorData.error || errorData.message || 'Unknown error';
+          console.error('Final extracted error message:', finalErrorMessage);
+          console.error('Error details object:', errorData);
+          
+        } catch (parseError) {
+          console.error('Error parsing response data:', parseError);
+        }
+      }
+    } else if (error.request) {
+      console.error('Request error - no response received');
+      console.error('Request:', error.request);
+    } else {
+      console.error('Setup error:', error.message);
+    }
     
     return {
       success: false,
-      message: error.response?.data?.error || error.message || 'Failed to create profile'
+      message: error.response?.data?.error || error.response?.data?.message || error.message || 'Failed to create profile',
+      details: error.response?.data,
+      status: error.response?.status,
+      statusText: error.response?.statusText || ''
     };
   }
 }
@@ -230,7 +314,7 @@ export async function updateProfile(updatedData) {
     
     return {
       success: false,
-      message: error.response?.data?.error || error.message || 'Failed to update profile'
+      message: error.response?.data?.error || error.response?.data?.message || error.message || 'Failed to update profile'
     };
   }
 }
@@ -282,7 +366,7 @@ export async function fetchMyProfile() {
     
     return {
       success: false,
-      message: error.response?.data?.error || error.message || 'Failed to fetch profile'
+      message: error.response?.data?.error || error.response?.data?.message || error.message || 'Failed to fetch profile'
     };
   }
 }
@@ -321,7 +405,7 @@ export async function fetchPublicProfile(userId, userType) {
     
     return {
       success: false,
-      message: error.response?.data?.error || error.message || 'Failed to fetch profile'
+      message: error.response?.data?.error || error.response?.data?.message || error.message || 'Failed to fetch profile'
     };
   }
 }
@@ -384,7 +468,7 @@ export async function uploadProfileImage(imageFile, imageType = 'profile') {
     
     return {
       success: false,
-      message: error.response?.data?.error || error.message || 'Failed to upload image'
+      message: error.response?.data?.error || error.response?.data?.message || error.message || 'Failed to upload image'
     };
   }
 }
@@ -432,7 +516,7 @@ export async function fetchProfileStats() {
     
     return {
       success: false,
-      message: error.response?.data?.error || error.message || 'Failed to fetch statistics'
+      message: error.response?.data?.error || error.response?.data?.message || error.message || 'Failed to fetch statistics'
     };
   }
 }
@@ -465,8 +549,7 @@ export async function deleteProfile() {
     }
 
     // Clear local storage
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('user');
+    logoutWithCleanup();
 
     return {
       success: true,
@@ -479,7 +562,7 @@ export async function deleteProfile() {
     
     return {
       success: false,
-      message: error.response?.data?.error || error.message || 'Failed to delete profile'
+      message: error.response?.data?.error || error.response?.data?.message || error.message || 'Failed to delete profile'
     };
   }
 }

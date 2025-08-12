@@ -30,7 +30,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/organization-profiles")
 @CrossOrigin(origins = "*", maxAge = 3600)
-public class OrganizationProfileController {
+public class OrganizationProfileController extends BaseController {
 
     @Autowired
     private OrganizationProfileService organizationProfileService;
@@ -524,24 +524,24 @@ public class OrganizationProfileController {
     // HELPER METHODS
     // ==========================================
 
-    private Long getCurrentUserId(Authentication authentication) {
-        if (authentication == null || authentication.getPrincipal() == null) {
-            throw new RuntimeException("User not authenticated");
-        }
+    // private Long getCurrentUserId(Authentication authentication) {
+    //     if (authentication == null || authentication.getPrincipal() == null) {
+    //         throw new RuntimeException("User not authenticated");
+    //     }
         
-        // Extract user ID from authentication principal
-        Object principal = authentication.getPrincipal();
-        if (principal instanceof UserPrincipal) {
-            return ((UserPrincipal) principal).getId();
-        }
+    //     // Extract user ID from authentication principal
+    //     Object principal = authentication.getPrincipal();
+    //     if (principal instanceof UserPrincipal) {
+    //         return ((UserPrincipal) principal).getId();
+    //     }
         
-        // Fallback - extract from name if it's the user ID
-        try {
-            return Long.parseLong(authentication.getName());
-        } catch (NumberFormatException e) {
-            throw new RuntimeException("Invalid user authentication");
-        }
-    }
+    //     // Fallback - extract from name if it's the user ID
+    //     try {
+    //         return Long.parseLong(authentication.getName());
+    //     } catch (NumberFormatException e) {
+    //         throw new RuntimeException("Invalid user authentication");
+    //     }
+    // }
 
     // ==========================================
     // REQUEST/RESPONSE CLASSES
