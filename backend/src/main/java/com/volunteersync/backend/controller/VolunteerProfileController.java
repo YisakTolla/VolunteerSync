@@ -1,4 +1,4 @@
-// backend/src/main/java/com/volunteersync/backend/controller/VolunteerProfileController.java
+// Fixed VolunteerProfileController.java - Resolved duplicate endpoints
 package com.volunteersync.backend.controller;
 
 import com.volunteersync.backend.service.VolunteerProfileService;
@@ -47,7 +47,7 @@ public class VolunteerProfileController extends BaseController {
     // ==========================================
 
     /**
-     * Create volunteer profile
+     * Create volunteer profile (LEGACY - kept for backward compatibility)
      * POST /api/volunteer-profiles
      */
     @PostMapping
@@ -55,8 +55,51 @@ public class VolunteerProfileController extends BaseController {
             Authentication authentication) {
         try {
             Long userId = getCurrentUserId(authentication);
-            VolunteerProfileDTO profile = volunteerProfileService.createProfile(request, userId);
+            VolunteerProfileDTO profile = volunteerProfileService.createOrUpdateProfile(request, userId);
             return ResponseEntity.status(HttpStatus.CREATED).body(profile);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
+        }
+    }
+
+    /**
+     * Create or update volunteer profile (UNIFIED UPSERT ENDPOINT)
+     * PUT /api/volunteer-profiles/me
+     */
+    @PutMapping("/me")
+    public ResponseEntity<?> createOrUpdateMyProfile(@Valid @RequestBody CreateVolunteerProfileRequest request,
+            Authentication authentication) {
+        try {
+            Long userId = getCurrentUserId(authentication);
+            VolunteerProfileDTO profile = volunteerProfileService.createOrUpdateProfile(request, userId);
+            return ResponseEntity.ok(profile);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
+        }
+    }
+
+    /**
+     * DEPRECATED: Legacy update endpoint (kept for compatibility)
+     * PUT /api/volunteer-profiles/me/legacy
+     */
+    @PutMapping("/me/legacy")
+    public ResponseEntity<?> updateMyProfileLegacy(@Valid @RequestBody UpdateVolunteerProfileRequest request,
+            Authentication authentication) {
+        try {
+            Long userId = getCurrentUserId(authentication);
+            
+            // Convert UpdateVolunteerProfileRequest to CreateVolunteerProfileRequest
+            CreateVolunteerProfileRequest createRequest = new CreateVolunteerProfileRequest();
+            createRequest.setFirstName(request.getFirstName());
+            createRequest.setLastName(request.getLastName());
+            createRequest.setBio(request.getBio());
+            createRequest.setLocation(request.getLocation());
+            createRequest.setPhoneNumber(request.getPhoneNumber());
+            createRequest.setProfileImageUrl(request.getProfileImageUrl());
+            createRequest.setIsAvailable(request.getIsAvailable());
+            
+            VolunteerProfileDTO profile = volunteerProfileService.createOrUpdateProfile(createRequest, userId);
+            return ResponseEntity.ok(profile);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
         }
@@ -171,22 +214,6 @@ public class VolunteerProfileController extends BaseController {
     public ResponseEntity<?> getProfileById(@PathVariable Long id) {
         try {
             VolunteerProfileDTO profile = volunteerProfileService.getProfileById(id);
-            return ResponseEntity.ok(profile);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
-        }
-    }
-
-    /**
-     * Update volunteer profile
-     * PUT /api/volunteer-profiles/me
-     */
-    @PutMapping("/me")
-    public ResponseEntity<?> updateMyProfile(@Valid @RequestBody UpdateVolunteerProfileRequest request,
-            Authentication authentication) {
-        try {
-            Long userId = getCurrentUserId(authentication);
-            VolunteerProfileDTO profile = volunteerProfileService.updateProfile(userId, request);
             return ResponseEntity.ok(profile);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
@@ -390,40 +417,6 @@ public class VolunteerProfileController extends BaseController {
     }
 
     // ==========================================
-    // HELPER METHODS
-    // ==========================================
-
-    /**
-     * Extract user ID from authentication context
-     */
-    // private Long getCurrentUserId(Authentication authentication) {
-    //     if (authentication == null || authentication.getPrincipal() == null) {
-    //         throw new RuntimeException("User not authenticated");
-    //     }
-
-    //     Object principal = authentication.getPrincipal();
-
-    //     // Handle UserDetails
-    //     if (principal instanceof UserDetails) {
-    //         UserDetails userDetails = (UserDetails) principal;
-    //         String email = userDetails.getUsername();
-
-    //         // Find user by email
-    //         User user = userRepository.findByEmail(email)
-    //                 .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
-
-    //         return user.getId();
-    //     }
-
-    //     // Fallback - extract from name if it's the user ID
-    //     try {
-    //         return Long.parseLong(authentication.getName());
-    //     } catch (NumberFormatException e) {
-    //         throw new RuntimeException("Invalid user authentication");
-    //     }
-    // }
-
-    // ==========================================
     // REQUEST CLASSES
     // ==========================================
 
@@ -525,6 +518,5 @@ public class VolunteerProfileController extends BaseController {
         public void setTimestamp(long timestamp) {
             this.timestamp = timestamp;
         }
-
     }
 }

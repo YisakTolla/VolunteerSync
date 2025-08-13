@@ -7,7 +7,6 @@ import { ensureValidToken, getCurrentUser, logoutWithCleanup } from './authServi
 
 const API_BASE_URL = 'http://localhost:8080/api';
 
-// 🔧 FIXED: Create axios instance with enhanced error handling
 const profileApi = axios.create({
   baseURL: API_BASE_URL,
   headers: {
@@ -15,10 +14,9 @@ const profileApi = axios.create({
   },
 });
 
-// 🔧 FIXED: Enhanced request interceptor that ensures valid token
+// Request interceptor
 profileApi.interceptors.request.use(async (config) => {
   try {
-    // Ensure we have a valid token before making the request
     const token = await ensureValidToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -26,14 +24,13 @@ profileApi.interceptors.request.use(async (config) => {
     return config;
   } catch (error) {
     console.error('Token validation failed in profile service:', error);
-    // If token validation fails, redirect to login
     logoutWithCleanup();
     window.location.href = '/login';
     return Promise.reject(error);
   }
 });
 
-// 🔧 FIXED: Enhanced response interceptor
+// Response interceptor
 profileApi.interceptors.response.use(
   (response) => {
     console.log('✅ Profile API Response:', response.status, response.config.url);
@@ -49,7 +46,6 @@ profileApi.interceptors.response.use(
       message: error.message
     });
 
-    // Handle authentication errors
     if (error.response?.status === 401 && !originalRequest._retry) {
       console.log('🔄 401 error in profile service, attempting token refresh...');
       
@@ -77,9 +73,6 @@ profileApi.interceptors.response.use(
 // UTILITY FUNCTIONS
 // ==========================================
 
-/**
- * Update user data in localStorage
- */
 const updateLocalUser = (updatedData) => {
   try {
     const currentUser = getCurrentUser();
@@ -96,9 +89,6 @@ const updateLocalUser = (updatedData) => {
   }
 };
 
-/**
- * Determine user type and format profile data accordingly
- */
 const formatProfileData = (profileData, userType) => {
   console.log('🔄 Formatting profile data for type:', userType);
   console.log('Raw profile data:', profileData);
@@ -142,17 +132,12 @@ const formatProfileData = (profileData, userType) => {
 };
 
 // ==========================================
-// PROFILE CREATION FUNCTIONS
+// MAIN PROFILE FUNCTIONS
 // ==========================================
 
-/**
- * 🔧 FIXED: Create initial profile during profile setup
- * @param {Object} profileData - Profile information from setup form
- * @returns {Object} - Success/error response with profile data
- */
-export async function createProfile(profileData) {
+const createOrUpdateProfile = async (profileData) => {
   try {
-    console.log('=== CREATING PROFILE ===');
+    console.log('=== CREATING OR UPDATING PROFILE ===');
     console.log('📝 Profile data received:', profileData);
 
     const user = getCurrentUser();
@@ -172,20 +157,19 @@ export async function createProfile(profileData) {
     let endpoint;
 
     if (userType === 'VOLUNTEER') {
-      endpoint = '/volunteer-profiles';
-      console.log('🙋‍♀️ Creating volunteer profile...');
-      response = await profileApi.post(endpoint, formattedData);
+      endpoint = '/volunteer-profiles/me';
+      console.log('🙋‍♀️ Creating/updating volunteer profile...');
+      response = await profileApi.put(endpoint, formattedData);
     } else if (userType === 'ORGANIZATION') {
-      endpoint = '/organization-profiles';
-      console.log('🏢 Creating organization profile...');
-      response = await profileApi.post(endpoint, formattedData);
+      endpoint = '/organization-profiles/me';
+      console.log('🏢 Creating/updating organization profile...');
+      response = await profileApi.put(endpoint, formattedData);
     } else {
       throw new Error(`Invalid user type: ${userType}`);
     }
 
-    console.log('✅ Profile creation response:', response.data);
+    console.log('✅ Profile upsert response:', response.data);
 
-    // Update local user data with profile completion
     const updatedUser = updateLocalUser({
       ...formattedData,
       profileComplete: true
@@ -195,84 +179,58 @@ export async function createProfile(profileData) {
       success: true,
       data: response.data,
       user: updatedUser,
-      message: 'Profile created successfully'
+      message: 'Profile saved successfully'
     };
 
   } catch (error) {
-    console.error('=== PROFILE CREATION ERROR - DETAILED ===');
+    console.error('=== PROFILE UPSERT ERROR - DETAILED ===');
     console.error('Error type:', error.constructor.name);
     console.error('Error message:', error.message);
     
     if (error.response) {
       console.error('Response status:', error.response.status);
       console.error('Response statusText:', error.response.statusText);
-      console.error('Response headers:', error.response.headers);
-      console.error('Response data type:', typeof error.response.data);
       console.error('Response data:', error.response.data);
       
       if (error.response.data && typeof error.response.data === 'object') {
-        console.error('Response data constructor:', error.response.data.constructor.name);
-        console.error('Response data stringified:', JSON.stringify(error.response.data));
-        
-        // Try to parse error data if it's an object
         try {
           const errorData = error.response.data;
-          console.error('Error data parsed:', errorData);
+          const finalErrorMessage = errorData.error || errorData.message || 'Unknown error occurred';
           
-          // Get all properties of the error data
-          const dataProperties = Object.keys(errorData);
-          console.error('Data properties:', dataProperties);
-          
-          // Log specific error properties
-          if (errorData.error) {
-            console.error('data.error:', errorData.error);
-          }
-          if (errorData.message) {
-            console.error('data.message:', errorData.message);
-          }
-          if (errorData.timestamp) {
-            console.error('data.timestamp:', errorData.timestamp);
-          }
-          
-          // Extract the final error message
-          const finalErrorMessage = errorData.error || errorData.message || 'Unknown error';
-          console.error('Final extracted error message:', finalErrorMessage);
-          console.error('Error details object:', errorData);
-          
+          return {
+            success: false,
+            message: finalErrorMessage,
+            details: errorData
+          };
         } catch (parseError) {
           console.error('Error parsing response data:', parseError);
         }
       }
-    } else if (error.request) {
-      console.error('Request error - no response received');
-      console.error('Request:', error.request);
-    } else {
-      console.error('Setup error:', error.message);
     }
     
     return {
       success: false,
-      message: error.response?.data?.error || error.response?.data?.message || error.message || 'Failed to create profile',
-      details: error.response?.data,
-      status: error.response?.status,
-      statusText: error.response?.statusText || ''
+      message: error.response?.data?.error || 
+               error.response?.data?.message || 
+               error.message || 
+               'Failed to save profile'
     };
   }
-}
+};
 
-// ==========================================
-// PROFILE UPDATE FUNCTIONS
-// ==========================================
+const createProfile = async (profileData) => {
+  console.log('=== LEGACY CREATE PROFILE - REDIRECTING TO UPSERT ===');
+  return createOrUpdateProfile(profileData);
+};
 
-/**
- * Update existing profile (from Profile page or Settings)
- * @param {Object} updatedData - Updated profile information
- * @returns {Object} - Success/error response with updated profile data
- */
-export async function updateProfile(updatedData) {
+const updateProfile = async (profileData) => {
+  console.log('=== UPDATING PROFILE (USING UPSERT) ===');
+  return createOrUpdateProfile(profileData);
+};
+
+const checkProfileExists = async () => {
   try {
-    console.log('=== UPDATING PROFILE ===');
-    console.log('Updated data:', updatedData);
+    console.log('=== CHECKING PROFILE EXISTS ===');
 
     const user = getCurrentUser();
     if (!user) {
@@ -280,54 +238,42 @@ export async function updateProfile(updatedData) {
     }
 
     const userType = user.userType;
-    const formattedData = formatProfileData(updatedData, userType);
-
-    console.log('Formatted update data:', formattedData);
-
     let response;
 
     if (userType === 'VOLUNTEER') {
-      // Update volunteer profile
-      response = await profileApi.put('/volunteer-profiles/me', formattedData);
+      response = await profileApi.get('/volunteer-profiles/me');
     } else if (userType === 'ORGANIZATION') {
-      // Update organization profile
-      response = await profileApi.put('/organization-profiles/me', formattedData);
+      response = await profileApi.get('/organization-profiles/me');
     } else {
       throw new Error('Invalid user type');
     }
 
-    console.log('Profile update response:', response.data);
-
-    // Update local user data
-    const updatedUser = updateLocalUser(formattedData);
-
     return {
       success: true,
-      data: response.data,
-      user: updatedUser,
-      message: 'Profile updated successfully'
+      exists: true,
+      data: response.data
     };
 
   } catch (error) {
-    console.error('=== PROFILE UPDATE ERROR ===');
+    if (error.response?.status === 404 || 
+        error.response?.data?.message?.includes('not found')) {
+      return {
+        success: true,
+        exists: false
+      };
+    }
+    
+    console.error('=== PROFILE EXISTENCE CHECK ERROR ===');
     console.error('Error:', error.response?.data || error.message);
     
     return {
       success: false,
-      message: error.response?.data?.error || error.response?.data?.message || error.message || 'Failed to update profile'
+      message: error.response?.data?.error || error.response?.data?.message || error.message || 'Failed to check profile'
     };
   }
-}
+};
 
-// ==========================================
-// PROFILE FETCHING FUNCTIONS
-// ==========================================
-
-/**
- * Fetch current user's complete profile
- * @returns {Object} - Success/error response with profile data
- */
-export async function fetchMyProfile() {
+const fetchMyProfile = async () => {
   try {
     console.log('=== FETCHING PROFILE ===');
 
@@ -340,10 +286,8 @@ export async function fetchMyProfile() {
     let response;
 
     if (userType === 'VOLUNTEER') {
-      // Fetch volunteer profile
       response = await profileApi.get('/volunteer-profiles/me');
     } else if (userType === 'ORGANIZATION') {
-      // Fetch organization profile
       response = await profileApi.get('/organization-profiles/me');
     } else {
       throw new Error('Invalid user type');
@@ -351,7 +295,6 @@ export async function fetchMyProfile() {
 
     console.log('Profile fetch response:', response.data);
 
-    // Update local user data with fetched profile
     const updatedUser = updateLocalUser(response.data);
 
     return {
@@ -369,15 +312,9 @@ export async function fetchMyProfile() {
       message: error.response?.data?.error || error.response?.data?.message || error.message || 'Failed to fetch profile'
     };
   }
-}
+};
 
-/**
- * Fetch public profile by user ID
- * @param {number} userId - User ID to fetch profile for
- * @param {string} userType - Type of user (VOLUNTEER/ORGANIZATION)
- * @returns {Object} - Success/error response with profile data
- */
-export async function fetchPublicProfile(userId, userType) {
+const fetchPublicProfile = async (userId, userType) => {
   try {
     console.log('=== FETCHING PUBLIC PROFILE ===');
     console.log('User ID:', userId, 'Type:', userType);
@@ -408,19 +345,9 @@ export async function fetchPublicProfile(userId, userType) {
       message: error.response?.data?.error || error.response?.data?.message || error.message || 'Failed to fetch profile'
     };
   }
-}
+};
 
-// ==========================================
-// IMAGE UPLOAD FUNCTIONS
-// ==========================================
-
-/**
- * Upload profile image
- * @param {File} imageFile - Image file to upload
- * @param {string} imageType - Type of image ('profile' or 'cover')
- * @returns {Object} - Success/error response with image URL
- */
-export async function uploadProfileImage(imageFile, imageType = 'profile') {
+const uploadProfileImage = async (imageFile, imageType = 'profile') => {
   try {
     console.log('=== UPLOADING PROFILE IMAGE ===');
     console.log('Image file:', imageFile);
@@ -430,7 +357,6 @@ export async function uploadProfileImage(imageFile, imageType = 'profile') {
       throw new Error('No image file provided');
     }
 
-    // Create FormData for file upload
     const formData = new FormData();
     formData.append('image', imageFile);
     formData.append('type', imageType);
@@ -440,7 +366,6 @@ export async function uploadProfileImage(imageFile, imageType = 'profile') {
       throw new Error('User not logged in');
     }
 
-    // Upload image
     const response = await profileApi.post('/upload/profile-image', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
@@ -449,7 +374,6 @@ export async function uploadProfileImage(imageFile, imageType = 'profile') {
 
     console.log('Image upload response:', response.data);
 
-    // Update local user data with new image URL
     const imageUrlField = imageType === 'cover' ? 'coverImageUrl' : 'profileImageUrl';
     const updatedUser = updateLocalUser({
       [imageUrlField]: response.data.imageUrl
@@ -471,17 +395,9 @@ export async function uploadProfileImage(imageFile, imageType = 'profile') {
       message: error.response?.data?.error || error.response?.data?.message || error.message || 'Failed to upload image'
     };
   }
-}
+};
 
-// ==========================================
-// PROFILE STATISTICS FUNCTIONS
-// ==========================================
-
-/**
- * Fetch profile statistics (volunteer hours, events, etc.)
- * @returns {Object} - Success/error response with statistics
- */
-export async function fetchProfileStats() {
+const fetchProfileStats = async () => {
   try {
     console.log('=== FETCHING PROFILE STATS ===');
 
@@ -494,10 +410,8 @@ export async function fetchProfileStats() {
     let response;
 
     if (userType === 'VOLUNTEER') {
-      // Fetch volunteer statistics
       response = await profileApi.get('/volunteer-profiles/me/stats');
     } else if (userType === 'ORGANIZATION') {
-      // Fetch organization statistics
       response = await profileApi.get('/organization-profiles/me/stats');
     } else {
       throw new Error('Invalid user type');
@@ -519,17 +433,9 @@ export async function fetchProfileStats() {
       message: error.response?.data?.error || error.response?.data?.message || error.message || 'Failed to fetch statistics'
     };
   }
-}
+};
 
-// ==========================================
-// PROFILE DELETION FUNCTIONS
-// ==========================================
-
-/**
- * Delete user profile (soft delete)
- * @returns {Object} - Success/error response
- */
-export async function deleteProfile() {
+const deleteProfile = async () => {
   try {
     console.log('=== DELETING PROFILE ===');
 
@@ -548,7 +454,6 @@ export async function deleteProfile() {
       throw new Error('Invalid user type');
     }
 
-    // Clear local storage
     logoutWithCleanup();
 
     return {
@@ -565,22 +470,32 @@ export async function deleteProfile() {
       message: error.response?.data?.error || error.response?.data?.message || error.message || 'Failed to delete profile'
     };
   }
-}
+};
 
 // ==========================================
-// UTILITY EXPORTS
+// EXPORTS - NO DUPLICATES
 // ==========================================
 
 export {
+  createOrUpdateProfile,
+  createProfile,
+  updateProfile,
+  checkProfileExists,
+  fetchMyProfile,
+  fetchPublicProfile,
+  uploadProfileImage,
+  fetchProfileStats,
+  deleteProfile,
   getCurrentUser,
   updateLocalUser,
   formatProfileData
 };
 
-// Default export
 export default {
+  createOrUpdateProfile,
   createProfile,
   updateProfile,
+  checkProfileExists,
   fetchMyProfile,
   fetchPublicProfile,
   uploadProfileImage,

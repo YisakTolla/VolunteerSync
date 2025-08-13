@@ -30,8 +30,10 @@ import java.util.HashMap;
 import java.util.stream.Collectors;
 
 /**
- * Organization Profile service - handles organization profile management and operations
- * Manages organization profiles, search, verification, statistics, and enhanced filtering
+ * Organization Profile service - handles organization profile management and
+ * operations
+ * Manages organization profiles, search, verification, statistics, and enhanced
+ * filtering
  */
 @Service
 @Transactional
@@ -39,13 +41,13 @@ public class OrganizationProfileService {
 
     @Autowired
     private OrganizationProfileRepository organizationProfileRepository;
-    
+
     @Autowired
     private UserRepository userRepository;
-    
+
     @Autowired
     private EventRepository eventRepository;
-    
+
     @Autowired
     private ApplicationRepository applicationRepository;
 
@@ -54,47 +56,158 @@ public class OrganizationProfileService {
     // ==========================================
 
     /**
-     * Create new organization profile
+     * Create or update organization profile (UPSERT)
+     * This method handles both profile creation and updates in a single endpoint
      */
-    public OrganizationProfileDTO createProfile(CreateOrganizationProfileRequest request, Long userId) {
-        System.out.println("Creating organization profile for user ID: " + userId);
-        
+    public OrganizationProfileDTO createOrUpdateProfile(CreateOrganizationProfileRequest request, Long userId) {
+        System.out.println("Creating or updating organization profile for user ID: " + userId);
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        
+
         if (user.getUserType() != UserType.ORGANIZATION) {
             throw new RuntimeException("User must be of type ORGANIZATION to create organization profile");
         }
-        
-        if (organizationProfileRepository.existsByUserId(userId)) {
-            throw new RuntimeException("Organization profile already exists for this user");
+
+        // Check if profile already exists
+        Optional<OrganizationProfile> existingProfile = organizationProfileRepository.findByUserId(userId);
+
+        OrganizationProfile profile;
+        boolean isUpdate = false;
+
+        if (existingProfile.isPresent()) {
+            // Update existing profile
+            profile = existingProfile.get();
+            isUpdate = true;
+            System.out.println("Updating existing organization profile with ID: " + profile.getId());
+
+            // Update all fields - use request values or keep existing if null
+            profile.setOrganizationName(request.getOrganizationName() != null ? request.getOrganizationName()
+                    : profile.getOrganizationName());
+            profile.setDescription(
+                    request.getDescription() != null ? request.getDescription() : profile.getDescription());
+            profile.setMissionStatement(request.getMissionStatement() != null ? request.getMissionStatement()
+                    : profile.getMissionStatement());
+            profile.setWebsite(request.getWebsite() != null ? request.getWebsite() : profile.getWebsite());
+            profile.setPhoneNumber(
+                    request.getPhoneNumber() != null ? request.getPhoneNumber() : profile.getPhoneNumber());
+            profile.setAddress(request.getAddress() != null ? request.getAddress() : profile.getAddress());
+            profile.setCity(request.getCity() != null ? request.getCity() : profile.getCity());
+            profile.setState(request.getState() != null ? request.getState() : profile.getState());
+            profile.setZipCode(request.getZipCode() != null ? request.getZipCode() : profile.getZipCode());
+            profile.setCountry(request.getCountry() != null ? request.getCountry() : profile.getCountry());
+            profile.setProfileImageUrl(
+                    request.getProfileImageUrl() != null ? request.getProfileImageUrl() : profile.getProfileImageUrl());
+            profile.setCategories(request.getCategories() != null ? request.getCategories() : profile.getCategories());
+            profile.setPrimaryCategory(
+                    request.getPrimaryCategory() != null ? request.getPrimaryCategory() : profile.getPrimaryCategory());
+            profile.setOrganizationType(request.getOrganizationType() != null ? request.getOrganizationType()
+                    : profile.getOrganizationType());
+            profile.setOrganizationSize(request.getOrganizationSize() != null ? request.getOrganizationSize()
+                    : profile.getOrganizationSize());
+            profile.setEmployeeCount(
+                    request.getEmployeeCount() != null ? request.getEmployeeCount() : profile.getEmployeeCount());
+            profile.setLanguagesSupported(request.getLanguagesSupported() != null ? request.getLanguagesSupported()
+                    : profile.getLanguagesSupported());
+            profile.setFoundedYear(
+                    request.getFoundedYear() != null ? request.getFoundedYear() : profile.getFoundedYear());
+            profile.setTaxExemptStatus(
+                    request.getTaxExemptStatus() != null ? request.getTaxExemptStatus() : profile.getTaxExemptStatus());
+            profile.setUpdatedAt(LocalDateTime.now());
+
+        } else {
+            // Create new profile
+            System.out.println("Creating new organization profile");
+            profile = new OrganizationProfile();
+            profile.setUser(user);
+            profile.setOrganizationName(request.getOrganizationName());
+            profile.setDescription(request.getDescription());
+            profile.setMissionStatement(request.getMissionStatement());
+            profile.setWebsite(request.getWebsite());
+            profile.setPhoneNumber(request.getPhoneNumber());
+            profile.setAddress(request.getAddress());
+            profile.setCity(request.getCity());
+            profile.setState(request.getState());
+            profile.setZipCode(request.getZipCode());
+            profile.setCountry(request.getCountry() != null ? request.getCountry() : "United States");
+            profile.setProfileImageUrl(request.getProfileImageUrl());
+            profile.setCategories(request.getCategories());
+            profile.setPrimaryCategory(request.getPrimaryCategory());
+            profile.setOrganizationType(request.getOrganizationType());
+            profile.setOrganizationSize(request.getOrganizationSize());
+            profile.setEmployeeCount(request.getEmployeeCount());
+            profile.setLanguagesSupported(request.getLanguagesSupported());
+            profile.setFoundedYear(request.getFoundedYear());
+            profile.setTaxExemptStatus(request.getTaxExemptStatus());
+            profile.setVerificationLevel("Unverified");
+            profile.setCreatedAt(LocalDateTime.now());
+            profile.setUpdatedAt(LocalDateTime.now());
         }
 
-        OrganizationProfile profile = new OrganizationProfile();
-        profile.setUser(user);
-        profile.setOrganizationName(request.getOrganizationName());
-        profile.setDescription(request.getDescription());
-        profile.setMissionStatement(request.getMissionStatement());
-        profile.setWebsite(request.getWebsite());
-        profile.setPhoneNumber(request.getPhoneNumber());
-        profile.setAddress(request.getAddress());
-        profile.setCity(request.getCity());
-        profile.setState(request.getState());
-        profile.setZipCode(request.getZipCode());
-        profile.setCountry(request.getCountry() != null ? request.getCountry() : "United States");
-        profile.setProfileImageUrl(request.getProfileImageUrl());
-        profile.setCategories(request.getCategories());
-        profile.setPrimaryCategory(request.getPrimaryCategory());
-        profile.setOrganizationType(request.getOrganizationType());
-        profile.setOrganizationSize(request.getOrganizationSize());
-        profile.setEmployeeCount(request.getEmployeeCount());
-        profile.setLanguagesSupported(request.getLanguagesSupported());
-        profile.setFoundedYear(request.getFoundedYear());
-        profile.setTaxExemptStatus(request.getTaxExemptStatus());
-        profile.setVerificationLevel("Unverified");
-
         OrganizationProfile savedProfile = organizationProfileRepository.save(profile);
+
+        if (isUpdate) {
+            System.out.println("Organization profile updated successfully with ID: " + savedProfile.getId());
+        } else {
+            System.out.println("Organization profile created successfully with ID: " + savedProfile.getId());
+        }
+
         return convertToDTO(savedProfile);
+    }
+
+    // /**
+    // * Create new organization profile
+    // */
+    // public OrganizationProfileDTO createProfile(CreateOrganizationProfileRequest
+    // request, Long userId) {
+    // System.out.println("Creating organization profile for user ID: " + userId);
+
+    // User user = userRepository.findById(userId)
+    // .orElseThrow(() -> new RuntimeException("User not found"));
+
+    // if (user.getUserType() != UserType.ORGANIZATION) {
+    // throw new RuntimeException("User must be of type ORGANIZATION to create
+    // organization profile");
+    // }
+
+    // if (organizationProfileRepository.existsByUserId(userId)) {
+    // throw new RuntimeException("Organization profile already exists for this
+    // user");
+    // }
+
+    // OrganizationProfile profile = new OrganizationProfile();
+    // profile.setUser(user);
+    // profile.setOrganizationName(request.getOrganizationName());
+    // profile.setDescription(request.getDescription());
+    // profile.setMissionStatement(request.getMissionStatement());
+    // profile.setWebsite(request.getWebsite());
+    // profile.setPhoneNumber(request.getPhoneNumber());
+    // profile.setAddress(request.getAddress());
+    // profile.setCity(request.getCity());
+    // profile.setState(request.getState());
+    // profile.setZipCode(request.getZipCode());
+    // profile.setCountry(request.getCountry() != null ? request.getCountry() :
+    // "United States");
+    // profile.setProfileImageUrl(request.getProfileImageUrl());
+    // profile.setCategories(request.getCategories());
+    // profile.setPrimaryCategory(request.getPrimaryCategory());
+    // profile.setOrganizationType(request.getOrganizationType());
+    // profile.setOrganizationSize(request.getOrganizationSize());
+    // profile.setEmployeeCount(request.getEmployeeCount());
+    // profile.setLanguagesSupported(request.getLanguagesSupported());
+    // profile.setFoundedYear(request.getFoundedYear());
+    // profile.setTaxExemptStatus(request.getTaxExemptStatus());
+    // profile.setVerificationLevel("Unverified");
+
+    // OrganizationProfile savedProfile =
+    // organizationProfileRepository.save(profile);
+    // return convertToDTO(savedProfile);
+    // }
+
+    // Keep the original createProfile method for backward compatibility
+    public OrganizationProfileDTO createProfile(CreateOrganizationProfileRequest request, Long userId) {
+        System.out.println("Legacy createProfile called - redirecting to createOrUpdateProfile");
+        return createOrUpdateProfile(request, userId);
     }
 
     /**
@@ -234,13 +347,12 @@ public class OrganizationProfileService {
                 request.getCountry(),
                 request.getOrganizationSize(),
                 request.getIsVerified(),
-                pageable
-        );
-        
+                pageable);
+
         List<OrganizationProfileDTO> dtos = profiles.getContent().stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
-        
+
         return new PageImpl<>(dtos, pageable, profiles.getTotalElements());
     }
 
@@ -261,13 +373,12 @@ public class OrganizationProfileService {
                 request.getVerificationType(),
                 request.getOrganizationType(),
                 request.getSortBy(),
-                pageable
-        );
-        
+                pageable);
+
         List<OrganizationProfileDTO> dtos = profiles.getContent().stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
-        
+
         return new PageImpl<>(dtos, pageable, profiles.getTotalElements());
     }
 
@@ -333,7 +444,7 @@ public class OrganizationProfileService {
     /**
      * Update verification status (Admin only)
      */
-    public OrganizationProfileDTO updateVerificationStatus(Long profileId, String verificationLevel, 
+    public OrganizationProfileDTO updateVerificationStatus(Long profileId, String verificationLevel,
             Boolean isVerified, String adminUserId) {
         OrganizationProfile profile = organizationProfileRepository.findById(profileId)
                 .orElseThrow(() -> new RuntimeException("Organization profile not found"));
@@ -434,9 +545,9 @@ public class OrganizationProfileService {
     public OrganizationStatsResponse getOrganizationStatistics() {
         Object[] comprehensiveStats = organizationProfileRepository.getComprehensiveStatistics();
         Object[] verificationStats = organizationProfileRepository.getVerificationStatistics();
-        
+
         OrganizationStatsResponse response = new OrganizationStatsResponse();
-        
+
         if (comprehensiveStats.length > 0) {
             Object[] stats = comprehensiveStats;
             response.setTotalOrganizations(getLongValue(stats[0]));
@@ -495,13 +606,13 @@ public class OrganizationProfileService {
      */
     public ProfileCompletionStats getProfileCompletionStats() {
         long totalProfiles = organizationProfileRepository.count();
-        
+
         ProfileCompletionStats stats = new ProfileCompletionStats();
         stats.setTotalProfiles(totalProfiles);
         stats.setCompleteProfiles(0L); // Calculate based on your completion criteria
         stats.setIncompleteProfiles(totalProfiles);
         stats.setCompletionRate(0.0); // Calculate based on complete/total
-        
+
         return stats;
     }
 
@@ -521,7 +632,7 @@ public class OrganizationProfileService {
         stats.setApplicationsReceived(0L); // Calculate from applications
         stats.setVerificationLevel(profile.getVerificationLevel());
         stats.setIsVerified(profile.getIsVerified());
-        
+
         return stats;
     }
 
@@ -556,8 +667,9 @@ public class OrganizationProfileService {
         // This is a simplified implementation
         // In a real scenario, you'd implement more sophisticated duplicate detection
         List<List<OrganizationProfileDTO>> duplicateGroups = new ArrayList<>();
-        
-        // For now, return empty list - implement based on your duplicate detection logic
+
+        // For now, return empty list - implement based on your duplicate detection
+        // logic
         return duplicateGroups;
     }
 
@@ -570,7 +682,7 @@ public class OrganizationProfileService {
      */
     private OrganizationProfileDTO convertToDTO(OrganizationProfile profile) {
         OrganizationProfileDTO dto = new OrganizationProfileDTO();
-        
+
         dto.setId(profile.getId());
         dto.setUserId(profile.getUser().getId());
         dto.setOrganizationName(profile.getOrganizationName());
@@ -588,7 +700,7 @@ public class OrganizationProfileService {
         dto.setTotalVolunteersServed(profile.getTotalVolunteersServed());
         dto.setCreatedAt(profile.getCreatedAt());
         dto.setUpdatedAt(profile.getUpdatedAt());
-        
+
         // New enhanced fields
         dto.setCategories(profile.getCategories());
         dto.setPrimaryCategory(profile.getPrimaryCategory());
@@ -600,7 +712,7 @@ public class OrganizationProfileService {
         dto.setFoundedYear(profile.getFoundedYear());
         dto.setTaxExemptStatus(profile.getTaxExemptStatus());
         dto.setVerificationLevel(profile.getVerificationLevel());
-        
+
         // Set additional DTO fields
         dto.setCoverImageUrl(profile.getCoverImageUrl());
         dto.setServices(profile.getServicesList());
@@ -609,13 +721,13 @@ public class OrganizationProfileService {
         dto.setFundingRaised(profile.getFundingRaised());
         dto.setEin(profile.getEin());
         dto.setFounded(profile.getFounded());
-        
+
         // Set mock data for fields not in entity
         dto.setAchievements(getMockAchievements());
         dto.setPartnerships(getMockPartnerships());
         dto.setVolunteers(getMockVolunteers());
         dto.setRecentActivity(getMockRecentActivity());
-        
+
         return dto;
     }
 
@@ -623,10 +735,14 @@ public class OrganizationProfileService {
      * Helper method to safely convert Object to Long
      */
     private Long getLongValue(Object value) {
-        if (value == null) return 0L;
-        if (value instanceof Long) return (Long) value;
-        if (value instanceof Integer) return ((Integer) value).longValue();
-        if (value instanceof Number) return ((Number) value).longValue();
+        if (value == null)
+            return 0L;
+        if (value instanceof Long)
+            return (Long) value;
+        if (value instanceof Integer)
+            return ((Integer) value).longValue();
+        if (value instanceof Number)
+            return ((Number) value).longValue();
         return 0L;
     }
 
@@ -635,8 +751,10 @@ public class OrganizationProfileService {
      */
     private List<OrganizationProfileDTO.Achievement> getMockAchievements() {
         List<OrganizationProfileDTO.Achievement> achievements = new ArrayList<>();
-        achievements.add(new OrganizationProfileDTO.Achievement(1L, "Verified Organization", "✅", "Background checked and verified"));
-        achievements.add(new OrganizationProfileDTO.Achievement(2L, "Top Rated", "⭐", "4.9/5 volunteer satisfaction rating"));
+        achievements.add(new OrganizationProfileDTO.Achievement(1L, "Verified Organization", "✅",
+                "Background checked and verified"));
+        achievements.add(
+                new OrganizationProfileDTO.Achievement(2L, "Top Rated", "⭐", "4.9/5 volunteer satisfaction rating"));
         return achievements;
     }
 
@@ -645,8 +763,10 @@ public class OrganizationProfileService {
      */
     private List<OrganizationProfileDTO.Partnership> getMockPartnerships() {
         List<OrganizationProfileDTO.Partnership> partnerships = new ArrayList<>();
-        partnerships.add(new OrganizationProfileDTO.Partnership(1L, "City Parks Department", "Government Partner", "Jan 2022", "🏛️"));
-        partnerships.add(new OrganizationProfileDTO.Partnership(2L, "Green Tech Solutions", "Corporate Sponsor", "Mar 2023", "💼"));
+        partnerships.add(new OrganizationProfileDTO.Partnership(1L, "City Parks Department", "Government Partner",
+                "Jan 2022", "🏛️"));
+        partnerships.add(new OrganizationProfileDTO.Partnership(2L, "Green Tech Solutions", "Corporate Sponsor",
+                "Mar 2023", "💼"));
         return partnerships;
     }
 
@@ -656,7 +776,8 @@ public class OrganizationProfileService {
     private List<OrganizationProfileDTO.VolunteerSummary> getMockVolunteers() {
         List<OrganizationProfileDTO.VolunteerSummary> volunteers = new ArrayList<>();
         volunteers.add(new OrganizationProfileDTO.VolunteerSummary(1L, "Sarah Chen", "Team Leader", 156, "SC"));
-        volunteers.add(new OrganizationProfileDTO.VolunteerSummary(2L, "Marcus Rodriguez", "Event Coordinator", 142, "MR"));
+        volunteers.add(
+                new OrganizationProfileDTO.VolunteerSummary(2L, "Marcus Rodriguez", "Event Coordinator", 142, "MR"));
         return volunteers;
     }
 
@@ -665,8 +786,10 @@ public class OrganizationProfileService {
      */
     private List<OrganizationProfileDTO.ActivityEntry> getMockRecentActivity() {
         List<OrganizationProfileDTO.ActivityEntry> activity = new ArrayList<>();
-        activity.add(new OrganizationProfileDTO.ActivityEntry(1L, "event", "Hosted River Cleanup Event", "3 days ago", 45));
-        activity.add(new OrganizationProfileDTO.ActivityEntry(2L, "volunteer", "Welcome new volunteer: Alex Johnson", "1 week ago", null));
+        activity.add(
+                new OrganizationProfileDTO.ActivityEntry(1L, "event", "Hosted River Cleanup Event", "3 days ago", 45));
+        activity.add(new OrganizationProfileDTO.ActivityEntry(2L, "volunteer", "Welcome new volunteer: Alex Johnson",
+                "1 week ago", null));
         return activity;
     }
 
@@ -694,46 +817,159 @@ public class OrganizationProfileService {
         private String languagesSupported;
         private Integer foundedYear;
         private String taxExemptStatus;
-        
+
         // Getters and setters
-        public String getOrganizationName() { return organizationName; }
-        public void setOrganizationName(String organizationName) { this.organizationName = organizationName; }
-        public String getDescription() { return description; }
-        public void setDescription(String description) { this.description = description; }
-        public String getMissionStatement() { return missionStatement; }
-        public void setMissionStatement(String missionStatement) { this.missionStatement = missionStatement; }
-        public String getWebsite() { return website; }
-        public void setWebsite(String website) { this.website = website; }
-        public String getPhoneNumber() { return phoneNumber; }
-        public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
-        public String getAddress() { return address; }
-        public void setAddress(String address) { this.address = address; }
-        public String getCity() { return city; }
-        public void setCity(String city) { this.city = city; }
-        public String getState() { return state; }
-        public void setState(String state) { this.state = state; }
-        public String getZipCode() { return zipCode; }
-        public void setZipCode(String zipCode) { this.zipCode = zipCode; }
-        public String getCountry() { return country; }
-        public void setCountry(String country) { this.country = country; }
-        public String getProfileImageUrl() { return profileImageUrl; }
-        public void setProfileImageUrl(String profileImageUrl) { this.profileImageUrl = profileImageUrl; }
-        public String getCategories() { return categories; }
-        public void setCategories(String categories) { this.categories = categories; }
-        public String getPrimaryCategory() { return primaryCategory; }
-        public void setPrimaryCategory(String primaryCategory) { this.primaryCategory = primaryCategory; }
-        public String getOrganizationType() { return organizationType; }
-        public void setOrganizationType(String organizationType) { this.organizationType = organizationType; }
-        public String getOrganizationSize() { return organizationSize; }
-        public void setOrganizationSize(String organizationSize) { this.organizationSize = organizationSize; }
-        public Integer getEmployeeCount() { return employeeCount; }
-        public void setEmployeeCount(Integer employeeCount) { this.employeeCount = employeeCount; }
-        public String getLanguagesSupported() { return languagesSupported; }
-        public void setLanguagesSupported(String languagesSupported) { this.languagesSupported = languagesSupported; }
-        public Integer getFoundedYear() { return foundedYear; }
-        public void setFoundedYear(Integer foundedYear) { this.foundedYear = foundedYear; }
-        public String getTaxExemptStatus() { return taxExemptStatus; }
-        public void setTaxExemptStatus(String taxExemptStatus) { this.taxExemptStatus = taxExemptStatus; }
+        public String getOrganizationName() {
+            return organizationName;
+        }
+
+        public void setOrganizationName(String organizationName) {
+            this.organizationName = organizationName;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+
+        public void setDescription(String description) {
+            this.description = description;
+        }
+
+        public String getMissionStatement() {
+            return missionStatement;
+        }
+
+        public void setMissionStatement(String missionStatement) {
+            this.missionStatement = missionStatement;
+        }
+
+        public String getWebsite() {
+            return website;
+        }
+
+        public void setWebsite(String website) {
+            this.website = website;
+        }
+
+        public String getPhoneNumber() {
+            return phoneNumber;
+        }
+
+        public void setPhoneNumber(String phoneNumber) {
+            this.phoneNumber = phoneNumber;
+        }
+
+        public String getAddress() {
+            return address;
+        }
+
+        public void setAddress(String address) {
+            this.address = address;
+        }
+
+        public String getCity() {
+            return city;
+        }
+
+        public void setCity(String city) {
+            this.city = city;
+        }
+
+        public String getState() {
+            return state;
+        }
+
+        public void setState(String state) {
+            this.state = state;
+        }
+
+        public String getZipCode() {
+            return zipCode;
+        }
+
+        public void setZipCode(String zipCode) {
+            this.zipCode = zipCode;
+        }
+
+        public String getCountry() {
+            return country;
+        }
+
+        public void setCountry(String country) {
+            this.country = country;
+        }
+
+        public String getProfileImageUrl() {
+            return profileImageUrl;
+        }
+
+        public void setProfileImageUrl(String profileImageUrl) {
+            this.profileImageUrl = profileImageUrl;
+        }
+
+        public String getCategories() {
+            return categories;
+        }
+
+        public void setCategories(String categories) {
+            this.categories = categories;
+        }
+
+        public String getPrimaryCategory() {
+            return primaryCategory;
+        }
+
+        public void setPrimaryCategory(String primaryCategory) {
+            this.primaryCategory = primaryCategory;
+        }
+
+        public String getOrganizationType() {
+            return organizationType;
+        }
+
+        public void setOrganizationType(String organizationType) {
+            this.organizationType = organizationType;
+        }
+
+        public String getOrganizationSize() {
+            return organizationSize;
+        }
+
+        public void setOrganizationSize(String organizationSize) {
+            this.organizationSize = organizationSize;
+        }
+
+        public Integer getEmployeeCount() {
+            return employeeCount;
+        }
+
+        public void setEmployeeCount(Integer employeeCount) {
+            this.employeeCount = employeeCount;
+        }
+
+        public String getLanguagesSupported() {
+            return languagesSupported;
+        }
+
+        public void setLanguagesSupported(String languagesSupported) {
+            this.languagesSupported = languagesSupported;
+        }
+
+        public Integer getFoundedYear() {
+            return foundedYear;
+        }
+
+        public void setFoundedYear(Integer foundedYear) {
+            this.foundedYear = foundedYear;
+        }
+
+        public String getTaxExemptStatus() {
+            return taxExemptStatus;
+        }
+
+        public void setTaxExemptStatus(String taxExemptStatus) {
+            this.taxExemptStatus = taxExemptStatus;
+        }
     }
 
     public static class UpdateOrganizationProfileRequest {
@@ -756,46 +992,159 @@ public class OrganizationProfileService {
         private String languagesSupported;
         private Integer foundedYear;
         private String taxExemptStatus;
-        
+
         // Getters and setters (same as CreateOrganizationProfileRequest)
-        public String getOrganizationName() { return organizationName; }
-        public void setOrganizationName(String organizationName) { this.organizationName = organizationName; }
-        public String getDescription() { return description; }
-        public void setDescription(String description) { this.description = description; }
-        public String getMissionStatement() { return missionStatement; }
-        public void setMissionStatement(String missionStatement) { this.missionStatement = missionStatement; }
-        public String getWebsite() { return website; }
-        public void setWebsite(String website) { this.website = website; }
-        public String getPhoneNumber() { return phoneNumber; }
-        public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
-        public String getAddress() { return address; }
-        public void setAddress(String address) { this.address = address; }
-        public String getCity() { return city; }
-        public void setCity(String city) { this.city = city; }
-        public String getState() { return state; }
-        public void setState(String state) { this.state = state; }
-        public String getZipCode() { return zipCode; }
-        public void setZipCode(String zipCode) { this.zipCode = zipCode; }
-        public String getCountry() { return country; }
-        public void setCountry(String country) { this.country = country; }
-        public String getProfileImageUrl() { return profileImageUrl; }
-        public void setProfileImageUrl(String profileImageUrl) { this.profileImageUrl = profileImageUrl; }
-        public String getCategories() { return categories; }
-        public void setCategories(String categories) { this.categories = categories; }
-        public String getPrimaryCategory() { return primaryCategory; }
-        public void setPrimaryCategory(String primaryCategory) { this.primaryCategory = primaryCategory; }
-        public String getOrganizationType() { return organizationType; }
-        public void setOrganizationType(String organizationType) { this.organizationType = organizationType; }
-        public String getOrganizationSize() { return organizationSize; }
-        public void setOrganizationSize(String organizationSize) { this.organizationSize = organizationSize; }
-        public Integer getEmployeeCount() { return employeeCount; }
-        public void setEmployeeCount(Integer employeeCount) { this.employeeCount = employeeCount; }
-        public String getLanguagesSupported() { return languagesSupported; }
-        public void setLanguagesSupported(String languagesSupported) { this.languagesSupported = languagesSupported; }
-        public Integer getFoundedYear() { return foundedYear; }
-        public void setFoundedYear(Integer foundedYear) { this.foundedYear = foundedYear; }
-        public String getTaxExemptStatus() { return taxExemptStatus; }
-        public void setTaxExemptStatus(String taxExemptStatus) { this.taxExemptStatus = taxExemptStatus; }
+        public String getOrganizationName() {
+            return organizationName;
+        }
+
+        public void setOrganizationName(String organizationName) {
+            this.organizationName = organizationName;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+
+        public void setDescription(String description) {
+            this.description = description;
+        }
+
+        public String getMissionStatement() {
+            return missionStatement;
+        }
+
+        public void setMissionStatement(String missionStatement) {
+            this.missionStatement = missionStatement;
+        }
+
+        public String getWebsite() {
+            return website;
+        }
+
+        public void setWebsite(String website) {
+            this.website = website;
+        }
+
+        public String getPhoneNumber() {
+            return phoneNumber;
+        }
+
+        public void setPhoneNumber(String phoneNumber) {
+            this.phoneNumber = phoneNumber;
+        }
+
+        public String getAddress() {
+            return address;
+        }
+
+        public void setAddress(String address) {
+            this.address = address;
+        }
+
+        public String getCity() {
+            return city;
+        }
+
+        public void setCity(String city) {
+            this.city = city;
+        }
+
+        public String getState() {
+            return state;
+        }
+
+        public void setState(String state) {
+            this.state = state;
+        }
+
+        public String getZipCode() {
+            return zipCode;
+        }
+
+        public void setZipCode(String zipCode) {
+            this.zipCode = zipCode;
+        }
+
+        public String getCountry() {
+            return country;
+        }
+
+        public void setCountry(String country) {
+            this.country = country;
+        }
+
+        public String getProfileImageUrl() {
+            return profileImageUrl;
+        }
+
+        public void setProfileImageUrl(String profileImageUrl) {
+            this.profileImageUrl = profileImageUrl;
+        }
+
+        public String getCategories() {
+            return categories;
+        }
+
+        public void setCategories(String categories) {
+            this.categories = categories;
+        }
+
+        public String getPrimaryCategory() {
+            return primaryCategory;
+        }
+
+        public void setPrimaryCategory(String primaryCategory) {
+            this.primaryCategory = primaryCategory;
+        }
+
+        public String getOrganizationType() {
+            return organizationType;
+        }
+
+        public void setOrganizationType(String organizationType) {
+            this.organizationType = organizationType;
+        }
+
+        public String getOrganizationSize() {
+            return organizationSize;
+        }
+
+        public void setOrganizationSize(String organizationSize) {
+            this.organizationSize = organizationSize;
+        }
+
+        public Integer getEmployeeCount() {
+            return employeeCount;
+        }
+
+        public void setEmployeeCount(Integer employeeCount) {
+            this.employeeCount = employeeCount;
+        }
+
+        public String getLanguagesSupported() {
+            return languagesSupported;
+        }
+
+        public void setLanguagesSupported(String languagesSupported) {
+            this.languagesSupported = languagesSupported;
+        }
+
+        public Integer getFoundedYear() {
+            return foundedYear;
+        }
+
+        public void setFoundedYear(Integer foundedYear) {
+            this.foundedYear = foundedYear;
+        }
+
+        public String getTaxExemptStatus() {
+            return taxExemptStatus;
+        }
+
+        public void setTaxExemptStatus(String taxExemptStatus) {
+            this.taxExemptStatus = taxExemptStatus;
+        }
     }
 
     public static class OrganizationSearchRequest {
@@ -806,22 +1155,63 @@ public class OrganizationProfileService {
         private Boolean isVerified;
         private String organizationType;
         private String sortBy;
-        
+
         // Getters and setters
-        public String getSearchTerm() { return searchTerm; }
-        public void setSearchTerm(String searchTerm) { this.searchTerm = searchTerm; }
-        public String getCategory() { return category; }
-        public void setCategory(String category) { this.category = category; }
-        public String getCountry() { return country; }
-        public void setCountry(String country) { this.country = country; }
-        public String getOrganizationSize() { return organizationSize; }
-        public void setOrganizationSize(String organizationSize) { this.organizationSize = organizationSize; }
-        public Boolean getIsVerified() { return isVerified; }
-        public void setIsVerified(Boolean isVerified) { this.isVerified = isVerified; }
-        public String getOrganizationType() { return organizationType; }
-        public void setOrganizationType(String organizationType) { this.organizationType = organizationType; }
-        public String getSortBy() { return sortBy; }
-        public void setSortBy(String sortBy) { this.sortBy = sortBy; }
+        public String getSearchTerm() {
+            return searchTerm;
+        }
+
+        public void setSearchTerm(String searchTerm) {
+            this.searchTerm = searchTerm;
+        }
+
+        public String getCategory() {
+            return category;
+        }
+
+        public void setCategory(String category) {
+            this.category = category;
+        }
+
+        public String getCountry() {
+            return country;
+        }
+
+        public void setCountry(String country) {
+            this.country = country;
+        }
+
+        public String getOrganizationSize() {
+            return organizationSize;
+        }
+
+        public void setOrganizationSize(String organizationSize) {
+            this.organizationSize = organizationSize;
+        }
+
+        public Boolean getIsVerified() {
+            return isVerified;
+        }
+
+        public void setIsVerified(Boolean isVerified) {
+            this.isVerified = isVerified;
+        }
+
+        public String getOrganizationType() {
+            return organizationType;
+        }
+
+        public void setOrganizationType(String organizationType) {
+            this.organizationType = organizationType;
+        }
+
+        public String getSortBy() {
+            return sortBy;
+        }
+
+        public void setSortBy(String sortBy) {
+            this.sortBy = sortBy;
+        }
     }
 
     public static class OrganizationFilterRequest {
@@ -832,22 +1222,63 @@ public class OrganizationProfileService {
         private String verificationType;
         private String organizationType;
         private String sortBy;
-        
+
         // Getters and setters
-        public String getCategory() { return category; }
-        public void setCategory(String category) { this.category = category; }
-        public String getCountry() { return country; }
-        public void setCountry(String country) { this.country = country; }
-        public String getOrganizationSize() { return organizationSize; }
-        public void setOrganizationSize(String organizationSize) { this.organizationSize = organizationSize; }
-        public Integer getUpdatedWithinDays() { return updatedWithinDays; }
-        public void setUpdatedWithinDays(Integer updatedWithinDays) { this.updatedWithinDays = updatedWithinDays; }
-        public String getVerificationType() { return verificationType; }
-        public void setVerificationType(String verificationType) { this.verificationType = verificationType; }
-        public String getOrganizationType() { return organizationType; }
-        public void setOrganizationType(String organizationType) { this.organizationType = organizationType; }
-        public String getSortBy() { return sortBy; }
-        public void setSortBy(String sortBy) { this.sortBy = sortBy; }
+        public String getCategory() {
+            return category;
+        }
+
+        public void setCategory(String category) {
+            this.category = category;
+        }
+
+        public String getCountry() {
+            return country;
+        }
+
+        public void setCountry(String country) {
+            this.country = country;
+        }
+
+        public String getOrganizationSize() {
+            return organizationSize;
+        }
+
+        public void setOrganizationSize(String organizationSize) {
+            this.organizationSize = organizationSize;
+        }
+
+        public Integer getUpdatedWithinDays() {
+            return updatedWithinDays;
+        }
+
+        public void setUpdatedWithinDays(Integer updatedWithinDays) {
+            this.updatedWithinDays = updatedWithinDays;
+        }
+
+        public String getVerificationType() {
+            return verificationType;
+        }
+
+        public void setVerificationType(String verificationType) {
+            this.verificationType = verificationType;
+        }
+
+        public String getOrganizationType() {
+            return organizationType;
+        }
+
+        public void setOrganizationType(String organizationType) {
+            this.organizationType = organizationType;
+        }
+
+        public String getSortBy() {
+            return sortBy;
+        }
+
+        public void setSortBy(String sortBy) {
+            this.sortBy = sortBy;
+        }
     }
 
     public static class OrganizationStatsResponse {
@@ -863,32 +1294,103 @@ public class OrganizationProfileService {
         private Map<String, Integer> typeDistribution;
         private Map<String, Integer> geographicDistribution;
         private VerificationStats verificationStats;
-        
+
         // Getters and setters
-        public Long getTotalOrganizations() { return totalOrganizations; }
-        public void setTotalOrganizations(Long totalOrganizations) { this.totalOrganizations = totalOrganizations; }
-        public Long getVerifiedOrganizations() { return verifiedOrganizations; }
-        public void setVerifiedOrganizations(Long verifiedOrganizations) { this.verifiedOrganizations = verifiedOrganizations; }
-        public Long getNonProfitOrganizations() { return nonProfitOrganizations; }
-        public void setNonProfitOrganizations(Long nonProfitOrganizations) { this.nonProfitOrganizations = nonProfitOrganizations; }
-        public Long getSmallOrganizations() { return smallOrganizations; }
-        public void setSmallOrganizations(Long smallOrganizations) { this.smallOrganizations = smallOrganizations; }
-        public Long getMediumOrganizations() { return mediumOrganizations; }
-        public void setMediumOrganizations(Long mediumOrganizations) { this.mediumOrganizations = mediumOrganizations; }
-        public Long getLargeOrganizations() { return largeOrganizations; }
-        public void setLargeOrganizations(Long largeOrganizations) { this.largeOrganizations = largeOrganizations; }
-        public Long getEnterpriseOrganizations() { return enterpriseOrganizations; }
-        public void setEnterpriseOrganizations(Long enterpriseOrganizations) { this.enterpriseOrganizations = enterpriseOrganizations; }
-        public Long getInternationalOrganizations() { return internationalOrganizations; }
-        public void setInternationalOrganizations(Long internationalOrganizations) { this.internationalOrganizations = internationalOrganizations; }
-        public Map<String, Integer> getCategoryDistribution() { return categoryDistribution; }
-        public void setCategoryDistribution(Map<String, Integer> categoryDistribution) { this.categoryDistribution = categoryDistribution; }
-        public Map<String, Integer> getTypeDistribution() { return typeDistribution; }
-        public void setTypeDistribution(Map<String, Integer> typeDistribution) { this.typeDistribution = typeDistribution; }
-        public Map<String, Integer> getGeographicDistribution() { return geographicDistribution; }
-        public void setGeographicDistribution(Map<String, Integer> geographicDistribution) { this.geographicDistribution = geographicDistribution; }
-        public VerificationStats getVerificationStats() { return verificationStats; }
-        public void setVerificationStats(VerificationStats verificationStats) { this.verificationStats = verificationStats; }
+        public Long getTotalOrganizations() {
+            return totalOrganizations;
+        }
+
+        public void setTotalOrganizations(Long totalOrganizations) {
+            this.totalOrganizations = totalOrganizations;
+        }
+
+        public Long getVerifiedOrganizations() {
+            return verifiedOrganizations;
+        }
+
+        public void setVerifiedOrganizations(Long verifiedOrganizations) {
+            this.verifiedOrganizations = verifiedOrganizations;
+        }
+
+        public Long getNonProfitOrganizations() {
+            return nonProfitOrganizations;
+        }
+
+        public void setNonProfitOrganizations(Long nonProfitOrganizations) {
+            this.nonProfitOrganizations = nonProfitOrganizations;
+        }
+
+        public Long getSmallOrganizations() {
+            return smallOrganizations;
+        }
+
+        public void setSmallOrganizations(Long smallOrganizations) {
+            this.smallOrganizations = smallOrganizations;
+        }
+
+        public Long getMediumOrganizations() {
+            return mediumOrganizations;
+        }
+
+        public void setMediumOrganizations(Long mediumOrganizations) {
+            this.mediumOrganizations = mediumOrganizations;
+        }
+
+        public Long getLargeOrganizations() {
+            return largeOrganizations;
+        }
+
+        public void setLargeOrganizations(Long largeOrganizations) {
+            this.largeOrganizations = largeOrganizations;
+        }
+
+        public Long getEnterpriseOrganizations() {
+            return enterpriseOrganizations;
+        }
+
+        public void setEnterpriseOrganizations(Long enterpriseOrganizations) {
+            this.enterpriseOrganizations = enterpriseOrganizations;
+        }
+
+        public Long getInternationalOrganizations() {
+            return internationalOrganizations;
+        }
+
+        public void setInternationalOrganizations(Long internationalOrganizations) {
+            this.internationalOrganizations = internationalOrganizations;
+        }
+
+        public Map<String, Integer> getCategoryDistribution() {
+            return categoryDistribution;
+        }
+
+        public void setCategoryDistribution(Map<String, Integer> categoryDistribution) {
+            this.categoryDistribution = categoryDistribution;
+        }
+
+        public Map<String, Integer> getTypeDistribution() {
+            return typeDistribution;
+        }
+
+        public void setTypeDistribution(Map<String, Integer> typeDistribution) {
+            this.typeDistribution = typeDistribution;
+        }
+
+        public Map<String, Integer> getGeographicDistribution() {
+            return geographicDistribution;
+        }
+
+        public void setGeographicDistribution(Map<String, Integer> geographicDistribution) {
+            this.geographicDistribution = geographicDistribution;
+        }
+
+        public VerificationStats getVerificationStats() {
+            return verificationStats;
+        }
+
+        public void setVerificationStats(VerificationStats verificationStats) {
+            this.verificationStats = verificationStats;
+        }
     }
 
     public static class VerificationStats {
@@ -898,20 +1400,55 @@ public class OrganizationProfileService {
         private Long standardVerified;
         private Long basic;
         private Long unverified;
-        
+
         // Getters and setters
-        public Long getTotal() { return total; }
-        public void setTotal(Long total) { this.total = total; }
-        public Long getVerified() { return verified; }
-        public void setVerified(Long verified) { this.verified = verified; }
-        public Long getPremium() { return premium; }
-        public void setPremium(Long premium) { this.premium = premium; }
-        public Long getStandardVerified() { return standardVerified; }
-        public void setStandardVerified(Long standardVerified) { this.standardVerified = standardVerified; }
-        public Long getBasic() { return basic; }
-        public void setBasic(Long basic) { this.basic = basic; }
-        public Long getUnverified() { return unverified; }
-        public void setUnverified(Long unverified) { this.unverified = unverified; }
+        public Long getTotal() {
+            return total;
+        }
+
+        public void setTotal(Long total) {
+            this.total = total;
+        }
+
+        public Long getVerified() {
+            return verified;
+        }
+
+        public void setVerified(Long verified) {
+            this.verified = verified;
+        }
+
+        public Long getPremium() {
+            return premium;
+        }
+
+        public void setPremium(Long premium) {
+            this.premium = premium;
+        }
+
+        public Long getStandardVerified() {
+            return standardVerified;
+        }
+
+        public void setStandardVerified(Long standardVerified) {
+            this.standardVerified = standardVerified;
+        }
+
+        public Long getBasic() {
+            return basic;
+        }
+
+        public void setBasic(Long basic) {
+            this.basic = basic;
+        }
+
+        public Long getUnverified() {
+            return unverified;
+        }
+
+        public void setUnverified(Long unverified) {
+            this.unverified = unverified;
+        }
     }
 
     public static class ProfileCompletionStats {
@@ -919,16 +1456,39 @@ public class OrganizationProfileService {
         private Long completeProfiles;
         private Long incompleteProfiles;
         private Double completionRate;
-        
+
         // Getters and setters
-        public Long getTotalProfiles() { return totalProfiles; }
-        public void setTotalProfiles(Long totalProfiles) { this.totalProfiles = totalProfiles; }
-        public Long getCompleteProfiles() { return completeProfiles; }
-        public void setCompleteProfiles(Long completeProfiles) { this.completeProfiles = completeProfiles; }
-        public Long getIncompleteProfiles() { return incompleteProfiles; }
-        public void setIncompleteProfiles(Long incompleteProfiles) { this.incompleteProfiles = incompleteProfiles; }
-        public Double getCompletionRate() { return completionRate; }
-        public void setCompletionRate(Double completionRate) { this.completionRate = completionRate; }
+        public Long getTotalProfiles() {
+            return totalProfiles;
+        }
+
+        public void setTotalProfiles(Long totalProfiles) {
+            this.totalProfiles = totalProfiles;
+        }
+
+        public Long getCompleteProfiles() {
+            return completeProfiles;
+        }
+
+        public void setCompleteProfiles(Long completeProfiles) {
+            this.completeProfiles = completeProfiles;
+        }
+
+        public Long getIncompleteProfiles() {
+            return incompleteProfiles;
+        }
+
+        public void setIncompleteProfiles(Long incompleteProfiles) {
+            this.incompleteProfiles = incompleteProfiles;
+        }
+
+        public Double getCompletionRate() {
+            return completionRate;
+        }
+
+        public void setCompletionRate(Double completionRate) {
+            this.completionRate = completionRate;
+        }
     }
 
     public static class IndividualOrganizationStats {
@@ -940,23 +1500,70 @@ public class OrganizationProfileService {
         private Long applicationsReceived;
         private String verificationLevel;
         private Boolean isVerified;
-        
+
         // Getters and setters
-        public Long getOrganizationId() { return organizationId; }
-        public void setOrganizationId(Long organizationId) { this.organizationId = organizationId; }
-        public String getOrganizationName() { return organizationName; }
-        public void setOrganizationName(String organizationName) { this.organizationName = organizationName; }
-        public Integer getTotalEventsHosted() { return totalEventsHosted; }
-        public void setTotalEventsHosted(Integer totalEventsHosted) { this.totalEventsHosted = totalEventsHosted; }
-        public Integer getTotalVolunteersServed() { return totalVolunteersServed; }
-        public void setTotalVolunteersServed(Integer totalVolunteersServed) { this.totalVolunteersServed = totalVolunteersServed; }
-        public Long getProfileViews() { return profileViews; }
-        public void setProfileViews(Long profileViews) { this.profileViews = profileViews; }
-        public Long getApplicationsReceived() { return applicationsReceived; }
-        public void setApplicationsReceived(Long applicationsReceived) { this.applicationsReceived = applicationsReceived; }
-        public String getVerificationLevel() { return verificationLevel; }
-        public void setVerificationLevel(String verificationLevel) { this.verificationLevel = verificationLevel; }
-        public Boolean getIsVerified() { return isVerified; }
-        public void setIsVerified(Boolean isVerified) { this.isVerified = isVerified; }
+        public Long getOrganizationId() {
+            return organizationId;
+        }
+
+        public void setOrganizationId(Long organizationId) {
+            this.organizationId = organizationId;
+        }
+
+        public String getOrganizationName() {
+            return organizationName;
+        }
+
+        public void setOrganizationName(String organizationName) {
+            this.organizationName = organizationName;
+        }
+
+        public Integer getTotalEventsHosted() {
+            return totalEventsHosted;
+        }
+
+        public void setTotalEventsHosted(Integer totalEventsHosted) {
+            this.totalEventsHosted = totalEventsHosted;
+        }
+
+        public Integer getTotalVolunteersServed() {
+            return totalVolunteersServed;
+        }
+
+        public void setTotalVolunteersServed(Integer totalVolunteersServed) {
+            this.totalVolunteersServed = totalVolunteersServed;
+        }
+
+        public Long getProfileViews() {
+            return profileViews;
+        }
+
+        public void setProfileViews(Long profileViews) {
+            this.profileViews = profileViews;
+        }
+
+        public Long getApplicationsReceived() {
+            return applicationsReceived;
+        }
+
+        public void setApplicationsReceived(Long applicationsReceived) {
+            this.applicationsReceived = applicationsReceived;
+        }
+
+        public String getVerificationLevel() {
+            return verificationLevel;
+        }
+
+        public void setVerificationLevel(String verificationLevel) {
+            this.verificationLevel = verificationLevel;
+        }
+
+        public Boolean getIsVerified() {
+            return isVerified;
+        }
+
+        public void setIsVerified(Boolean isVerified) {
+            this.isVerified = isVerified;
+        }
     }
 }

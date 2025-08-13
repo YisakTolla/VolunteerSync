@@ -425,54 +425,7 @@ const SettingsPage = () => {
 
       <div className="settings-form">
         <div className="privacy-groups">
-          <div className="privacy-group">
-            <h3 className="subsection-title">Profile Visibility</h3>
-            
-            <div className="radio-group">
-              <label className="radio-item">
-                <input
-                  type="radio"
-                  name="profileVisibility"
-                  value="public"
-                  checked={privacySettings.profileVisibility === 'public'}
-                  onChange={(e) => handlePrivacyChange('profileVisibility', e.target.value)}
-                />
-                <div className="radio-info">
-                  <h4>Public</h4>
-                  <p>Anyone can view your profile</p>
-                </div>
-              </label>
-
-              <label className="radio-item">
-                <input
-                  type="radio"
-                  name="profileVisibility"
-                  value="connections"
-                  checked={privacySettings.profileVisibility === 'connections'}
-                  onChange={(e) => handlePrivacyChange('profileVisibility', e.target.value)}
-                />
-                <div className="radio-info">
-                  <h4>Connections Only</h4>
-                  <p>Only your connections can view your full profile</p>
-                </div>
-              </label>
-
-              <label className="radio-item">
-                <input
-                  type="radio"
-                  name="profileVisibility"
-                  value="private"
-                  checked={privacySettings.profileVisibility === 'private'}
-                  onChange={(e) => handlePrivacyChange('profileVisibility', e.target.value)}
-                />
-                <div className="radio-info">
-                  <h4>Private</h4>
-                  <p>Only you can view your profile</p>
-                </div>
-              </label>
-            </div>
-          </div>
-
+         
           <div className="privacy-group">
             <h3 className="subsection-title">Contact Information</h3>
             

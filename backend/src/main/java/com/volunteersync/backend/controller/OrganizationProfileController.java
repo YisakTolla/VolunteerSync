@@ -40,15 +40,15 @@ public class OrganizationProfileController extends BaseController {
     // ==========================================
 
     /**
-     * Create organization profile
+     * Create organization profile (LEGACY - kept for backward compatibility)
      * POST /api/organization-profiles
      */
     @PostMapping
     public ResponseEntity<?> createProfile(@Valid @RequestBody CreateOrganizationProfileRequest request,
-                                         Authentication authentication) {
+            Authentication authentication) {
         try {
             Long userId = getCurrentUserId(authentication);
-            OrganizationProfileDTO profile = organizationProfileService.createProfile(request, userId);
+            OrganizationProfileDTO profile = organizationProfileService.createOrUpdateProfile(request, userId);
             return ResponseEntity.status(HttpStatus.CREATED).body(profile);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
@@ -85,21 +85,20 @@ public class OrganizationProfileController extends BaseController {
     }
 
     /**
-     * Update organization profile
+     * Update organization profile (NOW HANDLES BOTH CREATE AND UPDATE)
      * PUT /api/organization-profiles/me
      */
     @PutMapping("/me")
-    public ResponseEntity<?> updateMyProfile(@Valid @RequestBody UpdateOrganizationProfileRequest request,
-                                           Authentication authentication) {
+    public ResponseEntity<?> updateMyProfile(@Valid @RequestBody CreateOrganizationProfileRequest request,
+            Authentication authentication) {
         try {
             Long userId = getCurrentUserId(authentication);
-            OrganizationProfileDTO profile = organizationProfileService.updateProfile(userId, request);
+            OrganizationProfileDTO profile = organizationProfileService.createOrUpdateProfile(request, userId);
             return ResponseEntity.ok(profile);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
         }
     }
-
     // ==========================================
     // SEARCH AND DISCOVERY
     // ==========================================
@@ -166,8 +165,8 @@ public class OrganizationProfileController extends BaseController {
      */
     @PostMapping("/search")
     public ResponseEntity<?> advancedSearch(@RequestBody OrganizationSearchRequest request,
-                                          @RequestParam(defaultValue = "0") int page,
-                                          @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
         try {
             Pageable pageable = PageRequest.of(page, size);
             Page<OrganizationProfileDTO> profiles = organizationProfileService.advancedSearch(request, pageable);
@@ -183,8 +182,8 @@ public class OrganizationProfileController extends BaseController {
      */
     @PostMapping("/filter")
     public ResponseEntity<?> filterOrganizations(@RequestBody OrganizationFilterRequest request,
-                                                @RequestParam(defaultValue = "0") int page,
-                                                @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
         try {
             Pageable pageable = PageRequest.of(page, size);
             Page<OrganizationProfileDTO> profiles = organizationProfileService.filterOrganizations(request, pageable);
@@ -292,8 +291,8 @@ public class OrganizationProfileController extends BaseController {
      */
     @PutMapping("/{id}/verification")
     public ResponseEntity<?> updateVerificationStatus(@PathVariable Long id,
-                                                     @RequestBody VerificationRequest request,
-                                                     Authentication authentication) {
+            @RequestBody VerificationRequest request,
+            Authentication authentication) {
         try {
             String adminUserId = authentication.getName(); // Assuming admin authentication
             OrganizationProfileDTO profile = organizationProfileService.updateVerificationStatus(
@@ -525,22 +524,22 @@ public class OrganizationProfileController extends BaseController {
     // ==========================================
 
     // private Long getCurrentUserId(Authentication authentication) {
-    //     if (authentication == null || authentication.getPrincipal() == null) {
-    //         throw new RuntimeException("User not authenticated");
-    //     }
-        
-    //     // Extract user ID from authentication principal
-    //     Object principal = authentication.getPrincipal();
-    //     if (principal instanceof UserPrincipal) {
-    //         return ((UserPrincipal) principal).getId();
-    //     }
-        
-    //     // Fallback - extract from name if it's the user ID
-    //     try {
-    //         return Long.parseLong(authentication.getName());
-    //     } catch (NumberFormatException e) {
-    //         throw new RuntimeException("Invalid user authentication");
-    //     }
+    // if (authentication == null || authentication.getPrincipal() == null) {
+    // throw new RuntimeException("User not authenticated");
+    // }
+
+    // // Extract user ID from authentication principal
+    // Object principal = authentication.getPrincipal();
+    // if (principal instanceof UserPrincipal) {
+    // return ((UserPrincipal) principal).getId();
+    // }
+
+    // // Fallback - extract from name if it's the user ID
+    // try {
+    // return Long.parseLong(authentication.getName());
+    // } catch (NumberFormatException e) {
+    // throw new RuntimeException("Invalid user authentication");
+    // }
     // }
 
     // ==========================================
@@ -550,11 +549,22 @@ public class OrganizationProfileController extends BaseController {
     public static class VerificationRequest {
         private String verificationLevel;
         private Boolean isVerified;
-        
-        public String getVerificationLevel() { return verificationLevel; }
-        public void setVerificationLevel(String verificationLevel) { this.verificationLevel = verificationLevel; }
-        public Boolean getIsVerified() { return isVerified; }
-        public void setIsVerified(Boolean isVerified) { this.isVerified = isVerified; }
+
+        public String getVerificationLevel() {
+            return verificationLevel;
+        }
+
+        public void setVerificationLevel(String verificationLevel) {
+            this.verificationLevel = verificationLevel;
+        }
+
+        public Boolean getIsVerified() {
+            return isVerified;
+        }
+
+        public void setIsVerified(Boolean isVerified) {
+            this.isVerified = isVerified;
+        }
     }
 
     public static class ErrorResponse {
@@ -566,10 +576,21 @@ public class OrganizationProfileController extends BaseController {
             this.timestamp = System.currentTimeMillis();
         }
 
-        public String getError() { return error; }
-        public void setError(String error) { this.error = error; }
-        public long getTimestamp() { return timestamp; }
-        public void setTimestamp(long timestamp) { this.timestamp = timestamp; }
+        public String getError() {
+            return error;
+        }
+
+        public void setError(String error) {
+            this.error = error;
+        }
+
+        public long getTimestamp() {
+            return timestamp;
+        }
+
+        public void setTimestamp(long timestamp) {
+            this.timestamp = timestamp;
+        }
     }
 
     public static class SuccessResponse {
@@ -581,16 +602,69 @@ public class OrganizationProfileController extends BaseController {
             this.timestamp = System.currentTimeMillis();
         }
 
-        public String getMessage() { return message; }
-        public void setMessage(String message) { this.message = message; }
-        public long getTimestamp() { return timestamp; }
-        public void setTimestamp(long timestamp) { this.timestamp = timestamp; }
+        public String getMessage() {
+            return message;
+        }
+
+        public void setMessage(String message) {
+            this.message = message;
+        }
+
+        public long getTimestamp() {
+            return timestamp;
+        }
+
+        public void setTimestamp(long timestamp) {
+            this.timestamp = timestamp;
+        }
     }
 
-    // Placeholder for UserPrincipal - should be implemented based on your security setup
+    // Placeholder for UserPrincipal - should be implemented based on your security
+    // setup
     public interface UserPrincipal {
         Long getId();
+
         String getUsername();
+
         String getUserType();
+    }
+
+    /**
+     * DEPRECATED: Legacy update endpoint (kept for compatibility)
+     * This now redirects to the main upsert endpoint
+     */
+    @PutMapping("/me/legacy")
+    public ResponseEntity<?> updateMyProfileLegacy(@Valid @RequestBody UpdateOrganizationProfileRequest request,
+            Authentication authentication) {
+        try {
+            Long userId = getCurrentUserId(authentication);
+
+            // Convert UpdateOrganizationProfileRequest to CreateOrganizationProfileRequest
+            CreateOrganizationProfileRequest createRequest = new CreateOrganizationProfileRequest();
+            createRequest.setOrganizationName(request.getOrganizationName());
+            createRequest.setDescription(request.getDescription());
+            createRequest.setMissionStatement(request.getMissionStatement());
+            createRequest.setWebsite(request.getWebsite());
+            createRequest.setPhoneNumber(request.getPhoneNumber());
+            createRequest.setAddress(request.getAddress());
+            createRequest.setCity(request.getCity());
+            createRequest.setState(request.getState());
+            createRequest.setZipCode(request.getZipCode());
+            createRequest.setCountry(request.getCountry());
+            createRequest.setProfileImageUrl(request.getProfileImageUrl());
+            createRequest.setCategories(request.getCategories());
+            createRequest.setPrimaryCategory(request.getPrimaryCategory());
+            createRequest.setOrganizationType(request.getOrganizationType());
+            createRequest.setOrganizationSize(request.getOrganizationSize());
+            createRequest.setEmployeeCount(request.getEmployeeCount());
+            createRequest.setLanguagesSupported(request.getLanguagesSupported());
+            createRequest.setFoundedYear(request.getFoundedYear());
+            createRequest.setTaxExemptStatus(request.getTaxExemptStatus());
+
+            OrganizationProfileDTO profile = organizationProfileService.createOrUpdateProfile(createRequest, userId);
+            return ResponseEntity.ok(profile);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
+        }
     }
 }
