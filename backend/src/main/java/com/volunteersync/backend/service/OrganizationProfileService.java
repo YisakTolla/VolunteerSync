@@ -55,12 +55,12 @@ public class OrganizationProfileService {
     // PROFILE MANAGEMENT METHODS
     // ==========================================
 
-    /**
-     * Create or update organization profile (UPSERT)
-     * This method handles both profile creation and updates in a single endpoint
-     */
     public OrganizationProfileDTO createOrUpdateProfile(CreateOrganizationProfileRequest request, Long userId) {
         System.out.println("Creating or updating organization profile for user ID: " + userId);
+        System.out.println("Request categories: '" + request.getCategories() + "'");
+        System.out.println("Request services: '" + request.getServices() + "'");
+        System.out.println("Request bio: '" + request.getBio() + "'");
+        System.out.println("Request location: '" + request.getLocation() + "'");
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -82,37 +82,82 @@ public class OrganizationProfileService {
             System.out.println("Updating existing organization profile with ID: " + profile.getId());
 
             // Update all fields - use request values or keep existing if null
-            profile.setOrganizationName(request.getOrganizationName() != null ? request.getOrganizationName()
-                    : profile.getOrganizationName());
-            profile.setDescription(
-                    request.getDescription() != null ? request.getDescription() : profile.getDescription());
-            profile.setMissionStatement(request.getMissionStatement() != null ? request.getMissionStatement()
-                    : profile.getMissionStatement());
-            profile.setWebsite(request.getWebsite() != null ? request.getWebsite() : profile.getWebsite());
-            profile.setPhoneNumber(
-                    request.getPhoneNumber() != null ? request.getPhoneNumber() : profile.getPhoneNumber());
-            profile.setAddress(request.getAddress() != null ? request.getAddress() : profile.getAddress());
-            profile.setCity(request.getCity() != null ? request.getCity() : profile.getCity());
-            profile.setState(request.getState() != null ? request.getState() : profile.getState());
-            profile.setZipCode(request.getZipCode() != null ? request.getZipCode() : profile.getZipCode());
-            profile.setCountry(request.getCountry() != null ? request.getCountry() : profile.getCountry());
-            profile.setProfileImageUrl(
-                    request.getProfileImageUrl() != null ? request.getProfileImageUrl() : profile.getProfileImageUrl());
-            profile.setCategories(request.getCategories() != null ? request.getCategories() : profile.getCategories());
-            profile.setPrimaryCategory(
-                    request.getPrimaryCategory() != null ? request.getPrimaryCategory() : profile.getPrimaryCategory());
-            profile.setOrganizationType(request.getOrganizationType() != null ? request.getOrganizationType()
-                    : profile.getOrganizationType());
-            profile.setOrganizationSize(request.getOrganizationSize() != null ? request.getOrganizationSize()
-                    : profile.getOrganizationSize());
-            profile.setEmployeeCount(
-                    request.getEmployeeCount() != null ? request.getEmployeeCount() : profile.getEmployeeCount());
-            profile.setLanguagesSupported(request.getLanguagesSupported() != null ? request.getLanguagesSupported()
-                    : profile.getLanguagesSupported());
-            profile.setFoundedYear(
-                    request.getFoundedYear() != null ? request.getFoundedYear() : profile.getFoundedYear());
-            profile.setTaxExemptStatus(
-                    request.getTaxExemptStatus() != null ? request.getTaxExemptStatus() : profile.getTaxExemptStatus());
+            if (isValidString(request.getOrganizationName())) {
+                profile.setOrganizationName(request.getOrganizationName());
+            }
+
+            // ✅ CRITICAL: Handle bio -> description mapping
+            if (isValidString(request.getBio())) {
+                profile.setDescription(request.getBio());
+            } else if (isValidString(request.getDescription())) {
+                profile.setDescription(request.getDescription());
+            }
+
+            if (isValidString(request.getMissionStatement())) {
+                profile.setMissionStatement(request.getMissionStatement());
+            }
+            if (isValidString(request.getWebsite())) {
+                profile.setWebsite(request.getWebsite());
+            }
+            if (isValidString(request.getPhoneNumber())) {
+                profile.setPhoneNumber(request.getPhoneNumber());
+            }
+
+            // ✅ CRITICAL: Handle location -> address mapping
+            if (isValidString(request.getLocation())) {
+                profile.setAddress(request.getLocation());
+            } else if (isValidString(request.getAddress())) {
+                profile.setAddress(request.getAddress());
+            }
+
+            if (isValidString(request.getCity())) {
+                profile.setCity(request.getCity());
+            }
+            if (isValidString(request.getState())) {
+                profile.setState(request.getState());
+            }
+            if (isValidString(request.getZipCode())) {
+                profile.setZipCode(request.getZipCode());
+            }
+            if (isValidString(request.getCountry())) {
+                profile.setCountry(request.getCountry());
+            }
+            if (isValidString(request.getProfileImageUrl())) {
+                profile.setProfileImageUrl(request.getProfileImageUrl());
+            }
+
+            // ✅ CRITICAL: Handle categories and services
+            if (isValidString(request.getCategories())) {
+                System.out.println("Setting categories: '" + request.getCategories() + "'");
+                profile.setCategories(request.getCategories());
+            }
+            if (isValidString(request.getServices())) {
+                System.out.println("Setting services: '" + request.getServices() + "'");
+                profile.setServices(request.getServices());
+            }
+
+            if (isValidString(request.getPrimaryCategory())) {
+                profile.setPrimaryCategory(request.getPrimaryCategory());
+            }
+            if (isValidString(request.getOrganizationType())) {
+                profile.setOrganizationType(request.getOrganizationType());
+            }
+            if (isValidString(request.getOrganizationSize())) {
+                profile.setOrganizationSize(request.getOrganizationSize());
+            }
+            if (request.getEmployeeCount() != null) {
+                profile.setEmployeeCount(request.getEmployeeCount());
+            }
+            if (isValidString(request.getLanguagesSupported())) {
+                profile.setLanguagesSupported(request.getLanguagesSupported());
+            }
+            if (request.getFoundedYear() != null) {
+                profile.setFoundedYear(request.getFoundedYear());
+            }
+            if (isValidString(request.getTaxExemptStatus())) {
+                profile.setTaxExemptStatus(request.getTaxExemptStatus());
+            }
+
             profile.setUpdatedAt(LocalDateTime.now());
 
         } else {
@@ -120,31 +165,57 @@ public class OrganizationProfileService {
             System.out.println("Creating new organization profile");
             profile = new OrganizationProfile();
             profile.setUser(user);
-            profile.setOrganizationName(request.getOrganizationName());
-            profile.setDescription(request.getDescription());
-            profile.setMissionStatement(request.getMissionStatement());
-            profile.setWebsite(request.getWebsite());
-            profile.setPhoneNumber(request.getPhoneNumber());
-            profile.setAddress(request.getAddress());
-            profile.setCity(request.getCity());
-            profile.setState(request.getState());
-            profile.setZipCode(request.getZipCode());
-            profile.setCountry(request.getCountry() != null ? request.getCountry() : "United States");
+            profile.setOrganizationName(
+                    isValidString(request.getOrganizationName()) ? request.getOrganizationName() : "");
+
+            // ✅ CRITICAL: Map bio to description for new profiles
+            String description = isValidString(request.getBio()) ? request.getBio()
+                    : (isValidString(request.getDescription()) ? request.getDescription() : "");
+            profile.setDescription(description);
+
+            profile.setMissionStatement(
+                    isValidString(request.getMissionStatement()) ? request.getMissionStatement() : "");
+            profile.setWebsite(isValidString(request.getWebsite()) ? request.getWebsite() : "");
+            profile.setPhoneNumber(isValidString(request.getPhoneNumber()) ? request.getPhoneNumber() : "");
+
+            // ✅ CRITICAL: Map location to address for new profiles
+            String address = isValidString(request.getLocation()) ? request.getLocation()
+                    : (isValidString(request.getAddress()) ? request.getAddress() : "");
+            profile.setAddress(address);
+
+            profile.setCity(isValidString(request.getCity()) ? request.getCity() : "");
+            profile.setState(isValidString(request.getState()) ? request.getState() : "");
+            profile.setZipCode(isValidString(request.getZipCode()) ? request.getZipCode() : "");
+            profile.setCountry(isValidString(request.getCountry()) ? request.getCountry() : "United States");
             profile.setProfileImageUrl(request.getProfileImageUrl());
-            profile.setCategories(request.getCategories());
-            profile.setPrimaryCategory(request.getPrimaryCategory());
-            profile.setOrganizationType(request.getOrganizationType());
-            profile.setOrganizationSize(request.getOrganizationSize());
+
+            // ✅ CRITICAL: Set categories and services for new profiles
+            System.out.println("Setting new profile categories: '" + request.getCategories() + "'");
+            System.out.println("Setting new profile services: '" + request.getServices() + "'");
+            profile.setCategories(isValidString(request.getCategories()) ? request.getCategories() : "");
+            profile.setServices(isValidString(request.getServices()) ? request.getServices() : "");
+
+            profile.setPrimaryCategory(isValidString(request.getPrimaryCategory()) ? request.getPrimaryCategory() : "");
+            profile.setOrganizationType(
+                    isValidString(request.getOrganizationType()) ? request.getOrganizationType() : "");
+            profile.setOrganizationSize(
+                    isValidString(request.getOrganizationSize()) ? request.getOrganizationSize() : "");
             profile.setEmployeeCount(request.getEmployeeCount());
-            profile.setLanguagesSupported(request.getLanguagesSupported());
+            profile.setLanguagesSupported(
+                    isValidString(request.getLanguagesSupported()) ? request.getLanguagesSupported() : "");
             profile.setFoundedYear(request.getFoundedYear());
-            profile.setTaxExemptStatus(request.getTaxExemptStatus());
+            profile.setTaxExemptStatus(isValidString(request.getTaxExemptStatus()) ? request.getTaxExemptStatus() : "");
             profile.setVerificationLevel("Unverified");
             profile.setCreatedAt(LocalDateTime.now());
             profile.setUpdatedAt(LocalDateTime.now());
         }
 
         OrganizationProfile savedProfile = organizationProfileRepository.save(profile);
+
+        System.out.println("Saved organization profile categories: '" + savedProfile.getCategories() + "'");
+        System.out.println("Saved organization profile services: '" + savedProfile.getServices() + "'");
+        System.out.println("Saved organization profile description: '" + savedProfile.getDescription() + "'");
+        System.out.println("Saved organization profile address: '" + savedProfile.getAddress() + "'");
 
         if (isUpdate) {
             System.out.println("Organization profile updated successfully with ID: " + savedProfile.getId());
@@ -155,54 +226,10 @@ public class OrganizationProfileService {
         return convertToDTO(savedProfile);
     }
 
-    // /**
-    // * Create new organization profile
-    // */
-    // public OrganizationProfileDTO createProfile(CreateOrganizationProfileRequest
-    // request, Long userId) {
-    // System.out.println("Creating organization profile for user ID: " + userId);
-
-    // User user = userRepository.findById(userId)
-    // .orElseThrow(() -> new RuntimeException("User not found"));
-
-    // if (user.getUserType() != UserType.ORGANIZATION) {
-    // throw new RuntimeException("User must be of type ORGANIZATION to create
-    // organization profile");
-    // }
-
-    // if (organizationProfileRepository.existsByUserId(userId)) {
-    // throw new RuntimeException("Organization profile already exists for this
-    // user");
-    // }
-
-    // OrganizationProfile profile = new OrganizationProfile();
-    // profile.setUser(user);
-    // profile.setOrganizationName(request.getOrganizationName());
-    // profile.setDescription(request.getDescription());
-    // profile.setMissionStatement(request.getMissionStatement());
-    // profile.setWebsite(request.getWebsite());
-    // profile.setPhoneNumber(request.getPhoneNumber());
-    // profile.setAddress(request.getAddress());
-    // profile.setCity(request.getCity());
-    // profile.setState(request.getState());
-    // profile.setZipCode(request.getZipCode());
-    // profile.setCountry(request.getCountry() != null ? request.getCountry() :
-    // "United States");
-    // profile.setProfileImageUrl(request.getProfileImageUrl());
-    // profile.setCategories(request.getCategories());
-    // profile.setPrimaryCategory(request.getPrimaryCategory());
-    // profile.setOrganizationType(request.getOrganizationType());
-    // profile.setOrganizationSize(request.getOrganizationSize());
-    // profile.setEmployeeCount(request.getEmployeeCount());
-    // profile.setLanguagesSupported(request.getLanguagesSupported());
-    // profile.setFoundedYear(request.getFoundedYear());
-    // profile.setTaxExemptStatus(request.getTaxExemptStatus());
-    // profile.setVerificationLevel("Unverified");
-
-    // OrganizationProfile savedProfile =
-    // organizationProfileRepository.save(profile);
-    // return convertToDTO(savedProfile);
-    // }
+    // Helper method to check if a string is valid
+    private boolean isValidString(String value) {
+        return value != null && !value.trim().isEmpty();
+    }
 
     // Keep the original createProfile method for backward compatibility
     public OrganizationProfileDTO createProfile(CreateOrganizationProfileRequest request, Long userId) {
@@ -798,6 +825,7 @@ public class OrganizationProfileService {
     // ==========================================
 
     public static class CreateOrganizationProfileRequest {
+        // Basic organization info
         private String organizationName;
         private String description;
         private String missionStatement;
@@ -809,7 +837,14 @@ public class OrganizationProfileService {
         private String zipCode;
         private String country;
         private String profileImageUrl;
-        private String categories;
+
+        // ✅ CRITICAL: These fields were missing - causing data to be ignored
+        private String categories; // "Education,Environment,Community Service"
+        private String services; // "Tutoring,Cleanup Events,Food Distribution"
+        private String bio; // For bio field from frontend
+        private String location; // For location field from frontend
+
+        // Enhanced organization fields
         private String primaryCategory;
         private String organizationType;
         private String organizationSize;
@@ -907,12 +942,41 @@ public class OrganizationProfileService {
             this.profileImageUrl = profileImageUrl;
         }
 
+        // ✅ NEW: Categories getter/setter
         public String getCategories() {
             return categories;
         }
 
         public void setCategories(String categories) {
             this.categories = categories;
+        }
+
+        // ✅ NEW: Services getter/setter
+        public String getServices() {
+            return services;
+        }
+
+        public void setServices(String services) {
+            this.services = services;
+        }
+
+        // ✅ NEW: Bio getter/setter (frontend sends bio, backend maps to description)
+        public String getBio() {
+            return bio;
+        }
+
+        public void setBio(String bio) {
+            this.bio = bio;
+        }
+
+        // ✅ NEW: Location getter/setter (frontend sends location, backend maps to
+        // address)
+        public String getLocation() {
+            return location;
+        }
+
+        public void setLocation(String location) {
+            this.location = location;
         }
 
         public String getPrimaryCategory() {
@@ -984,7 +1048,13 @@ public class OrganizationProfileService {
         private String zipCode;
         private String country;
         private String profileImageUrl;
+
+        // ✅ CRITICAL: Added missing fields
         private String categories;
+        private String services;
+        private String bio;
+        private String location;
+
         private String primaryCategory;
         private String organizationType;
         private String organizationSize;
@@ -993,7 +1063,8 @@ public class OrganizationProfileService {
         private Integer foundedYear;
         private String taxExemptStatus;
 
-        // Getters and setters (same as CreateOrganizationProfileRequest)
+        // All getters and setters (same as CreateOrganizationProfileRequest)
+        // [Include all the same getters/setters as above]
         public String getOrganizationName() {
             return organizationName;
         }
@@ -1088,6 +1159,30 @@ public class OrganizationProfileService {
 
         public void setCategories(String categories) {
             this.categories = categories;
+        }
+
+        public String getServices() {
+            return services;
+        }
+
+        public void setServices(String services) {
+            this.services = services;
+        }
+
+        public String getBio() {
+            return bio;
+        }
+
+        public void setBio(String bio) {
+            this.bio = bio;
+        }
+
+        public String getLocation() {
+            return location;
+        }
+
+        public void setLocation(String location) {
+            this.location = location;
         }
 
         public String getPrimaryCategory() {

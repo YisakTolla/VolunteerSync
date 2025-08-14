@@ -184,6 +184,15 @@ const getVolunteerDashboardData = async (user) => {
   }
 
   try {
+    console.log('📅 Fetching volunteer events...');
+    const eventsResponse = await dashboardApi.get('/events/volunteer/me');
+    dashboardData.events = eventsResponse.data || [];
+    console.log('✅ Volunteer events loaded');
+  } catch (error) {
+    console.error('❌ Error fetching volunteer events:', error.response?.data || error.message);
+  }
+
+  try {
     console.log('🏆 Fetching volunteer badges...');
     const badgesResponse = await dashboardApi.get('/volunteer-profiles/me/badges');
     dashboardData.badges = badgesResponse.data || [];
@@ -366,20 +375,6 @@ const isProfileComplete = (user) => {
   return false;
 };
 
-const getUserDisplayName = (user) => {
-  if (!user) return 'User';
-  
-  if (user.userType === 'ORGANIZATION' && user.organizationName) {
-    return user.organizationName;
-  }
-  
-  if (user.userType === 'VOLUNTEER' && user.firstName && user.lastName) {
-    return `${user.firstName} ${user.lastName}`;
-  }
-  
-  return user.email || 'User';
-};
-
 const getUserWelcomeName = (user) => {
   if (!user) return 'User';
   
@@ -387,15 +382,145 @@ const getUserWelcomeName = (user) => {
     return user.organizationName;
   }
   
-  if (user.userType === 'VOLUNTEER' && user.firstName) {
-    return user.firstName;
+  if (user.userType === 'VOLUNTEER') {
+    if (user.firstName && user.lastName) {
+      return `${user.firstName} ${user.lastName}`;
+    } else if (user.firstName) {
+      return user.firstName;
+    }
   }
   
-  return user.email?.split('@')[0] || 'User';
+  // Fallback to email prefix
+  if (user.email) {
+    return user.email.split('@')[0];
+  }
+  
+  return 'User';
+};
+
+const getProfileCompletionStatus = (user) => {
+  if (!user) return { isComplete: false, missingFields: [] };
+  
+  const missingFields = [];
+  
+  if (user.userType === 'VOLUNTEER') {
+    if (!user.firstName) missingFields.push('First Name');
+    if (!user.lastName) missingFields.push('Last Name');
+    if (!user.bio) missingFields.push('Bio');
+    if (!user.skills || user.skills.length === 0) missingFields.push('Skills');
+  } else if (user.userType === 'ORGANIZATION') {
+    if (!user.organizationName) missingFields.push('Organization Name');
+    if (!user.description) missingFields.push('Description');
+    if (!user.address) missingFields.push('Address');
+  }
+  
+  return {
+    isComplete: missingFields.length === 0,
+    missingFields: missingFields,
+    completionPercentage: user.userType === 'VOLUNTEER' 
+      ? Math.round(((4 - missingFields.length) / 4) * 100)
+      : Math.round(((3 - missingFields.length) / 3) * 100)
+  };
 };
 
 // ==========================================
-// SINGLE EXPORT SECTION
+// PROFILE IMAGE UPLOAD
+// ==========================================
+
+const uploadProfileImage = async (file, imageType = 'profile') => {
+  try {
+    console.log('=== UPLOADING PROFILE IMAGE ===');
+    console.log('File:', file.name, 'Type:', imageType);
+
+    const formData = new FormData();
+    formData.append('image', file);
+    formData.append('imageType', imageType);
+
+    const user = getCurrentUser();
+    let uploadEndpoint;
+    
+    if (user.userType === 'VOLUNTEER') {
+      uploadEndpoint = '/volunteer-profiles/me/upload-image';
+    } else if (user.userType === 'ORGANIZATION') {
+      uploadEndpoint = '/organization-profiles/me/upload-image';
+    } else {
+      throw new Error('Invalid user type for image upload');
+    }
+
+    const response = await dashboardApi.post(uploadEndpoint, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    console.log('✅ Image uploaded successfully');
+
+    return {
+      success: true,
+      data: response.data,
+      imageUrl: response.data.imageUrl
+    };
+
+  } catch (error) {
+    console.error('=== IMAGE UPLOAD ERROR ===');
+    console.error('Error:', error.response?.data || error.message);
+    
+    return {
+      success: false,
+      message: error.response?.data?.error || error.response?.data?.message || error.message || 'Failed to upload image',
+      data: null
+    };
+  }
+};
+
+// ==========================================
+// ACTIVITY TRACKING
+// ==========================================
+
+const logActivity = async (activityData) => {
+  try {
+    console.log('=== LOGGING ACTIVITY ===');
+    
+    const user = getCurrentUser();
+    if (!user) {
+      throw new Error('User not logged in');
+    }
+
+    let activityEndpoint;
+    if (user.userType === 'VOLUNTEER') {
+      activityEndpoint = '/volunteer-profiles/me/activity';
+    } else if (user.userType === 'ORGANIZATION') {
+      activityEndpoint = '/organization-profiles/me/activity';
+    } else {
+      throw new Error('Invalid user type');
+    }
+
+    const response = await dashboardApi.post(activityEndpoint, {
+      ...activityData,
+      timestamp: new Date().toISOString()
+    });
+
+    console.log('✅ Activity logged successfully');
+
+    return {
+      success: true,
+      data: response.data
+    };
+
+  } catch (error) {
+    console.error('=== ACTIVITY LOG ERROR ===');
+    console.error('Error:', error.response?.data || error.message);
+    
+    return {
+      success: false,
+      message: error.response?.data?.error || error.response?.data?.message || error.message || 'Failed to log activity',
+      data: null
+    };
+  }
+};
+
+// ==========================================
+// EXPORTS
 // ==========================================
 
 export {
@@ -403,8 +528,12 @@ export {
   getQuickStats,
   refreshDashboardData,
   isProfileComplete,
-  getUserDisplayName,
-  getUserWelcomeName
+  getUserWelcomeName,
+  getProfileCompletionStatus,
+  uploadProfileImage,
+  logActivity,
+  getVolunteerDashboardData,
+  getOrganizationDashboardData
 };
 
 export default {
@@ -412,6 +541,8 @@ export default {
   getQuickStats,
   refreshDashboardData,
   isProfileComplete,
-  getUserDisplayName,
-  getUserWelcomeName
+  getUserWelcomeName,
+  getProfileCompletionStatus,
+  uploadProfileImage,
+  logActivity
 };

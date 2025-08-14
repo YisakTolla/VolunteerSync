@@ -15,48 +15,68 @@ import {
   Link,
   Lock,
   Download,
-  AlertTriangle
+  AlertTriangle,
+  Loader,
+  CheckCircle,
+  XCircle
 } from 'lucide-react';
+import { getCurrentUser, getUserDisplayName, getUserInitials, updateCurrentUser } from '../services/authService';
+import {
+  fetchUserSettings,
+  updateProfileSettings,
+  changePassword,
+  enableTwoFactor,
+  disableTwoFactor,
+  fetchNotificationSettings,
+  updateNotificationSettings,
+  fetchPrivacySettings,
+  updatePrivacySettings,
+  requestDataExport,
+  deleteAccount,
+  fetchActiveSessions,
+  terminateSession,
+  terminateAllOtherSessions,
+  getDefaultNotificationSettings,
+  getDefaultPrivacySettings
+} from '../services/settingsService';
+import { uploadProfileImage } from '../services/profileService';
 import './Settings.css';
 
 const SettingsPage = () => {
   const [activeSection, setActiveSection] = useState('profile');
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [user, setUser] = useState(null);
+  
+  // Profile data state
   const [profileData, setProfileData] = useState({
-    firstName: 'Yisak',
-    lastName: 'Tolla',
-    displayName: 'Yisak Tolla',
-    email: 'ytolla@gmu.edu',
-    phone: '+1 (555) 123-4567',
-    location: 'Fairfax, Virginia',
-    website: 'https://yisaktolla.dev',
-    bio: 'Passionate computer science student at George Mason University with a strong interest in volunteer work and community service. I love connecting with like-minded individuals and making a positive impact through technology and direct action.'
+    firstName: '',
+    lastName: '',
+    displayName: '',
+    email: '',
+    phone: '',
+    location: '',
+    website: '',
+    bio: ''
   });
 
-  const [notificationSettings, setNotificationSettings] = useState({
-    emailNotifications: true,
-    pushNotifications: true,
-    eventReminders: true,
-    organizationUpdates: true,
-    connectionRequests: true,
-    weeklyDigest: false,
-    marketingEmails: false
-  });
+  // Notification settings state
+  const [notificationSettings, setNotificationSettings] = useState(getDefaultNotificationSettings());
 
-  const [privacySettings, setPrivacySettings] = useState({
-    profileVisibility: 'public',
-    showEmail: false,
-    showPhone: false,
-    showLocation: true,
-    allowMessaging: true,
-    showActivity: true,
-    searchable: true
-  });
+  // Privacy settings state
+  const [privacySettings, setPrivacySettings] = useState(getDefaultPrivacySettings());
 
+  // Password change state
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
     newPassword: '',
     confirmPassword: ''
   });
+
+  // Active sessions state
+  const [activeSessions, setActiveSessions] = useState([]);
 
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
@@ -68,9 +88,70 @@ const SettingsPage = () => {
     { id: 'data', label: 'Data & Privacy', icon: Download }
   ];
 
+  // Load initial data
+  useEffect(() => {
+    loadSettingsData();
+  }, []);
+
+  const loadSettingsData = async () => {
+    try {
+      setLoading(true);
+      setError('');
+
+      const currentUser = getCurrentUser();
+      if (!currentUser) {
+        setError('Please log in to access settings');
+        return;
+      }
+
+      setUser(currentUser);
+
+      // Load profile data
+      const profileResult = await fetchUserSettings();
+      if (profileResult.success) {
+        const data = profileResult.data;
+        setProfileData({
+          firstName: data.firstName || '',
+          lastName: data.lastName || '',
+          displayName: data.displayName || data.organizationName || getUserDisplayName(currentUser),
+          email: data.email || currentUser.email || '',
+          phone: data.phoneNumber || data.phone || '',
+          location: data.location || '',
+          website: data.website || '',
+          bio: data.bio || data.description || ''
+        });
+      }
+
+      // Load notification settings
+      const notificationResult = await fetchNotificationSettings();
+      if (notificationResult.success) {
+        setNotificationSettings({ ...getDefaultNotificationSettings(), ...notificationResult.data });
+      }
+
+      // Load privacy settings
+      const privacyResult = await fetchPrivacySettings();
+      if (privacyResult.success) {
+        setPrivacySettings({ ...getDefaultPrivacySettings(), ...privacyResult.data });
+      }
+
+      // Load active sessions
+      const sessionsResult = await fetchActiveSessions();
+      if (sessionsResult.success) {
+        setActiveSessions(sessionsResult.data || []);
+      }
+
+    } catch (err) {
+      console.error('Error loading settings:', err);
+      setError('Failed to load settings. Please try refreshing the page.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleProfileChange = (field, value) => {
     setProfileData(prev => ({ ...prev, [field]: value }));
     setHasUnsavedChanges(true);
+    setError('');
   };
 
   const handleNotificationChange = (setting) => {
@@ -83,10 +164,197 @@ const SettingsPage = () => {
     setHasUnsavedChanges(true);
   };
 
-  const handleSaveChanges = () => {
-    // Here you would make API calls to save the changes
-    console.log('Saving changes...');
-    setHasUnsavedChanges(false);
+  const handleSaveChanges = async () => {
+    try {
+      setSaving(true);
+      setError('');
+      setSuccess('');
+
+      const promises = [];
+
+      // Save profile data if changed
+      if (hasUnsavedChanges) {
+        promises.push(updateProfileSettings(profileData));
+        promises.push(updateNotificationSettings(notificationSettings));
+        promises.push(updatePrivacySettings(privacySettings));
+      }
+
+      const results = await Promise.all(promises);
+      const failures = results.filter(result => !result.success);
+
+      if (failures.length > 0) {
+        setError(failures[0].message || 'Some settings could not be saved');
+      } else {
+        setSuccess('Settings saved successfully!');
+        setHasUnsavedChanges(false);
+        
+        // Update local user data if profile was updated
+        if (results[0] && results[0].success) {
+          updateCurrentUser(profileData);
+        }
+        
+        setTimeout(() => setSuccess(''), 3000);
+      }
+
+    } catch (err) {
+      console.error('Error saving settings:', err);
+      setError('Failed to save settings. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handlePasswordChange = async () => {
+    try {
+      if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
+        setError('Please fill in all password fields');
+        return;
+      }
+
+      if (passwordData.newPassword !== passwordData.confirmPassword) {
+        setError('New passwords do not match');
+        return;
+      }
+
+      if (passwordData.newPassword.length < 8) {
+        setError('Password must be at least 8 characters long');
+        return;
+      }
+
+      setSaving(true);
+      setError('');
+      setSuccess('');
+
+      const result = await changePassword(passwordData);
+
+      if (result.success) {
+        setSuccess('Password changed successfully!');
+        setPasswordData({
+          currentPassword: '',
+          newPassword: '',
+          confirmPassword: ''
+        });
+        setTimeout(() => setSuccess(''), 3000);
+      } else {
+        setError(result.message || 'Failed to change password');
+      }
+
+    } catch (err) {
+      console.error('Error changing password:', err);
+      setError('Failed to change password. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleImageUpload = async (file) => {
+    try {
+      setSaving(true);
+      setError('');
+
+      // Validate file
+      if (!file.type.startsWith('image/')) {
+        setError('Please select a valid image file');
+        return;
+      }
+
+      if (file.size > 5 * 1024 * 1024) {
+        setError('Image size must be less than 5MB');
+        return;
+      }
+
+      const result = await uploadProfileImage(file, 'profile');
+
+      if (result.success) {
+        setSuccess('Profile picture updated successfully!');
+        // Update local user data
+        updateCurrentUser({ profileImageUrl: result.imageUrl });
+        // Reload user data to show new image
+        const updatedUser = getCurrentUser();
+        setUser(updatedUser);
+        setTimeout(() => setSuccess(''), 3000);
+      } else {
+        setError(result.message || 'Failed to upload image');
+      }
+
+    } catch (err) {
+      console.error('Error uploading image:', err);
+      setError('Failed to upload image. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDataExport = async () => {
+    try {
+      setSaving(true);
+      setError('');
+
+      const result = await requestDataExport();
+
+      if (result.success) {
+        setSuccess('Data export requested. You will receive an email when ready.');
+        setTimeout(() => setSuccess(''), 5000);
+      } else {
+        setError(result.message || 'Failed to request data export');
+      }
+
+    } catch (err) {
+      console.error('Error requesting data export:', err);
+      setError('Failed to request data export. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleAccountDeletion = async () => {
+    const password = prompt('Please enter your password to confirm account deletion:');
+    if (!password) return;
+
+    const confirmed = window.confirm('Are you sure you want to delete your account? This action cannot be undone.');
+    if (!confirmed) return;
+
+    try {
+      setSaving(true);
+      setError('');
+
+      const result = await deleteAccount(password);
+
+      if (result.success) {
+        alert('Account deleted successfully. You will be redirected to the homepage.');
+        window.location.href = '/';
+      } else {
+        setError(result.message || 'Failed to delete account');
+      }
+
+    } catch (err) {
+      console.error('Error deleting account:', err);
+      setError('Failed to delete account. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSessionTermination = async (sessionId) => {
+    try {
+      const result = await terminateSession(sessionId);
+
+      if (result.success) {
+        setSuccess('Session terminated successfully');
+        // Reload sessions
+        const sessionsResult = await fetchActiveSessions();
+        if (sessionsResult.success) {
+          setActiveSessions(sessionsResult.data || []);
+        }
+        setTimeout(() => setSuccess(''), 3000);
+      } else {
+        setError(result.message || 'Failed to terminate session');
+      }
+
+    } catch (err) {
+      console.error('Error terminating session:', err);
+      setError('Failed to terminate session. Please try again.');
+    }
   };
 
   const renderProfileSection = () => (
@@ -100,56 +368,71 @@ const SettingsPage = () => {
 
       <div className="settings-form">
         {/* Profile Picture */}
-        <div className="form-group profile-picture-group">
+        <div className="form-group">
           <label className="form-label">Profile Picture</label>
           <div className="profile-picture-container">
-            <div className="profile-picture-current">
-              <div className="profile-avatar">
-                <span>YT</span>
-              </div>
+            <div className="profile-avatar">
+              {user?.profileImageUrl ? (
+                <img src={user.profileImageUrl} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+              ) : (
+                <span>{getUserInitials(user)}</span>
+              )}
             </div>
             <div className="profile-picture-actions">
-              <button className="btn-secondary">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files[0];
+                  if (file) handleImageUpload(file);
+                }}
+                style={{ display: 'none' }}
+                id="profile-picture-upload"
+              />
+              <label htmlFor="profile-picture-upload" className="btn-secondary">
                 <Camera className="w-4 h-4" />
                 Change Photo
-              </button>
-              <button className="btn-text">Remove</button>
+              </label>
             </div>
           </div>
         </div>
 
         {/* Name Fields */}
-        <div className="form-row">
-          <div className="form-group">
-            <label className="form-label">First Name</label>
-            <input
-              type="text"
-              className="form-input"
-              value={profileData.firstName}
-              onChange={(e) => handleProfileChange('firstName', e.target.value)}
-            />
-          </div>
-          <div className="form-group">
-            <label className="form-label">Last Name</label>
-            <input
-              type="text"
-              className="form-input"
-              value={profileData.lastName}
-              onChange={(e) => handleProfileChange('lastName', e.target.value)}
-            />
-          </div>
-        </div>
+        {user?.userType === 'VOLUNTEER' && (
+          <>
+            <div className="form-row">
+              <div className="form-group">
+                <label className="form-label">First Name</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  value={profileData.firstName}
+                  onChange={(e) => handleProfileChange('firstName', e.target.value)}
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Last Name</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  value={profileData.lastName}
+                  onChange={(e) => handleProfileChange('lastName', e.target.value)}
+                />
+              </div>
+            </div>
+          </>
+        )}
 
-        {/* Display Name */}
         <div className="form-group">
-          <label className="form-label">Display Name</label>
+          <label className="form-label">
+            {user?.userType === 'ORGANIZATION' ? 'Organization Name' : 'Display Name'}
+          </label>
           <input
             type="text"
             className="form-input"
             value={profileData.displayName}
             onChange={(e) => handleProfileChange('displayName', e.target.value)}
           />
-          <p className="form-help">This is how your name will appear to other users</p>
         </div>
 
         {/* Contact Information */}
@@ -189,6 +472,7 @@ const SettingsPage = () => {
             className="form-input"
             value={profileData.location}
             onChange={(e) => handleProfileChange('location', e.target.value)}
+            placeholder="City, State"
           />
         </div>
 
@@ -214,6 +498,7 @@ const SettingsPage = () => {
             value={profileData.bio}
             onChange={(e) => handleProfileChange('bio', e.target.value)}
             placeholder="Tell others about yourself, your interests, and what motivates you to volunteer..."
+            maxLength={500}
           />
           <p className="form-help">{profileData.bio.length}/500 characters</p>
         </div>
@@ -262,9 +547,13 @@ const SettingsPage = () => {
           />
         </div>
 
-        <button className="btn-secondary">
+        <button 
+          className="btn-secondary"
+          onClick={handlePasswordChange}
+          disabled={saving || !passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword}
+        >
           <Lock className="w-4 h-4" />
-          Update Password
+          {saving ? 'Updating...' : 'Update Password'}
         </button>
 
         {/* Two-Factor Authentication */}
@@ -276,6 +565,36 @@ const SettingsPage = () => {
               <p>Use an authenticator app for enhanced security</p>
             </div>
             <button className="btn-secondary">Enable</button>
+          </div>
+        </div>
+
+        {/* Active Sessions */}
+        <div className="security-section">
+          <h3 className="subsection-title">Active Sessions</h3>
+          <div className="sessions-list">
+            {activeSessions.length > 0 ? (
+              activeSessions.map((session) => (
+                <div key={session.id} className="session-item">
+                  <div className="session-info">
+                    <h4>{session.deviceName || 'Unknown Device'}</h4>
+                    <p>{session.location || 'Unknown Location'} • {session.browser || 'Unknown Browser'}</p>
+                    <span className={`session-status ${session.current ? 'active' : ''}`}>
+                      {session.current ? 'Current Session' : `Last active: ${session.lastActive}`}
+                    </span>
+                  </div>
+                  {!session.current && (
+                    <button 
+                      className="btn-secondary"
+                      onClick={() => handleSessionTermination(session.id)}
+                    >
+                      Terminate
+                    </button>
+                  )}
+                </div>
+              ))
+            ) : (
+              <p className="no-data">No active sessions found.</p>
+            )}
           </div>
         </div>
       </div>
@@ -377,12 +696,12 @@ const SettingsPage = () => {
           </div>
 
           <div className="notification-group">
-            <h3 className="subsection-title">Digest & Marketing</h3>
+            <h3 className="subsection-title">Email Preferences</h3>
             
             <div className="toggle-item">
               <div className="toggle-info">
                 <h4>Weekly Digest</h4>
-                <p>Weekly summary of platform activity</p>
+                <p>Receive a weekly summary of your activity</p>
               </div>
               <label className="toggle-switch">
                 <input
@@ -397,7 +716,7 @@ const SettingsPage = () => {
             <div className="toggle-item">
               <div className="toggle-info">
                 <h4>Marketing Emails</h4>
-                <p>Receive updates about new features and opportunities</p>
+                <p>Receive promotional content and feature updates</p>
               </div>
               <label className="toggle-switch">
                 <input
@@ -425,14 +744,61 @@ const SettingsPage = () => {
 
       <div className="settings-form">
         <div className="privacy-groups">
-         
+          <div className="privacy-group">
+            <h3 className="subsection-title">Profile Visibility</h3>
+            
+            <div className="radio-group">
+              <label className="radio-item">
+                <input
+                  type="radio"
+                  name="profileVisibility"
+                  value="public"
+                  checked={privacySettings.profileVisibility === 'public'}
+                  onChange={(e) => handlePrivacyChange('profileVisibility', e.target.value)}
+                />
+                <div className="radio-info">
+                  <h4>Public</h4>
+                  <p>Anyone can view your profile</p>
+                </div>
+              </label>
+
+              <label className="radio-item">
+                <input
+                  type="radio"
+                  name="profileVisibility"
+                  value="connections"
+                  checked={privacySettings.profileVisibility === 'connections'}
+                  onChange={(e) => handlePrivacyChange('profileVisibility', e.target.value)}
+                />
+                <div className="radio-info">
+                  <h4>Connections Only</h4>
+                  <p>Only your connections can view your full profile</p>
+                </div>
+              </label>
+
+              <label className="radio-item">
+                <input
+                  type="radio"
+                  name="profileVisibility"
+                  value="private"
+                  checked={privacySettings.profileVisibility === 'private'}
+                  onChange={(e) => handlePrivacyChange('profileVisibility', e.target.value)}
+                />
+                <div className="radio-info">
+                  <h4>Private</h4>
+                  <p>Only you can view your profile</p>
+                </div>
+              </label>
+            </div>
+          </div>
+
           <div className="privacy-group">
             <h3 className="subsection-title">Contact Information</h3>
             
             <div className="toggle-item">
               <div className="toggle-info">
                 <h4>Show Email Address</h4>
-                <p>Allow others to see your email address</p>
+                <p>Display your email address on your profile</p>
               </div>
               <label className="toggle-switch">
                 <input
@@ -447,7 +813,7 @@ const SettingsPage = () => {
             <div className="toggle-item">
               <div className="toggle-info">
                 <h4>Show Phone Number</h4>
-                <p>Allow others to see your phone number</p>
+                <p>Display your phone number on your profile</p>
               </div>
               <label className="toggle-switch">
                 <input
@@ -462,7 +828,7 @@ const SettingsPage = () => {
             <div className="toggle-item">
               <div className="toggle-info">
                 <h4>Show Location</h4>
-                <p>Allow others to see your location</p>
+                <p>Display your location on your profile</p>
               </div>
               <label className="toggle-switch">
                 <input
@@ -476,12 +842,12 @@ const SettingsPage = () => {
           </div>
 
           <div className="privacy-group">
-            <h3 className="subsection-title">Platform Interactions</h3>
+            <h3 className="subsection-title">Communication</h3>
             
             <div className="toggle-item">
               <div className="toggle-info">
                 <h4>Allow Direct Messages</h4>
-                <p>Let other users send you direct messages</p>
+                <p>Let others send you direct messages</p>
               </div>
               <label className="toggle-switch">
                 <input
@@ -547,7 +913,13 @@ const SettingsPage = () => {
                 <p>Get a copy of all your data including profile, activities, and connections</p>
               </div>
             </div>
-            <button className="btn-secondary">Request Download</button>
+            <button 
+              className="btn-secondary"
+              onClick={handleDataExport}
+              disabled={saving}
+            >
+              {saving ? 'Requesting...' : 'Request Download'}
+            </button>
           </div>
 
           <div className="action-card danger">
@@ -558,7 +930,13 @@ const SettingsPage = () => {
                 <p>Permanently delete your account and all associated data. This action cannot be undone.</p>
               </div>
             </div>
-            <button className="btn-danger">Delete Account</button>
+            <button 
+              className="btn-danger"
+              onClick={handleAccountDeletion}
+              disabled={saving}
+            >
+              {saving ? 'Deleting...' : 'Delete Account'}
+            </button>
           </div>
         </div>
       </div>
@@ -582,9 +960,80 @@ const SettingsPage = () => {
     }
   };
 
+  // Loading state
+  if (loading) {
+    return (
+      <div className="settings-page">
+        <div className="settings-container">
+          <div className="settings-section">
+            <div className="section-header">
+              <Loader className="w-6 h-6" />
+              <p>Loading settings...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="settings-page">
       <div className="settings-container">
+        {/* Error/Success Messages */}
+        {error && (
+          <div className="settings-section" style={{ 
+            marginBottom: 'var(--spacing-4)', 
+            background: '#fef2f2', 
+            borderColor: '#dc3545',
+            padding: 'var(--spacing-4)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-2)' }}>
+              <XCircle className="w-5 h-5" style={{ color: '#dc3545' }} />
+              <span style={{ color: '#dc3545' }}>{error}</span>
+              <button 
+                onClick={() => setError('')} 
+                style={{ 
+                  marginLeft: 'auto', 
+                  background: 'none', 
+                  border: 'none', 
+                  color: '#dc3545', 
+                  cursor: 'pointer',
+                  fontSize: '1.2rem'
+                }}
+              >
+                ×
+              </button>
+            </div>
+          </div>
+        )}
+
+        {success && (
+          <div className="settings-section" style={{ 
+            marginBottom: 'var(--spacing-4)', 
+            background: '#f0f9ff', 
+            borderColor: 'var(--accent-green)',
+            padding: 'var(--spacing-4)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-2)' }}>
+              <CheckCircle className="w-5 h-5" style={{ color: 'var(--accent-green)' }} />
+              <span style={{ color: 'var(--accent-green)' }}>{success}</span>
+              <button 
+                onClick={() => setSuccess('')} 
+                style={{ 
+                  marginLeft: 'auto', 
+                  background: 'none', 
+                  border: 'none', 
+                  color: 'var(--accent-green)', 
+                  cursor: 'pointer',
+                  fontSize: '1.2rem'
+                }}
+              >
+                ×
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Left Sidebar - Navigation */}
         <div className="settings-sidebar">
           <div className="sidebar-header">
@@ -623,16 +1072,25 @@ const SettingsPage = () => {
                 <div className="save-bar-actions">
                   <button 
                     className="btn-text"
-                    onClick={() => setHasUnsavedChanges(false)}
+                    onClick={() => {
+                      setHasUnsavedChanges(false);
+                      loadSettingsData(); // Reload original data
+                    }}
+                    disabled={saving}
                   >
                     Discard
                   </button>
                   <button 
                     className="btn-primary"
                     onClick={handleSaveChanges}
+                    disabled={saving}
                   >
-                    <Save className="w-4 h-4" />
-                    Save Changes
+                    {saving ? (
+                      <Loader className="w-4 h-4" />
+                    ) : (
+                      <Save className="w-4 h-4" />
+                    )}
+                    {saving ? 'Saving...' : 'Save Changes'}
                   </button>
                 </div>
               </div>

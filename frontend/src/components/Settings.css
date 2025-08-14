@@ -1,4 +1,7 @@
-/* Settings.css - Clean & Focused */
+/* ========================================
+   SETTINGS PAGE STYLES
+   Uses global.css design system variables
+   ======================================== */
 
 /* ========================================
    MAIN LAYOUT
@@ -7,7 +10,7 @@
 .settings-page {
   min-height: 100vh;
   background-color: var(--background-secondary);
-  padding: var(--spacing-20) var(--spacing-4) var(--spacing-6) var(--spacing-4);
+  padding: calc(64px + var(--spacing-6)) var(--spacing-4) var(--spacing-6) var(--spacing-4);
 }
 
 .settings-container {
@@ -186,7 +189,7 @@
 .profile-avatar {
   width: 80px;
   height: 80px;
-  background: linear-gradient(135deg, var(--accent-green) 0%, var(--accent-purple) 100%);
+  background: var(--gradient-primary);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -194,6 +197,7 @@
   color: var(--white);
   font-size: var(--font-size-xl);
   font-weight: var(--font-weight-bold);
+  overflow: hidden;
 }
 
 .profile-picture-actions {
@@ -226,6 +230,12 @@
   transform: translateY(-1px);
 }
 
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
 .btn-secondary {
   display: inline-flex;
   align-items: center;
@@ -246,6 +256,12 @@
   transform: translateY(-1px);
 }
 
+.btn-secondary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
 .btn-text {
   background: none;
   border: none;
@@ -261,6 +277,11 @@
 .btn-text:hover {
   color: var(--text-primary);
   background: var(--background-muted);
+}
+
+.btn-text:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .btn-danger {
@@ -281,6 +302,12 @@
 .btn-danger:hover {
   background: #c82333;
   transform: translateY(-1px);
+}
+
+.btn-danger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
 }
 
 /* ========================================
@@ -336,6 +363,13 @@
 .session-status.active {
   background: var(--accent-green);
   color: var(--white);
+}
+
+.no-data {
+  color: var(--text-secondary);
+  font-style: italic;
+  text-align: center;
+  padding: var(--spacing-4);
 }
 
 /* ========================================
@@ -588,7 +622,7 @@ input:checked + .toggle-slider:before {
 
 @media (max-width: 768px) {
   .settings-page {
-    padding: var(--spacing-4) 0;
+    padding: calc(56px + var(--spacing-4)) var(--spacing-3) var(--spacing-4) var(--spacing-3);
   }
 
   .settings-container {
@@ -618,6 +652,11 @@ input:checked + .toggle-slider:before {
     flex-direction: column;
     gap: var(--spacing-3);
   }
+
+  .save-bar-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
 }
 
 @media (max-width: 480px) {
@@ -637,5 +676,95 @@ input:checked + .toggle-slider:before {
     width: 60px;
     height: 60px;
     font-size: var(--font-size-lg);
+  }
+
+  .section-title {
+    font-size: var(--font-size-xl);
+  }
+
+  .subsection-title {
+    font-size: var(--font-size-base);
+  }
+}
+
+/* ========================================
+   ACCESSIBILITY IMPROVEMENTS
+   ======================================== */
+
+.btn-primary:focus,
+.btn-secondary:focus,
+.btn-danger:focus,
+.btn-text:focus {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.nav-item:focus {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.toggle-switch:focus-within {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.radio-item:focus-within {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* Reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .btn-primary,
+  .btn-secondary,
+  .btn-danger,
+  .nav-item,
+  .toggle-slider,
+  .radio-item,
+  .action-card {
+    transition: none;
+  }
+
+  .btn-primary:hover,
+  .btn-secondary:hover,
+  .btn-danger:hover {
+    transform: none;
+  }
+}
+
+/* ========================================
+   PRINT STYLES
+   ======================================== */
+
+@media print {
+  .settings-page {
+    background: white;
+    padding: var(--spacing-4);
+  }
+
+  .settings-sidebar {
+    display: none;
+  }
+
+  .settings-container {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-4);
+  }
+
+  .save-bar {
+    display: none;
+  }
+
+  .btn-primary,
+  .btn-secondary,
+  .btn-danger,
+  .btn-text {
+    display: none;
+  }
+
+  .settings-section {
+    border: 1px solid black;
+    box-shadow: none;
   }
 }

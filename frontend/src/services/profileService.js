@@ -38,7 +38,7 @@ profileApi.interceptors.response.use(
   },
   async (error) => {
     const originalRequest = error.config;
-    
+
     console.error('❌ Profile API Error:', {
       status: error.response?.status,
       url: error.config?.url,
@@ -48,11 +48,11 @@ profileApi.interceptors.response.use(
 
     if (error.response?.status === 401 && !originalRequest._retry) {
       console.log('🔄 401 error in profile service, attempting token refresh...');
-      
+
       try {
         originalRequest._retry = true;
         const token = await ensureValidToken();
-        
+
         if (token) {
           originalRequest.headers.Authorization = `Bearer ${token}`;
           return profileApi(originalRequest);
@@ -64,7 +64,7 @@ profileApi.interceptors.response.use(
         return Promise.reject(refreshError);
       }
     }
-    
+
     return Promise.reject(error);
   }
 );
@@ -93,42 +93,115 @@ const formatProfileData = (profileData, userType) => {
   console.log('🔄 Formatting profile data for type:', userType);
   console.log('Raw profile data:', profileData);
 
+  // Helper function to safely convert arrays to strings
+  const arrayToString = (value) => {
+    if (Array.isArray(value)) {
+      return value.length > 0 ? value.join(',') : '';
+    }
+    return value || '';
+  };
+
+  // Helper function to ensure string values
+  const ensureString = (value) => {
+    if (value === null || value === undefined) {
+      return '';
+    }
+    if (Array.isArray(value)) {
+      return value.join(',');
+    }
+    return String(value);
+  };
+
   const baseData = {
-    bio: profileData.bio || '',
-    location: profileData.location || '',
-    phoneNumber: profileData.phoneNumber || profileData.phone || '',
+    bio: ensureString(profileData.bio),
+    location: ensureString(profileData.location),
+    phoneNumber: ensureString(profileData.phoneNumber || profileData.phone),
+    skills: ensureString(profileData.skills),
+    interests: ensureString(profileData.interests),
+    profileComplete: profileData.profileComplete || false
   };
 
   if (userType === 'VOLUNTEER') {
     const formattedData = {
       ...baseData,
-      firstName: profileData.firstName || '',
-      lastName: profileData.lastName || '',
-      skills: profileData.skills || '',
-      interests: profileData.interests || '',
-      availability: profileData.availability || 'flexible',
+      firstName: ensureString(profileData.firstName),
+      lastName: ensureString(profileData.lastName),
+      availability: ensureString(profileData.availability || 'flexible'),
       profileImageUrl: profileData.profileImageUrl || null,
     };
-    console.log('📝 Formatted volunteer data:', formattedData);
+
+    console.log('🙋 Formatted volunteer data:', formattedData);
     return formattedData;
+
   } else if (userType === 'ORGANIZATION') {
     const formattedData = {
       ...baseData,
-      organizationName: profileData.organizationName || '',
-      organizationType: profileData.organizationType || '',
-      website: profileData.website || '',
-      missionStatement: profileData.missionStatement || profileData.bio || '',
-      categories: profileData.categories || profileData.interests || '',
-      services: profileData.services || '',
+      organizationName: ensureString(profileData.organizationName),
+      organizationType: ensureString(profileData.organizationType),
+      website: ensureString(profileData.website),
+      missionStatement: ensureString(profileData.missionStatement || profileData.bio),
+      categories: ensureString(profileData.categories),
+      // ✅ FIXED: Convert services array to string
+      services: arrayToString(profileData.services),
       profileImageUrl: profileData.profileImageUrl || null,
       coverImageUrl: profileData.coverImageUrl || null,
+      // Additional fields that might be sent
+      description: ensureString(profileData.description || profileData.bio),
+      address: ensureString(profileData.address || profileData.location),
+      city: ensureString(profileData.city),
+      state: ensureString(profileData.state),
+      zipCode: ensureString(profileData.zipCode),
+      country: ensureString(profileData.country),
+      primaryCategory: ensureString(profileData.primaryCategory),
+      organizationSize: ensureString(profileData.organizationSize),
+      languagesSupported: ensureString(profileData.languagesSupported),
+      taxExemptStatus: ensureString(profileData.taxExemptStatus),
+      // Handle numeric fields properly
+      employeeCount: profileData.employeeCount ? Number(profileData.employeeCount) : null,
+      foundedYear: profileData.foundedYear ? Number(profileData.foundedYear) : null,
     };
+
     console.log('🏢 Formatted organization data:', formattedData);
     return formattedData;
   }
 
   console.log('📝 Formatted base data:', baseData);
   return baseData;
+};
+
+/**
+ * Check if profile data is complete based on user type
+ * @param {Object} profileData - Profile data to check
+ * @param {string} userType - User type (VOLUNTEER/ORGANIZATION)
+ * @returns {boolean} - Whether profile is complete
+ */
+const checkProfileCompleteness = (profileData, userType) => {
+  if (!profileData) return false;
+
+  // If profileComplete flag is explicitly set, use that
+  if (profileData.profileComplete !== undefined) {
+    return profileData.profileComplete;
+  }
+
+  // Check required fields based on user type
+  if (userType === 'VOLUNTEER') {
+    return !!(
+      profileData.firstName &&
+      profileData.lastName &&
+      profileData.bio &&
+      profileData.location &&
+      profileData.interests
+    );
+  } else if (userType === 'ORGANIZATION') {
+    return !!(
+      profileData.organizationName &&
+      profileData.bio &&
+      profileData.location &&
+      profileData.categories
+    );
+  }
+
+  return false;
 };
 
 // ==========================================
@@ -138,7 +211,7 @@ const formatProfileData = (profileData, userType) => {
 const createOrUpdateProfile = async (profileData) => {
   try {
     console.log('=== CREATING OR UPDATING PROFILE ===');
-    console.log('📝 Profile data received:', profileData);
+    console.log('🔍 Profile data received:', profileData);
 
     const user = getCurrentUser();
     if (!user) {
@@ -170,9 +243,10 @@ const createOrUpdateProfile = async (profileData) => {
 
     console.log('✅ Profile upsert response:', response.data);
 
+    // Update local user data with profile completion status
     const updatedUser = updateLocalUser({
       ...formattedData,
-      profileComplete: true
+      profileComplete: profileData.profileComplete || true
     });
 
     return {
@@ -186,17 +260,17 @@ const createOrUpdateProfile = async (profileData) => {
     console.error('=== PROFILE UPSERT ERROR - DETAILED ===');
     console.error('Error type:', error.constructor.name);
     console.error('Error message:', error.message);
-    
+
     if (error.response) {
       console.error('Response status:', error.response.status);
       console.error('Response statusText:', error.response.statusText);
       console.error('Response data:', error.response.data);
-      
+
       if (error.response.data && typeof error.response.data === 'object') {
         try {
           const errorData = error.response.data;
           const finalErrorMessage = errorData.error || errorData.message || 'Unknown error occurred';
-          
+
           return {
             success: false,
             message: finalErrorMessage,
@@ -207,24 +281,34 @@ const createOrUpdateProfile = async (profileData) => {
         }
       }
     }
-    
+
     return {
       success: false,
-      message: error.response?.data?.error || 
-               error.response?.data?.message || 
-               error.message || 
-               'Failed to save profile'
+      message: error.response?.data?.error ||
+        error.response?.data?.message ||
+        error.message ||
+        'Failed to save profile'
     };
   }
 };
 
 const createProfile = async (profileData) => {
-  console.log('=== LEGACY CREATE PROFILE - REDIRECTING TO UPSERT ===');
-  return createOrUpdateProfile(profileData);
+  console.log('=== CREATING PROFILE ===');
+  console.log('📝 Profile data:', profileData);
+
+  // Mark as profile complete when successfully created through setup
+  const profileDataWithCompletion = {
+    ...profileData,
+    profileComplete: profileData.profileComplete !== false // Default to true unless explicitly false
+  };
+
+  return createOrUpdateProfile(profileDataWithCompletion);
 };
 
 const updateProfile = async (profileData) => {
-  console.log('=== UPDATING PROFILE (USING UPSERT) ===');
+  console.log('=== UPDATING PROFILE ===');
+  console.log('📝 Profile data:', profileData);
+
   return createOrUpdateProfile(profileData);
 };
 
@@ -248,24 +332,30 @@ const checkProfileExists = async () => {
       throw new Error('Invalid user type');
     }
 
+    // Check if profile is considered complete
+    const profileData = response.data;
+    const isComplete = checkProfileCompleteness(profileData, userType);
+
     return {
       success: true,
       exists: true,
-      data: response.data
+      data: profileData,
+      isComplete: isComplete
     };
 
   } catch (error) {
-    if (error.response?.status === 404 || 
-        error.response?.data?.message?.includes('not found')) {
+    if (error.response?.status === 404 ||
+      error.response?.data?.message?.includes('not found')) {
       return {
         success: true,
-        exists: false
+        exists: false,
+        isComplete: false
       };
     }
-    
+
     console.error('=== PROFILE EXISTENCE CHECK ERROR ===');
     console.error('Error:', error.response?.data || error.message);
-    
+
     return {
       success: false,
       message: error.response?.data?.error || error.response?.data?.message || error.message || 'Failed to check profile'
@@ -295,18 +385,26 @@ const fetchMyProfile = async () => {
 
     console.log('Profile fetch response:', response.data);
 
-    const updatedUser = updateLocalUser(response.data);
+    // Check if profile is complete and update local storage
+    const isComplete = checkProfileCompleteness(response.data, userType);
+    const updatedProfileData = {
+      ...response.data,
+      profileComplete: isComplete
+    };
+
+    const updatedUser = updateLocalUser(updatedProfileData);
 
     return {
       success: true,
-      data: response.data,
-      user: updatedUser
+      data: updatedProfileData,
+      user: updatedUser,
+      isComplete: isComplete
     };
 
   } catch (error) {
     console.error('=== PROFILE FETCH ERROR ===');
     console.error('Error:', error.response?.data || error.message);
-    
+
     return {
       success: false,
       message: error.response?.data?.error || error.response?.data?.message || error.message || 'Failed to fetch profile'
@@ -339,7 +437,7 @@ const fetchPublicProfile = async (userId, userType) => {
   } catch (error) {
     console.error('=== PUBLIC PROFILE FETCH ERROR ===');
     console.error('Error:', error.response?.data || error.message);
-    
+
     return {
       success: false,
       message: error.response?.data?.error || error.response?.data?.message || error.message || 'Failed to fetch profile'
@@ -389,7 +487,7 @@ const uploadProfileImage = async (imageFile, imageType = 'profile') => {
   } catch (error) {
     console.error('=== IMAGE UPLOAD ERROR ===');
     console.error('Error:', error.response?.data || error.message);
-    
+
     return {
       success: false,
       message: error.response?.data?.error || error.response?.data?.message || error.message || 'Failed to upload image'
@@ -427,7 +525,7 @@ const fetchProfileStats = async () => {
   } catch (error) {
     console.error('=== PROFILE STATS ERROR ===');
     console.error('Error:', error.response?.data || error.message);
-    
+
     return {
       success: false,
       message: error.response?.data?.error || error.response?.data?.message || error.message || 'Failed to fetch statistics'
@@ -464,7 +562,7 @@ const deleteProfile = async () => {
   } catch (error) {
     console.error('=== PROFILE DELETION ERROR ===');
     console.error('Error:', error.response?.data || error.message);
-    
+
     return {
       success: false,
       message: error.response?.data?.error || error.response?.data?.message || error.message || 'Failed to delete profile'
@@ -473,7 +571,59 @@ const deleteProfile = async () => {
 };
 
 // ==========================================
-// EXPORTS - NO DUPLICATES
+// PROFILE COMPLETION UTILITIES
+// ==========================================
+
+/**
+ * Check if user profile is complete
+ * @param {Object} user - User object (optional, will get current user if not provided)
+ * @returns {boolean} - Whether profile is complete
+ */
+const isProfileComplete = (user = null) => {
+  const currentUser = user || getCurrentUser();
+  if (!currentUser) return false;
+
+  // Check explicit profileComplete flag first
+  if (currentUser.profileComplete === true) {
+    return true;
+  }
+
+  if (currentUser.profileComplete === false) {
+    return false;
+  }
+
+  // Check required fields based on user type
+  if (currentUser.userType === 'VOLUNTEER') {
+    return !!(
+      currentUser.firstName &&
+      currentUser.lastName &&
+      currentUser.bio &&
+      currentUser.location
+    );
+  } else if (currentUser.userType === 'ORGANIZATION') {
+    return !!(
+      currentUser.organizationName &&
+      currentUser.bio &&
+      currentUser.location
+    );
+  }
+
+  return false;
+};
+
+/**
+ * Mark profile as complete in local storage
+ * @param {boolean} isComplete - Whether profile is complete
+ */
+const setProfileComplete = (isComplete = true) => {
+  const user = getCurrentUser();
+  if (user) {
+    updateLocalUser({ profileComplete: isComplete });
+  }
+};
+
+// ==========================================
+// EXPORTS
 // ==========================================
 
 export {
@@ -488,7 +638,10 @@ export {
   deleteProfile,
   getCurrentUser,
   updateLocalUser,
-  formatProfileData
+  formatProfileData,
+  isProfileComplete,
+  setProfileComplete,
+  checkProfileCompleteness
 };
 
 export default {
@@ -502,5 +655,7 @@ export default {
   fetchProfileStats,
   deleteProfile,
   getCurrentUser,
-  updateLocalUser
+  updateLocalUser,
+  isProfileComplete,
+  setProfileComplete
 };

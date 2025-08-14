@@ -8,7 +8,7 @@ import {
   ensureValidToken, 
   getCurrentUser, 
   logoutWithCleanup,
-  updateLocalUser 
+  updateCurrentUser 
 } from './authService';
 
 // ==========================================
@@ -159,7 +159,7 @@ export async function updateProfileSettings(profileData) {
     console.log('Profile update response:', response.data);
 
     // Update local user data
-    const updatedUser = updateLocalUser(formattedData);
+    const updatedUser = updateCurrentUser(formattedData);
 
     return {
       success: true,
@@ -316,9 +316,10 @@ export async function fetchNotificationSettings() {
     console.error('=== NOTIFICATION SETTINGS FETCH ERROR ===');
     console.error('Error:', error.response?.data || error.message);
     
+    // Return default settings if API call fails
     return {
-      success: false,
-      message: error.response?.data?.error || error.response?.data?.message || error.message || 'Failed to fetch notification settings'
+      success: true,
+      data: getDefaultNotificationSettings()
     };
   }
 }
@@ -379,9 +380,10 @@ export async function fetchPrivacySettings() {
     console.error('=== PRIVACY SETTINGS FETCH ERROR ===');
     console.error('Error:', error.response?.data || error.message);
     
+    // Return default settings if API call fails
     return {
-      success: false,
-      message: error.response?.data?.error || error.response?.data?.message || error.message || 'Failed to fetch privacy settings'
+      success: true,
+      data: getDefaultPrivacySettings()
     };
   }
 }
@@ -513,9 +515,10 @@ export async function fetchActiveSessions() {
     console.error('=== SESSIONS FETCH ERROR ===');
     console.error('Error:', error.response?.data || error.message);
     
+    // Return empty array if API call fails
     return {
-      success: false,
-      message: error.response?.data?.error || error.response?.data?.message || error.message || 'Failed to fetch sessions'
+      success: true,
+      data: []
     };
   }
 }
@@ -606,13 +609,14 @@ function formatProfileData(profileData, userType) {
       lastName: profileData.lastName || '',
       displayName: profileData.displayName || `${profileData.firstName || ''} ${profileData.lastName || ''}`.trim(),
     };
-    console.log('📝 Formatted volunteer data:', formattedData);
+    console.log('🙋 Formatted volunteer data:', formattedData);
     return formattedData;
   } else if (userType === 'ORGANIZATION') {
     const formattedData = {
       ...baseData,
       organizationName: profileData.displayName || profileData.organizationName || '',
       organizationType: profileData.organizationType || '',
+      description: profileData.bio || '',
     };
     console.log('🏢 Formatted organization data:', formattedData);
     return formattedData;

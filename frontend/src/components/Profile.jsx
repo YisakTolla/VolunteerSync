@@ -160,7 +160,7 @@ const Profile = () => {
     );
   }
 
-  const volunteerTabs = [
+  const volunteerTabs = [ 
     { id: "overview", label: "Overview", icon: Users },
     { id: "organizations", label: "Organizations", icon: Heart },
   ];

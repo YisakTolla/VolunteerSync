@@ -14,7 +14,10 @@ const api = axios.create({
   },
 });
 
-// 🔧 FIXED: Proper token interceptor with refresh handling
+// ==========================================
+// TOKEN REFRESH QUEUE MANAGEMENT
+// ==========================================
+
 let isRefreshing = false;
 let failedQueue = [];
 
@@ -30,7 +33,11 @@ const processQueue = (error, token = null) => {
   failedQueue = [];
 };
 
-// Add token to requests if available
+// ==========================================
+// AXIOS INTERCEPTORS
+// ==========================================
+
+// Request interceptor - Add token to requests
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('authToken');
   if (token && token !== 'undefined' && token !== 'null') {
@@ -39,7 +46,7 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// 🔧 FIXED: Proper response interceptor with automatic token refresh
+// Response interceptor - Handle token refresh on 401 errors
 api.interceptors.response.use(
   (response) => {
     return response;
@@ -103,11 +110,11 @@ api.interceptors.response.use(
 );
 
 // ==========================================
-// TOKEN MANAGEMENT - 🔧 FIXED
+// TOKEN MANAGEMENT FUNCTIONS
 // ==========================================
 
 /**
- * 🔧 FIXED: Separate function for token refresh that doesn't use the interceptor
+ * Separate function for token refresh that doesn't use the interceptor
  */
 async function performTokenRefresh() {
   try {
@@ -184,13 +191,24 @@ export function getTokenTimeRemaining(token = null) {
   }
 }
 
+/**
+ * ✅ FIXED: Updated to refresh only when 1 hour remaining instead of 5 minutes
+ * This prevents constant token refreshing and makes sessions feel longer
+ */
 export function shouldRefreshToken(token = null) {
   const timeRemaining = getTokenTimeRemaining(token);
-  // Refresh if less than 5 minutes remaining
-  return timeRemaining > 0 && timeRemaining < 5 * 60 * 1000;
+  
+  // Log token status for debugging
+  console.log('🔍 Token check:', {
+    timeRemainingMinutes: Math.round(timeRemaining / 1000 / 60),
+    shouldRefresh: timeRemaining > 0 && timeRemaining < 60 * 60 * 1000
+  });
+  
+  // Refresh when 1 hour remaining instead of 5 minutes
+  return timeRemaining > 0 && timeRemaining < 60 * 60 * 1000; // 1 hour
 }
 
-// 🔧 FIXED: Public refresh function
+// Public refresh function
 export async function refreshToken() {
   return await performTokenRefresh();
 }
@@ -278,7 +296,7 @@ export async function registerWithGoogle(googleIdToken, userType) {
 }
 
 // ==========================================
-// LOGIN FUNCTIONS - 🔧 FIXED
+// LOGIN FUNCTIONS
 // ==========================================
 
 export async function loginUser(email, password) {
@@ -401,7 +419,7 @@ export function logoutWithCleanup() {
 }
 
 // ==========================================
-// PROFILE DATA FETCHING - 🔧 FIXED
+// PROFILE DATA FETCHING
 // ==========================================
 
 export async function getUserProfile() {
@@ -561,6 +579,20 @@ export function getUserInitials(user = null) {
   return 'U';
 }
 
+export function getUserTypeDisplay(user = null) {
+  const currentUser = user || getCurrentUser();
+  if (!currentUser) return '';
+
+  switch (currentUser.userType) {
+    case 'ORGANIZATION':
+      return '🏢 Organization';
+    case 'VOLUNTEER':
+      return '🙋‍♀️ Volunteer';
+    default:
+      return currentUser.userType;
+  }
+}
+
 export function debugAuthState() {
   console.log('🔍 === Auth Debug Info ===');
   console.log('Token:', localStorage.getItem('authToken')?.substring(0, 20) + '...');
@@ -569,11 +601,12 @@ export function debugAuthState() {
   console.log('Profile Complete:', isProfileComplete(getCurrentUser()));
   console.log('Needs Setup:', needsProfileSetup(getCurrentUser()));
   console.log('Token Expired:', isTokenExpired());
+  console.log('Token Time Remaining (minutes):', Math.round(getTokenTimeRemaining() / 1000 / 60));
   console.log('========================');
 }
 
 // ==========================================
-// REGISTRATION SUCCESS HANDLER
+// PROFILE COMPLETION HELPERS
 // ==========================================
 
 export function handleRegistrationSuccess(userData) {
@@ -592,10 +625,6 @@ export function handleRegistrationSuccess(userData) {
 
   return userWithFlags;
 }
-
-// ==========================================
-// PROFILE COMPLETION HELPERS
-// ==========================================
 
 export function getProfileCompletionStatus(user = null) {
   const currentUser = user || getCurrentUser();
@@ -670,24 +699,6 @@ export function getProfileCompletionStatus(user = null) {
     completed,
     total: required.length
   };
-}
-
-// ==========================================
-// ADDITIONAL UTILITY FUNCTIONS
-// ==========================================
-
-export function getUserTypeDisplay(user = null) {
-  const currentUser = user || getCurrentUser();
-  if (!currentUser) return '';
-
-  switch (currentUser.userType) {
-    case 'ORGANIZATION':
-      return '🏢 Organization';
-    case 'VOLUNTEER':
-      return '🙋‍♀️ Volunteer';
-    default:
-      return currentUser.userType;
-  }
 }
 
 export async function refreshUserData() {

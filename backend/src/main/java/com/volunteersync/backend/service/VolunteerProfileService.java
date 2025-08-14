@@ -51,12 +51,10 @@ public class VolunteerProfileService {
 
     // Updated VolunteerProfileService.java with upsert functionality
 
-    /**
-     * Create or update volunteer profile (UPSERT)
-     * This method handles both profile creation and updates in a single endpoint
-     */
     public VolunteerProfileDTO createOrUpdateProfile(CreateVolunteerProfileRequest request, Long userId) {
         System.out.println("Creating or updating volunteer profile for user ID: " + userId);
+        System.out.println("Request skills: '" + request.getSkills() + "'");
+        System.out.println("Request interests: '" + request.getInterests() + "'");
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -65,9 +63,7 @@ public class VolunteerProfileService {
             throw new RuntimeException("Only volunteer users can create volunteer profiles");
         }
 
-        // Check if profile already exists
         Optional<VolunteerProfile> existingProfile = volunteerProfileRepository.findByUser(user);
-
         VolunteerProfile profile;
         boolean isUpdate = false;
 
@@ -78,16 +74,41 @@ public class VolunteerProfileService {
             System.out.println("Updating existing volunteer profile with ID: " + profile.getId());
 
             // Update all fields - use request values or keep existing if null
-            profile.setFirstName(request.getFirstName() != null ? request.getFirstName() : profile.getFirstName());
-            profile.setLastName(request.getLastName() != null ? request.getLastName() : profile.getLastName());
-            profile.setBio(request.getBio() != null ? request.getBio() : profile.getBio());
-            profile.setLocation(request.getLocation() != null ? request.getLocation() : profile.getLocation());
-            profile.setPhoneNumber(
-                    request.getPhoneNumber() != null ? request.getPhoneNumber() : profile.getPhoneNumber());
-            profile.setProfileImageUrl(
-                    request.getProfileImageUrl() != null ? request.getProfileImageUrl() : profile.getProfileImageUrl());
-            profile.setIsAvailable(
-                    request.getIsAvailable() != null ? request.getIsAvailable() : profile.getIsAvailable());
+            if (isValidString(request.getFirstName())) {
+                profile.setFirstName(request.getFirstName());
+            }
+            if (isValidString(request.getLastName())) {
+                profile.setLastName(request.getLastName());
+            }
+            if (isValidString(request.getBio())) {
+                profile.setBio(request.getBio());
+            }
+            if (isValidString(request.getLocation())) {
+                profile.setLocation(request.getLocation());
+            }
+            if (isValidString(request.getPhoneNumber())) {
+                profile.setPhoneNumber(request.getPhoneNumber());
+            }
+            if (isValidString(request.getProfileImageUrl())) {
+                profile.setProfileImageUrl(request.getProfileImageUrl());
+            }
+            if (request.getIsAvailable() != null) {
+                profile.setIsAvailable(request.getIsAvailable());
+            }
+
+            // ✅ CRITICAL: Handle skills and interests
+            if (isValidString(request.getSkills())) {
+                System.out.println("Setting skills: '" + request.getSkills() + "'");
+                profile.setSkills(request.getSkills());
+            }
+            if (isValidString(request.getInterests())) {
+                System.out.println("Setting interests: '" + request.getInterests() + "'");
+                profile.setInterests(request.getInterests());
+            }
+            if (isValidString(request.getAvailabilityPreference())) {
+                profile.setAvailabilityPreference(request.getAvailabilityPreference());
+            }
+
             profile.setUpdatedAt(LocalDateTime.now());
 
         } else {
@@ -95,13 +116,23 @@ public class VolunteerProfileService {
             System.out.println("Creating new volunteer profile");
             profile = new VolunteerProfile();
             profile.setUser(user);
-            profile.setFirstName(request.getFirstName());
-            profile.setLastName(request.getLastName());
-            profile.setBio(request.getBio());
-            profile.setLocation(request.getLocation());
-            profile.setPhoneNumber(request.getPhoneNumber());
+            profile.setFirstName(isValidString(request.getFirstName()) ? request.getFirstName() : "");
+            profile.setLastName(isValidString(request.getLastName()) ? request.getLastName() : "");
+            profile.setBio(isValidString(request.getBio()) ? request.getBio() : "");
+            profile.setLocation(isValidString(request.getLocation()) ? request.getLocation() : "");
+            profile.setPhoneNumber(isValidString(request.getPhoneNumber()) ? request.getPhoneNumber() : "");
             profile.setProfileImageUrl(request.getProfileImageUrl());
             profile.setIsAvailable(request.getIsAvailable() != null ? request.getIsAvailable() : true);
+
+            // ✅ CRITICAL: Set skills and interests for new profiles
+            System.out.println("Setting new profile skills: '" + request.getSkills() + "'");
+            System.out.println("Setting new profile interests: '" + request.getInterests() + "'");
+            profile.setSkills(isValidString(request.getSkills()) ? request.getSkills() : "");
+            profile.setInterests(isValidString(request.getInterests()) ? request.getInterests() : "");
+            profile.setAvailabilityPreference(
+                    isValidString(request.getAvailabilityPreference()) ? request.getAvailabilityPreference()
+                            : "flexible");
+
             profile.setCreatedAt(LocalDateTime.now());
             profile.setUpdatedAt(LocalDateTime.now());
 
@@ -112,6 +143,9 @@ public class VolunteerProfileService {
 
         VolunteerProfile savedProfile = volunteerProfileRepository.save(profile);
 
+        System.out.println("Saved profile skills: '" + savedProfile.getSkills() + "'");
+        System.out.println("Saved profile interests: '" + savedProfile.getInterests() + "'");
+
         if (isUpdate) {
             System.out.println("Volunteer profile updated successfully with ID: " + savedProfile.getId());
         } else {
@@ -119,6 +153,11 @@ public class VolunteerProfileService {
         }
 
         return convertToDTO(savedProfile);
+    }
+
+    // Helper method to check if a string is valid
+    private boolean isValidString(String value) {
+        return value != null && !value.trim().isEmpty();
     }
 
     // Keep the original createProfile method for backward compatibility
@@ -757,12 +796,12 @@ public class VolunteerProfileService {
     }
 
     /**
-     * Enhanced convertToDTO method with all frontend data
+     * Enhanced convertToDTO method with proper skills and interests handling
      */
     private VolunteerProfileDTO convertToDTO(VolunteerProfile profile) {
         VolunteerProfileDTO dto = new VolunteerProfileDTO();
 
-        // Existing fields
+        // Basic profile fields
         dto.setId(profile.getId());
         dto.setUserId(profile.getUser().getId());
         dto.setFirstName(profile.getFirstName());
@@ -777,17 +816,26 @@ public class VolunteerProfileService {
         dto.setCreatedAt(profile.getCreatedAt());
         dto.setUpdatedAt(profile.getUpdatedAt());
 
-        // New fields
+        // ✅ FIXED: Properly convert skills and interests to Lists
         dto.setSkills(profile.getSkillsList());
         dto.setInterests(profile.getInterestsList());
         dto.setAvailabilityPreference(profile.getAvailabilityPreference());
 
+        System.out.println("=== DTO CONVERSION DEBUG ===");
+        System.out.println("Profile skills string: " + profile.getSkills());
+        System.out.println("Profile skills list: " + profile.getSkillsList());
+        System.out.println("Profile interests string: " + profile.getInterests());
+        System.out.println("Profile interests list: " + profile.getInterestsList());
+        System.out.println("DTO skills: " + dto.getSkills());
+        System.out.println("DTO interests: " + dto.getInterests());
+
         return dto;
     }
-
     // ==========================================
     // REQUEST/RESPONSE CLASSES
     // ==========================================
+
+    // Add these complete request classes to your VolunteerProfileService.java
 
     public static class CreateVolunteerProfileRequest {
         private String firstName;
@@ -798,7 +846,12 @@ public class VolunteerProfileService {
         private String profileImageUrl;
         private Boolean isAvailable;
 
-        // Getters and setters
+        // ✅ CRITICAL: These were missing - causing skills/interests to be ignored
+        private String skills;
+        private String interests;
+        private String availabilityPreference;
+
+        // All getters and setters
         public String getFirstName() {
             return firstName;
         }
@@ -853,6 +906,33 @@ public class VolunteerProfileService {
 
         public void setIsAvailable(Boolean isAvailable) {
             this.isAvailable = isAvailable;
+        }
+
+        // ✅ NEW: Skills getter/setter
+        public String getSkills() {
+            return skills;
+        }
+
+        public void setSkills(String skills) {
+            this.skills = skills;
+        }
+
+        // ✅ NEW: Interests getter/setter
+        public String getInterests() {
+            return interests;
+        }
+
+        public void setInterests(String interests) {
+            this.interests = interests;
+        }
+
+        // ✅ NEW: Availability preference getter/setter
+        public String getAvailabilityPreference() {
+            return availabilityPreference;
+        }
+
+        public void setAvailabilityPreference(String availabilityPreference) {
+            this.availabilityPreference = availabilityPreference;
         }
     }
 
@@ -865,7 +945,12 @@ public class VolunteerProfileService {
         private String profileImageUrl;
         private Boolean isAvailable;
 
-        // Getters and setters
+        // ✅ CRITICAL: These were missing too
+        private String skills;
+        private String interests;
+        private String availabilityPreference;
+
+        // All getters and setters (same as above)
         public String getFirstName() {
             return firstName;
         }
@@ -920,6 +1005,30 @@ public class VolunteerProfileService {
 
         public void setIsAvailable(Boolean isAvailable) {
             this.isAvailable = isAvailable;
+        }
+
+        public String getSkills() {
+            return skills;
+        }
+
+        public void setSkills(String skills) {
+            this.skills = skills;
+        }
+
+        public String getInterests() {
+            return interests;
+        }
+
+        public void setInterests(String interests) {
+            this.interests = interests;
+        }
+
+        public String getAvailabilityPreference() {
+            return availabilityPreference;
+        }
+
+        public void setAvailabilityPreference(String availabilityPreference) {
+            this.availabilityPreference = availabilityPreference;
         }
     }
 
