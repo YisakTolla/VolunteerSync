@@ -79,19 +79,19 @@ const Dashboard = () => {
 
   const handleEditProfile = () => {
     if (user?.userType === 'VOLUNTEER') {
-      navigate('/volunteer/profile/edit');
+      navigate('/profile');
     } else if (user?.userType === 'ORGANIZATION') {
-      navigate('/organization/profile/edit');
+      navigate('/profile');
     } else {
-      navigate('/profile/setup');
+      navigate('/profile');
     }
   };
 
   const handleViewProfile = () => {
     if (user?.userType === 'VOLUNTEER') {
-      navigate('/volunteer/profile');
+      navigate('/profile');
     } else if (user?.userType === 'ORGANIZATION') {
-      navigate('/organization/profile');
+      navigate('/profile');
     } else {
       navigate('/profile');
     }
@@ -440,7 +440,7 @@ const VolunteerDashboard = ({ dashboardData, onRefresh, refreshing, onNavigate }
           <button onClick={() => onNavigate('/find-organizations')} className="btn-secondary">
             Find Organizations
           </button>
-          <button onClick={() => onNavigate('/volunteer/profile')} className="btn-secondary">
+          <button onClick={() => onNavigate('/profile')} className="btn-secondary">
             Update Profile
           </button>
         </div>

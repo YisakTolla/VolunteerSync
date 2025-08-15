@@ -1,0 +1,562 @@
+package com.volunteersync.backend.controller;
+
+import com.volunteersync.backend.entity.OrganizationProfile;
+import com.volunteersync.backend.repository.OrganizationProfileRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+/**
+ * Organizations Controller - Dedicated to the frontend Organizations page
+ * Provides simple, clean endpoints for organization discovery and filtering
+ */
+@RestController
+@RequestMapping("/api/organizations")
+@CrossOrigin(origins = "http://localhost:3000")
+public class OrganizationsControlleOldr {
+
+    @Autowired
+    private OrganizationProfileRepository organizationRepository;
+
+    /**
+     * Get all organizations
+     * GET /api/organizations
+     */
+    @GetMapping
+    public ResponseEntity<List<OrganizationProfile>> getAllOrganizations() {
+        try {
+            List<OrganizationProfile> organizations = organizationRepository.findAll();
+            return ResponseEntity.ok(organizations);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
+     * Get organizations with pagination
+     * GET /api/organizations/paginated?page=0&size=10&sortBy=organizationName&sortDirection=asc
+     */
+    @GetMapping("/paginated")
+    public ResponseEntity<Page<OrganizationProfile>> getAllOrganizationsWithPagination(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "organizationName") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDirection) {
+        try {
+            Sort.Direction direction = "desc".equalsIgnoreCase(sortDirection) ? 
+                                      Sort.Direction.DESC : Sort.Direction.ASC;
+            Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+            Page<OrganizationProfile> organizations = organizationRepository.findAll(pageable);
+            return ResponseEntity.ok(organizations);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
+     * Get organization by ID
+     * GET /api/organizations/{id}
+     */
+    @GetMapping("/{id}")
+    public ResponseEntity<OrganizationProfile> getOrganizationById(@PathVariable Long id) {
+        try {
+            Optional<OrganizationProfile> organization = organizationRepository.findById(id);
+            return organization.map(ResponseEntity::ok)
+                             .orElse(ResponseEntity.notFound().build());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
+     * Search organizations by name
+     * GET /api/organizations/search/name?name=searchTerm
+     */
+    @GetMapping("/search/name")
+    public ResponseEntity<List<OrganizationProfile>> searchOrganizationsByName(
+            @RequestParam String name) {
+        try {
+            List<OrganizationProfile> organizations = organizationRepository.findAll().stream()
+                    .filter(org -> org.getOrganizationName() != null && 
+                                 org.getOrganizationName().toLowerCase().contains(name.toLowerCase()))
+                    .collect(Collectors.toList());
+            return ResponseEntity.ok(organizations);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
+     * Search organizations by category
+     * GET /api/organizations/search/category?category=Education
+     */
+    @GetMapping("/search/category")
+    public ResponseEntity<List<OrganizationProfile>> searchOrganizationsByCategory(
+            @RequestParam String category) {
+        try {
+            List<OrganizationProfile> organizations = organizationRepository.findAll().stream()
+                    .filter(org -> {
+                        // Check primary category
+                        if (category.equals(org.getPrimaryCategory())) {
+                            return true;
+                        }
+                        // Check if category is in categories list
+                        if (org.getCategories() != null) {
+                            String[] categories = org.getCategories().split(",");
+                            for (String cat : categories) {
+                                if (category.equals(cat.trim())) {
+                                    return true;
+                                }
+                            }
+                        }
+                        return false;
+                    })
+                    .collect(Collectors.toList());
+            return ResponseEntity.ok(organizations);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
+     * Search organizations by type
+     * GET /api/organizations/search/type?type=Non-Profit
+     */
+    @GetMapping("/search/type")
+    public ResponseEntity<List<OrganizationProfile>> searchOrganizationsByType(
+            @RequestParam String type) {
+        try {
+            List<OrganizationProfile> organizations = organizationRepository.findAll().stream()
+                    .filter(org -> type.equals(org.getOrganizationType()))
+                    .collect(Collectors.toList());
+            return ResponseEntity.ok(organizations);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
+     * Search organizations by location
+     * GET /api/organizations/search/location?city=Seattle&state=WA
+     */
+    @GetMapping("/search/location")
+    public ResponseEntity<List<OrganizationProfile>> searchOrganizationsByLocation(
+            @RequestParam(required = false) String city,
+            @RequestParam(required = false) String state) {
+        try {
+            List<OrganizationProfile> organizations = organizationRepository.findAll().stream()
+                    .filter(org -> {
+                        boolean cityMatch = city == null || city.isEmpty() || 
+                                          (org.getCity() != null && org.getCity().toLowerCase().contains(city.toLowerCase()));
+                        boolean stateMatch = state == null || state.isEmpty() || 
+                                           (org.getState() != null && org.getState().equalsIgnoreCase(state));
+                        return cityMatch && stateMatch;
+                    })
+                    .collect(Collectors.toList());
+            return ResponseEntity.ok(organizations);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
+     * Get verified organizations
+     * GET /api/organizations/verified
+     */
+    @GetMapping("/verified")
+    public ResponseEntity<List<OrganizationProfile>> getVerifiedOrganizations() {
+        try {
+            List<OrganizationProfile> organizations = organizationRepository.findAll().stream()
+                    .filter(org -> Boolean.TRUE.equals(org.getIsVerified()))
+                    .collect(Collectors.toList());
+            return ResponseEntity.ok(organizations);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
+     * Search organizations by employee count range
+     * GET /api/organizations/search/employee-count?minEmployees=50&maxEmployees=200
+     */
+    @GetMapping("/search/employee-count")
+    public ResponseEntity<List<OrganizationProfile>> searchOrganizationsByEmployeeCount(
+            @RequestParam(required = false) Integer minEmployees,
+            @RequestParam(required = false) Integer maxEmployees) {
+        try {
+            List<OrganizationProfile> organizations = organizationRepository.findAll().stream()
+                    .filter(org -> {
+                        Integer empCount = org.getEmployeeCount();
+                        if (empCount == null) return false;
+                        
+                        boolean minMatch = minEmployees == null || empCount >= minEmployees;
+                        boolean maxMatch = maxEmployees == null || empCount <= maxEmployees;
+                        return minMatch && maxMatch;
+                    })
+                    .collect(Collectors.toList());
+            return ResponseEntity.ok(organizations);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
+     * Advanced search with multiple filters
+     * GET /api/organizations/search?name=example&category=Education&verified=true
+     */
+    @GetMapping("/search")
+    public ResponseEntity<List<OrganizationProfile>> searchOrganizations(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) String city,
+            @RequestParam(required = false) String state,
+            @RequestParam(required = false) String country,
+            @RequestParam(required = false) Boolean verified,
+            @RequestParam(required = false) String verificationLevel,
+            @RequestParam(required = false) Integer minEmployees,
+            @RequestParam(required = false) Integer maxEmployees,
+            @RequestParam(required = false) Integer minFoundedYear,
+            @RequestParam(required = false) Integer maxFoundedYear,
+            @RequestParam(required = false) String language) {
+        try {
+            List<OrganizationProfile> organizations = organizationRepository.findAll().stream()
+                    .filter(org -> {
+                        // Name filter
+                        if (name != null && !name.isEmpty()) {
+                            if (org.getOrganizationName() == null || 
+                                !org.getOrganizationName().toLowerCase().contains(name.toLowerCase())) {
+                                return false;
+                            }
+                        }
+                        
+                        // Category filter
+                        if (category != null && !category.isEmpty()) {
+                            boolean hasCategory = false;
+                            // Check primary category
+                            if (category.equals(org.getPrimaryCategory())) {
+                                hasCategory = true;
+                            }
+                            // Check categories list
+                            if (!hasCategory && org.getCategories() != null) {
+                                String[] categories = org.getCategories().split(",");
+                                for (String cat : categories) {
+                                    if (category.equals(cat.trim())) {
+                                        hasCategory = true;
+                                        break;
+                                    }
+                                }
+                            }
+                            if (!hasCategory) return false;
+                        }
+                        
+                        // Type filter
+                        if (type != null && !type.isEmpty()) {
+                            if (!type.equals(org.getOrganizationType())) {
+                                return false;
+                            }
+                        }
+                        
+                        // Location filters
+                        if (city != null && !city.isEmpty()) {
+                            if (org.getCity() == null || 
+                                !org.getCity().toLowerCase().contains(city.toLowerCase())) {
+                                return false;
+                            }
+                        }
+                        
+                        if (state != null && !state.isEmpty()) {
+                            if (org.getState() == null || 
+                                !org.getState().equalsIgnoreCase(state)) {
+                                return false;
+                            }
+                        }
+                        
+                        if (country != null && !country.isEmpty()) {
+                            if (org.getCountry() == null || 
+                                !org.getCountry().equalsIgnoreCase(country)) {
+                                return false;
+                            }
+                        }
+                        
+                        // Verification filter
+                        if (verified != null) {
+                            if (!verified.equals(org.getIsVerified())) {
+                                return false;
+                            }
+                        }
+                        
+                        // Employee count filters
+                        if (minEmployees != null || maxEmployees != null) {
+                            Integer empCount = org.getEmployeeCount();
+                            if (empCount == null) return false;
+                            
+                            if (minEmployees != null && empCount < minEmployees) return false;
+                            if (maxEmployees != null && empCount > maxEmployees) return false;
+                        }
+                        
+                        // Founded year filters
+                        if (minFoundedYear != null || maxFoundedYear != null) {
+                            Integer foundedYear = org.getFoundedYear();
+                            if (foundedYear == null) return false;
+                            
+                            if (minFoundedYear != null && foundedYear < minFoundedYear) return false;
+                            if (maxFoundedYear != null && foundedYear > maxFoundedYear) return false;
+                        }
+                        
+                        // Verification level filter
+                        if (verificationLevel != null && !verificationLevel.isEmpty()) {
+                            if (!verificationLevel.equals(org.getVerificationLevel())) {
+                                return false;
+                            }
+                        }
+                        
+                        // Language filter
+                        if (language != null && !language.isEmpty()) {
+                            if (org.getLanguagesSupported() == null) return false;
+                            String[] languages = org.getLanguagesSupported().split(",");
+                            boolean hasLanguage = false;
+                            for (String lang : languages) {
+                                if (language.equals(lang.trim())) {
+                                    hasLanguage = true;
+                                    break;
+                                }
+                            }
+                            if (!hasLanguage) return false;
+                        }
+                        
+                        return true;
+                    })
+                    .collect(Collectors.toList());
+            return ResponseEntity.ok(organizations);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
+     * Get organizations sorted by name
+     * GET /api/organizations/sorted/name
+     */
+    @GetMapping("/sorted/name")
+    public ResponseEntity<List<OrganizationProfile>> getOrganizationsSortedByName() {
+        try {
+            List<OrganizationProfile> organizations = organizationRepository.findAll(Sort.by(Sort.Direction.ASC, "organizationName"));
+            return ResponseEntity.ok(organizations);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
+     * Get newest organizations
+     * GET /api/organizations/sorted/newest
+     */
+    @GetMapping("/sorted/newest")
+    public ResponseEntity<List<OrganizationProfile>> getNewestOrganizations() {
+        try {
+            List<OrganizationProfile> organizations = organizationRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"));
+            return ResponseEntity.ok(organizations);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
+     * Get most active organizations (by events hosted)
+     * GET /api/organizations/sorted/most-active
+     */
+    @GetMapping("/sorted/most-active")
+    public ResponseEntity<List<OrganizationProfile>> getMostActiveOrganizations() {
+        try {
+            List<OrganizationProfile> organizations = organizationRepository.findAll().stream()
+                    .sorted((org1, org2) -> {
+                        Integer events1 = org1.getTotalEventsHosted() != null ? org1.getTotalEventsHosted() : 0;
+                        Integer events2 = org2.getTotalEventsHosted() != null ? org2.getTotalEventsHosted() : 0;
+                        return events2.compareTo(events1); // Descending order
+                    })
+                    .collect(Collectors.toList());
+            return ResponseEntity.ok(organizations);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
+     * Get highest impact organizations (by volunteers served)
+     * GET /api/organizations/sorted/highest-impact
+     */
+    @GetMapping("/sorted/highest-impact")
+    public ResponseEntity<List<OrganizationProfile>> getHighestImpactOrganizations() {
+        try {
+            List<OrganizationProfile> organizations = organizationRepository.findAll().stream()
+                    .sorted((org1, org2) -> {
+                        Integer vol1 = org1.getTotalVolunteersServed() != null ? org1.getTotalVolunteersServed() : 0;
+                        Integer vol2 = org2.getTotalVolunteersServed() != null ? org2.getTotalVolunteersServed() : 0;
+                        return vol2.compareTo(vol1); // Descending order
+                    })
+                    .collect(Collectors.toList());
+            return ResponseEntity.ok(organizations);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
+     * Get non-profit organizations
+     * GET /api/organizations/non-profit
+     */
+    @GetMapping("/non-profit")
+    public ResponseEntity<List<OrganizationProfile>> getNonProfitOrganizations() {
+        try {
+            List<OrganizationProfile> organizations = organizationRepository.findAll().stream()
+                    .filter(org -> {
+                        String type = org.getOrganizationType();
+                        String taxStatus = org.getTaxExemptStatus();
+                        return (type != null && (type.toLowerCase().contains("non-profit") || 
+                                               type.toLowerCase().contains("nonprofit"))) ||
+                               (taxStatus != null && taxStatus.startsWith("501(c)"));
+                    })
+                    .collect(Collectors.toList());
+            return ResponseEntity.ok(organizations);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
+     * Get highly verified organizations
+     * GET /api/organizations/highly-verified
+     */
+    @GetMapping("/highly-verified")
+    public ResponseEntity<List<OrganizationProfile>> getHighlyVerifiedOrganizations() {
+        try {
+            List<OrganizationProfile> organizations = organizationRepository.findAll().stream()
+                    .filter(org -> Boolean.TRUE.equals(org.getIsVerified()) &&
+                                 ("Verified".equals(org.getVerificationLevel()) || 
+                                  "Premium".equals(org.getVerificationLevel())))
+                    .collect(Collectors.toList());
+            return ResponseEntity.ok(organizations);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
+     * Get international organizations
+     * GET /api/organizations/international
+     */
+    @GetMapping("/international")
+    public ResponseEntity<List<OrganizationProfile>> getInternationalOrganizations() {
+        try {
+            List<OrganizationProfile> organizations = organizationRepository.findAll().stream()
+                    .filter(org -> {
+                        String languages = org.getLanguagesSupported();
+                        return languages != null && languages.contains(",") && !languages.equals("English");
+                    })
+                    .collect(Collectors.toList());
+            return ResponseEntity.ok(organizations);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
+     * Get organization statistics
+     * GET /api/organizations/stats
+     */
+    @GetMapping("/stats")
+    public ResponseEntity<OrganizationStats> getOrganizationStats() {
+        try {
+            List<OrganizationProfile> allOrgs = organizationRepository.findAll();
+            
+            long totalOrganizations = allOrgs.size();
+            long verifiedOrganizations = allOrgs.stream()
+                    .mapToLong(org -> Boolean.TRUE.equals(org.getIsVerified()) ? 1 : 0)
+                    .sum();
+            long nonProfitOrganizations = allOrgs.stream()
+                    .mapToLong(org -> {
+                        String type = org.getOrganizationType();
+                        String taxStatus = org.getTaxExemptStatus();
+                        return ((type != null && (type.toLowerCase().contains("non-profit") || 
+                                                type.toLowerCase().contains("nonprofit"))) ||
+                               (taxStatus != null && taxStatus.startsWith("501(c)"))) ? 1 : 0;
+                    })
+                    .sum();
+            
+            OrganizationStats stats = new OrganizationStats();
+            stats.total = totalOrganizations;
+            stats.verified = verifiedOrganizations;
+            stats.nonProfit = nonProfitOrganizations;
+            stats.lastUpdated = LocalDateTime.now().toString();
+            
+            return ResponseEntity.ok(stats);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
+     * Check if organization name exists
+     * GET /api/organizations/exists?name=ExampleOrg
+     */
+    @GetMapping("/exists")
+    public ResponseEntity<ExistsResponse> checkOrganizationNameExists(@RequestParam String name) {
+        try {
+            boolean exists = organizationRepository.findAll().stream()
+                    .anyMatch(org -> name.equalsIgnoreCase(org.getOrganizationName()));
+            
+            ExistsResponse response = new ExistsResponse();
+            response.exists = exists;
+            response.name = name;
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    // ==========================================
+    // RESPONSE CLASSES
+    // ==========================================
+
+    public static class OrganizationStats {
+        public long total;
+        public long verified;
+        public long nonProfit;
+        public String lastUpdated;
+    }
+
+    public static class ExistsResponse {
+        public boolean exists;
+        public String name;
+    }
+}

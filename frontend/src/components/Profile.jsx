@@ -27,12 +27,12 @@ import {
   Loader,
   AlertCircle,
 } from "lucide-react";
-import { 
-  getProfileData, 
-  updateProfileData, 
+import {
+  getProfileData,
+  updateProfileData,
   uploadProfileImage,
   addInterest,
-  addSkill
+  addSkill,
 } from "../services/profilePageService";
 import { getCurrentUser, isLoggedIn } from "../services/authService";
 import "./Profile.css";
@@ -41,7 +41,7 @@ const Profile = () => {
   const [userData, setUserData] = useState(null);
   const [userType, setUserType] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
   const [uploading, setUploading] = useState(false);
@@ -50,7 +50,7 @@ const Profile = () => {
 
   useEffect(() => {
     if (!isLoggedIn()) {
-      navigate('/login');
+      navigate("/login");
       return;
     }
     loadProfileData();
@@ -59,23 +59,30 @@ const Profile = () => {
   const loadProfileData = async () => {
     try {
       setLoading(true);
-      setError('');
+      setError("");
 
-      console.log('📊 Loading profile data...');
+      console.log("📊 Loading profile data...");
       const result = await getProfileData(userId);
-      
+
       if (result.success) {
+        console.log('=== PROFILE DEBUG INFO ===');
+        console.log('Result userType:', result.userType);
+        console.log('Result data:', result.data);
+        console.log('Data type field:', result.data?.type);
+        
         setUserData(result.data);
         setUserType(result.userType);
-        setError('');
-        console.log('✅ Profile data loaded successfully');
+        setError("");
+        console.log("✅ Profile data loaded successfully");
+        console.log('Component userType set to:', result.userType);
+        console.log('Component userData set to:', result.data);
       } else {
-        setError(result.message || 'Failed to load profile data');
-        console.error('❌ Failed to load profile data:', result.message);
+        setError(result.message || "Failed to load profile data");
+        console.error("❌ Failed to load profile data:", result.message);
       }
     } catch (err) {
-      setError('Failed to load profile. Please try refreshing.');
-      console.error('❌ Error loading profile data:', err);
+      setError("Failed to load profile. Please try refreshing.");
+      console.error("❌ Error loading profile data:", err);
     } finally {
       setLoading(false);
     }
@@ -89,17 +96,17 @@ const Profile = () => {
     try {
       setUploading(true);
       const result = await uploadProfileImage(file, imageType);
-      
+
       if (result.success) {
         // Reload profile data to get updated image URL
         await loadProfileData();
-        console.log('✅ Image uploaded successfully');
+        console.log("✅ Image uploaded successfully");
       } else {
-        setError(result.message || 'Failed to upload image');
+        setError(result.message || "Failed to upload image");
       }
     } catch (err) {
-      setError('Failed to upload image');
-      console.error('❌ Error uploading image:', err);
+      setError("Failed to upload image");
+      console.error("❌ Error uploading image:", err);
     } finally {
       setUploading(false);
     }
@@ -136,7 +143,10 @@ const Profile = () => {
             <button onClick={loadProfileData} className="btn-primary">
               Try Again
             </button>
-            <button onClick={() => navigate('/dashboard')} className="btn-secondary">
+            <button
+              onClick={() => navigate("/dashboard")}
+              className="btn-secondary"
+            >
               Go to Dashboard
             </button>
           </div>
@@ -152,7 +162,10 @@ const Profile = () => {
           <AlertCircle className="error-icon" />
           <h3>Profile not found</h3>
           <p>The requested profile could not be found.</p>
-          <button onClick={() => navigate('/dashboard')} className="btn-primary">
+          <button
+            onClick={() => navigate("/dashboard")}
+            className="btn-primary"
+          >
             Go to Dashboard
           </button>
         </div>
@@ -160,7 +173,7 @@ const Profile = () => {
     );
   }
 
-  const volunteerTabs = [ 
+  const volunteerTabs = [
     { id: "overview", label: "Overview", icon: Users },
     { id: "organizations", label: "Organizations", icon: Heart },
   ];
@@ -173,9 +186,17 @@ const Profile = () => {
 
   const tabs = userType === "volunteer" ? volunteerTabs : organizationTabs;
 
-  const renderVolunteerOverview = () => (
-    <div className="profile-overview">
-      <div className="profile-overview-grid">
+  console.log('=== TABS DEBUG ===');
+  console.log('userType for tabs:', userType);
+  console.log('Selected tabs:', tabs);
+  console.log('Tab structure:', tabs.map(t => ({ id: t.id, label: t.label })));
+
+  const renderVolunteerOverview = () => {
+    console.log('🙋 EXECUTING renderVolunteerOverview()');
+    console.log('userData in volunteer render:', userData);
+    return (
+      <div className="profile-overview">
+        <div className="profile-overview-grid">
         {/* About Section */}
         <div className="profile-card">
           <div className="profile-card-header">
@@ -260,7 +281,9 @@ const Profile = () => {
                   </span>
                 ))
               ) : (
-                <p className="no-data">No interests added yet. Click the + button to add some!</p>
+                <p className="no-data">
+                  No interests added yet. Click the + button to add some!
+                </p>
               )}
             </div>
           </div>
@@ -283,7 +306,9 @@ const Profile = () => {
                   </span>
                 ))
               ) : (
-                <p className="no-data">No skills added yet. Click the + button to add some!</p>
+                <p className="no-data">
+                  No skills added yet. Click the + button to add some!
+                </p>
               )}
             </div>
           </div>
@@ -309,7 +334,9 @@ const Profile = () => {
                   </div>
                 ))
               ) : (
-                <p className="no-data">No badges earned yet. Start volunteering to earn achievements!</p>
+                <p className="no-data">
+                  No badges earned yet. Start volunteering to earn achievements!
+                </p>
               )}
             </div>
           </div>
@@ -317,10 +344,17 @@ const Profile = () => {
       </div>
     </div>
   );
+  };
 
-  const renderOrganizationOverview = () => (
-    <div className="profile-overview">
-      <div className="profile-overview-grid">
+  const renderOrganizationOverview = () => {
+    console.log('🏢 EXECUTING renderOrganizationOverview()');
+    console.log('userData in organization render:', userData);
+    console.log('userData.causes:', userData?.causes);
+    console.log('userData.services:', userData?.services);
+    console.log('userData.categories:', userData?.categories);
+    return (
+      <div className="profile-overview">
+        <div className="profile-overview-grid">
         {/* About Section */}
         <div className="profile-card">
           <div className="profile-card-header">
@@ -345,12 +379,16 @@ const Profile = () => {
               </div>
               <div className="profile-detail">
                 <Calendar className="profile-detail-icon" />
-                <span>Founded {userData.founded}</span>
+                <span>Founded {userData.foundedYear || userData.founded}</span>
               </div>
-              {userData.ein && userData.ein !== 'Not provided' && (
+              <div className="profile-detail">
+                <Users className="profile-detail-icon" />
+                <span>{userData.employeeCount || 'Not specified'} employees</span>
+              </div>
+              {userData.isVerified && (
                 <div className="profile-detail">
-                  <FileText className="profile-detail-icon" />
-                  <span>EIN: {userData.ein}</span>
+                  <UserCheck className="profile-detail-icon" />
+                  <span>Verified Organization</span>
                 </div>
               )}
               {userData.website && (
@@ -378,32 +416,27 @@ const Profile = () => {
             <div className="profile-stats-grid">
               <div className="profile-stat">
                 <div className="profile-stat-number">
-                  {userData.stats.volunteers}
+                  {userData.totalVolunteersServed || userData.stats?.volunteers || 0}
                 </div>
-                <div className="profile-stat-label">Active Volunteers</div>
+                <div className="profile-stat-label">Volunteers Served</div>
               </div>
               <div className="profile-stat">
                 <div className="profile-stat-number">
-                  {userData.stats.eventsHosted}
+                  {userData.totalEventsHosted || userData.stats?.eventsHosted || 0}
                 </div>
                 <div className="profile-stat-label">Events Hosted</div>
               </div>
               <div className="profile-stat">
                 <div className="profile-stat-number">
-                  {userData.stats.hoursImpacted}
+                  {userData.stats?.hoursImpacted || 0}
                 </div>
                 <div className="profile-stat-label">Volunteer Hours</div>
               </div>
               <div className="profile-stat">
                 <div className="profile-stat-number">
-                  {Math.round(
-                    (userData.stats.fundingRaised /
-                      userData.stats.fundingGoal) *
-                      100
-                  )}
-                  %
+                  {userData.foundedYear ? new Date().getFullYear() - userData.foundedYear : 'N/A'}
                 </div>
-                <div className="profile-stat-label">Funding Goal</div>
+                <div className="profile-stat-label">Years Active</div>
               </div>
             </div>
           </div>
@@ -419,13 +452,13 @@ const Profile = () => {
               <div className="profile-funding-amounts">
                 <div className="profile-funding-raised">
                   <span className="profile-funding-number">
-                    ${userData.stats.fundingRaised.toLocaleString()}
+                    ${(userData.fundingRaised || userData.stats?.fundingRaised || 0).toLocaleString()}
                   </span>
                   <span className="profile-funding-label">Raised</span>
                 </div>
                 <div className="profile-funding-goal">
                   <span className="profile-funding-number">
-                    ${userData.stats.fundingGoal.toLocaleString()}
+                    ${(userData.fundingGoal || userData.stats?.fundingGoal || 0).toLocaleString()}
                   </span>
                   <span className="profile-funding-label">Goal</span>
                 </div>
@@ -435,9 +468,9 @@ const Profile = () => {
                   className="profile-funding-progress"
                   style={{
                     width: `${
-                      (userData.stats.fundingRaised /
-                        userData.stats.fundingGoal) *
-                      100
+                      userData.fundingGoal ? 
+                        Math.min(((userData.fundingRaised || 0) / userData.fundingGoal) * 100, 100) : 
+                        0
                     }%`,
                   }}
                 ></div>
@@ -457,9 +490,9 @@ const Profile = () => {
           <div className="profile-card-content">
             <div className="profile-tags">
               {userData.causes && userData.causes.length > 0 ? (
-                userData.causes.map((cause, index) => (
+                (Array.isArray(userData.causes) ? userData.causes : userData.causes.split(',')).map((cause, index) => (
                   <span key={index} className="profile-tag interest">
-                    {cause}
+                    {typeof cause === 'string' ? cause.trim() : cause}
                   </span>
                 ))
               ) : (
@@ -480,9 +513,9 @@ const Profile = () => {
           <div className="profile-card-content">
             <div className="profile-tags">
               {userData.services && userData.services.length > 0 ? (
-                userData.services.map((service, index) => (
+                (Array.isArray(userData.services) ? userData.services : userData.services.split(',')).map((service, index) => (
                   <span key={index} className="profile-tag skill">
-                    {service}
+                    {typeof service === 'string' ? service.trim() : service}
                   </span>
                 ))
               ) : (
@@ -492,34 +525,32 @@ const Profile = () => {
           </div>
         </div>
 
-        {/* Achievements Section */}
-        <div className="profile-card profile-badges-card">
+        {/* Focus Areas Section */}
+        <div className="profile-card">
           <div className="profile-card-header">
-            <h3 className="profile-card-title">Achievements & Recognition</h3>
+            <h3 className="profile-card-title">Focus Areas</h3>
+            <button className="profile-add-btn">
+              <Plus />
+            </button>
           </div>
           <div className="profile-card-content">
-            <div className="profile-badges">
-              {userData.achievements && userData.achievements.length > 0 ? (
-                userData.achievements.map((achievement) => (
-                  <div key={achievement.id} className="profile-badge">
-                    <div className="profile-badge-icon">{achievement.icon}</div>
-                    <div className="profile-badge-content">
-                      <div className="profile-badge-name">{achievement.name}</div>
-                      <div className="profile-badge-description">
-                        {achievement.description}
-                      </div>
-                    </div>
-                  </div>
+            <div className="profile-tags">
+              {userData.categories && userData.categories.length > 0 ? (
+                (Array.isArray(userData.categories) ? userData.categories : userData.categories.split(',')).map((category, index) => (
+                  <span key={index} className="profile-tag interest">
+                    {typeof category === 'string' ? category.trim() : category}
+                  </span>
                 ))
               ) : (
-                <p className="no-data">No achievements yet. Keep building your impact!</p>
+                <p className="no-data">No focus areas added yet. Click the + button to add some!</p>
               )}
             </div>
           </div>
         </div>
       </div>
     </div>
-  );
+    );
+  };
 
   const renderActivity = () => (
     <div className="profile-activity">
@@ -538,7 +569,9 @@ const Profile = () => {
                     {activity.type === "achievement" && <Award />}
                   </div>
                   <div className="profile-activity-content">
-                    <div className="profile-activity-title">{activity.title}</div>
+                    <div className="profile-activity-title">
+                      {activity.title}
+                    </div>
                     {activity.volunteers && (
                       <div className="profile-activity-organization">
                         {activity.volunteers} volunteers participated
@@ -558,8 +591,10 @@ const Profile = () => {
   );
 
   const renderVolunteersOrOrganizations = () => {
-    const data = userType === "volunteer" ? userData.organizations : userData.volunteers;
-    const title = userType === "volunteer" ? "My Organizations" : "Our Volunteers";
+    const data =
+      userType === "volunteer" ? userData.organizations : userData.volunteers;
+    const title =
+      userType === "volunteer" ? "My Organizations" : "Our Volunteers";
 
     return (
       <div className="profile-connections">
@@ -596,10 +631,9 @@ const Profile = () => {
                 ))
               ) : (
                 <p className="no-data">
-                  {userType === "volunteer" 
+                  {userType === "volunteer"
                     ? "No organizations yet. Start volunteering to connect with organizations!"
-                    : "No volunteers yet. Create events to attract volunteers!"
-                  }
+                    : "No volunteers yet. Create events to attract volunteers!"}
                 </p>
               )}
             </div>
@@ -617,7 +651,9 @@ const Profile = () => {
           <div className="profile-error-banner">
             <AlertCircle className="error-icon" />
             <span>{error}</span>
-            <button onClick={() => setError('')} className="error-dismiss">×</button>
+            <button onClick={() => setError("")} className="error-dismiss">
+              ×
+            </button>
           </div>
         )}
 
@@ -633,8 +669,8 @@ const Profile = () => {
               <input
                 type="file"
                 accept="image/*"
-                onChange={(e) => handleFileInputChange(e, 'cover')}
-                style={{ display: 'none' }}
+                onChange={(e) => handleFileInputChange(e, "cover")}
+                style={{ display: "none" }}
                 id="cover-upload"
               />
               <label htmlFor="cover-upload">
@@ -655,8 +691,8 @@ const Profile = () => {
                   <input
                     type="file"
                     accept="image/*"
-                    onChange={(e) => handleFileInputChange(e, 'profile')}
-                    style={{ display: 'none' }}
+                    onChange={(e) => handleFileInputChange(e, "profile")}
+                    style={{ display: "none" }}
                     id="avatar-upload"
                   />
                   <label htmlFor="avatar-upload">
@@ -723,13 +759,34 @@ const Profile = () => {
 
         {/* Content */}
         <div className="profile-content">
-          {activeTab === "overview" &&
-            (userType === "volunteer"
-              ? renderVolunteerOverview()
-              : renderOrganizationOverview())}
-          {activeTab === "activity" && renderActivity()}
-          {activeTab === "organizations" && userType === "volunteer" && renderVolunteersOrOrganizations()}
-          {activeTab === "volunteers" && userType === "organization" && renderVolunteersOrOrganizations()}
+          {(() => {
+            console.log('=== RENDER DECISION DEBUG ===');
+            console.log('activeTab:', activeTab);
+            console.log('userType:', userType);
+            console.log('userData?.type:', userData?.type);
+            console.log('userData?.organizationType:', userData?.organizationType);
+            console.log('userData?.name:', userData?.name);
+            console.log('About to render with userType:', userType);
+            
+            if (activeTab === "overview") {
+              // Force organization rendering if we detect organization data
+              if (userType === "organization" || userData?.type === "organization" || userData?.organizationType) {
+                console.log('🏢 Rendering organization overview (FORCED)');
+                return renderOrganizationOverview();
+              } else if (userType === "volunteer" || userData?.type === "volunteer") {
+                console.log('🙋 Rendering volunteer overview');
+                return renderVolunteerOverview();
+              } else {
+                console.log('⚠️ Unknown user type, defaulting to volunteer');
+                return renderVolunteerOverview();
+              }
+            }
+            if (activeTab === "activity") return renderActivity();
+            if (activeTab === "organizations" && (userType === "volunteer" || userData?.type === "volunteer")) return renderVolunteersOrOrganizations();
+            if (activeTab === "volunteers" && (userType === "organization" || userData?.type === "organization")) return renderVolunteersOrOrganizations();
+            
+            return null;
+          })()}
         </div>
       </div>
     </div>

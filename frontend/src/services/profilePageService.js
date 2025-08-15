@@ -226,7 +226,7 @@ function formatProfileDataForDisplay(rawData, userType) {
     email: rawData.email || '',
     phone: rawData.phone || rawData.phoneNumber || '',
     bio: rawData.bio || rawData.description || '',
-    location: rawData.location || 
+    location: rawData.location || rawData.address ||
               `${rawData.city || ''}, ${rawData.state || ''}`.replace(/, $/, '') || '',
     website: rawData.website || '',
     profileImage: rawData.profileImageUrl || rawData.profileImage || '/api/placeholder/150/150',
@@ -249,17 +249,26 @@ function formatProfileDataForDisplay(rawData, userType) {
       organizations: rawData.organizations || [],
     };
   } else {
-    return {
+    // Organization profile data
+    const organizationData = {
       ...baseData,
       type: 'organization',
       organizationType: rawData.organizationType || 'Non-Profit',
       founded: formatFoundedDate(rawData.foundedYear || rawData.founded),
+      foundedYear: rawData.foundedYear || null,
+      employeeCount: rawData.employeeCount || null,
+      isVerified: rawData.verificationLevel === 'Verified' || false,
       ein: rawData.ein || rawData.taxId || 'Not provided',
       causes: parseArrayField(rawData.categories || rawData.causes),
       services: parseArrayField(rawData.services),
+      categories: parseArrayField(rawData.categories),
+      totalVolunteersServed: rawData.totalVolunteersServed || 0,
+      totalEventsHosted: rawData.totalEventsHosted || 0,
+      fundingRaised: rawData.fundingRaised || 0,
+      fundingGoal: rawData.fundingGoal || 50000,
       stats: {
-        volunteers: rawData.volunteersCount || 0,
-        eventsHosted: rawData.eventsHosted || 0,
+        volunteers: rawData.volunteersCount || rawData.totalVolunteersServed || 0,
+        eventsHosted: rawData.eventsHosted || rawData.totalEventsHosted || 0,
         hoursImpacted: rawData.totalVolunteerHours || 0,
         fundingGoal: rawData.fundingGoal || 50000,
         fundingRaised: rawData.fundingRaised || 0,
@@ -268,6 +277,9 @@ function formatProfileDataForDisplay(rawData, userType) {
       recentActivity: rawData.recentActivity || [],
       volunteers: rawData.volunteers || [],
     };
+
+    console.log('🏢 Formatted organization data:', organizationData);
+    return organizationData;
   }
 }
 
