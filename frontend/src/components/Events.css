@@ -1,4 +1,4 @@
-/* Events.css - Events Page Styling with Unique Class Names */
+/* Enhanced Events.css - Complete Tag System with Improved Card Design */
 
 /* Page Container */
 .events-page {
@@ -96,9 +96,177 @@
   font-weight: var(--font-weight-semibold);
 }
 
-.events-filter-option.active.date {
+/* Event Type Filter Colors */
+.events-filter-option.active.event-type-community-cleanup {
   color: var(--accent-green);
   border-color: var(--accent-green);
+}
+
+.events-filter-option.active.event-type-food-service {
+  color: #f97316;
+  border-color: #f97316;
+}
+
+.events-filter-option.active.event-type-tutoring-education {
+  color: #3b82f6;
+  border-color: #3b82f6;
+}
+
+.events-filter-option.active.event-type-animal-care {
+  color: #f97316;
+  border-color: #f97316;
+}
+
+.events-filter-option.active.event-type-environmental-conservation {
+  color: var(--accent-green);
+  border-color: var(--accent-green);
+}
+
+.events-filter-option.active.event-type-senior-support {
+  color: #6366f1;
+  border-color: #6366f1;
+}
+
+.events-filter-option.active.event-type-youth-mentoring {
+  color: #06b6d4;
+  border-color: #06b6d4;
+}
+
+.events-filter-option.active.event-type-healthcare-support {
+  color: #ef4444;
+  border-color: #ef4444;
+}
+
+.events-filter-option.active.event-type-disaster-relief {
+  color: #fb923c;
+  border-color: #fb923c;
+}
+
+.events-filter-option.active.event-type-arts-culture {
+  color: #ec4899;
+  border-color: #ec4899;
+}
+
+.events-filter-option.active.event-type-sports-recreation {
+  color: #a855f7;
+  border-color: #a855f7;
+}
+
+.events-filter-option.active.event-type-fundraising {
+  color: #fbbf24;
+  border-color: #fbbf24;
+}
+
+.events-filter-option.active.event-type-administrative-support {
+  color: #6b7280;
+  border-color: #6b7280;
+}
+
+.events-filter-option.active.event-type-construction-building {
+  color: #78716c;
+  border-color: #78716c;
+}
+
+.events-filter-option.active.event-type-technology-digital {
+  color: #3b82f6;
+  border-color: #3b82f6;
+}
+
+.events-filter-option.active.event-type-event-planning {
+  color: #ec4899;
+  border-color: #ec4899;
+}
+
+.events-filter-option.active.event-type-advocacy-awareness {
+  color: var(--accent-purple);
+  border-color: var(--accent-purple);
+}
+
+.events-filter-option.active.event-type-research-data {
+  color: #3b82f6;
+  border-color: #3b82f6;
+}
+
+.events-filter-option.active.event-type-transportation {
+  color: #06b6d4;
+  border-color: #06b6d4;
+}
+
+.events-filter-option.active.event-type-gardening {
+  color: var(--accent-green);
+  border-color: var(--accent-green);
+}
+
+.events-filter-option.active.event-type-crisis-support {
+  color: #ef4444;
+  border-color: #ef4444;
+}
+
+.events-filter-option.active.event-type-festival-fair {
+  color: #fbbf24;
+  border-color: #fbbf24;
+}
+
+.events-filter-option.active.event-type-workshop-training {
+  color: #3b82f6;
+  border-color: #3b82f6;
+}
+
+.events-filter-option.active.event-type-blood-drive {
+  color: #ef4444;
+  border-color: #ef4444;
+}
+
+
+/* Specific date filter colors matching date badges */
+.events-filter-option.active.date-today {
+  color: #FF6B6B;
+  border-color: #FF6B6B;
+}
+
+.events-filter-option.active.date-tomorrow {
+  color: #4ECDC4;
+  border-color: #4ECDC4;
+}
+
+.events-filter-option.active.date-this-week {
+  color: #45B7D1;
+  border-color: #45B7D1;
+}
+
+.events-filter-option.active.date-this-weekend {
+  color: #96CEB4;
+  border-color: #96CEB4;
+}
+
+.events-filter-option.active.date-next-week {
+  color: #FECA57;
+  border-color: #FECA57;
+}
+
+.events-filter-option.active.date-next-weekend {
+  color: #FF9FF3;
+  border-color: #FF9FF3;
+}
+
+.events-filter-option.active.date-this-month {
+  color: #54A0FF;
+  border-color: #54A0FF;
+}
+
+.events-filter-option.active.date-next-month {
+  color: var(--accent-purple);
+  border-color: var(--accent-purple);
+}
+
+.events-filter-option.active.date-next-3-months {
+  color: #8b5cf6;
+  border-color: #8b5cf6;
+}
+
+.events-filter-option.active.date-custom-date-range {
+  color: #6b7280;
+  border-color: #6b7280;
 }
 
 .events-filter-option.active.time {
@@ -284,31 +452,6 @@
   border: 1px solid var(--accent-purple);
 }
 
-.events-filter-chip.date {
-  color: var(--accent-green);
-  border-color: var(--accent-green);
-}
-
-.events-filter-chip.time {
-  color: var(--accent-purple-dark);
-  border-color: var(--accent-purple-dark);
-}
-
-.events-filter-chip.duration {
-  color: var(--secondary-dark);
-  border-color: var(--secondary-dark);
-}
-
-.events-filter-chip.location {
-  color: var(--accent-green);
-  border-color: var(--accent-green);
-}
-
-.events-filter-chip.skill {
-  color: var(--accent-purple);
-  border-color: var(--accent-purple);
-}
-
 .events-filter-chip-remove {
   width: var(--spacing-4);
   height: var(--spacing-4);
@@ -335,115 +478,210 @@
 /* Events List */
 .events-list {
   display: grid;
-  gap: var(--spacing-6);
+  gap: var(--spacing-4);
   margin-bottom: var(--spacing-8);
 }
+
+/* ========================================
+   ENHANCED EVENT CARD WITH IMPROVED DESIGN
+   ======================================== */
 
 /* Event Card */
 .event-card {
   background: var(--background-primary);
   border: 1px solid var(--border-primary);
-  border-radius: var(--radius-xl);
-  overflow: hidden;
-  transition: all var(--duration-300) var(--ease-out);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-5);
+  transition: all var(--duration-200) var(--ease-out);
   box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  position: relative;
 }
 
 .event-card:hover {
-  border-color: var(--accent-purple);
-  box-shadow: var(--shadow-lg);
-  transform: translateY(-2px);
+  border-color: var(--border-secondary);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
 }
 
+/* Enhanced Event Card Header with Primary Tags Only */
 .event-card-header {
   display: flex;
-  gap: var(--spacing-4);
-  padding: var(--spacing-6);
-}
-
-.event-card-image {
-  position: relative;
-  width: 120px;
-  height: 120px;
-  flex-shrink: 0;
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  background: var(--background-muted);
-}
-
-.event-card-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.event-card-placeholder {
-  width: 100%;
-  height: 100%;
-  display: flex;
   align-items: center;
-  justify-content: center;
-  color: var(--text-muted);
-}
-
-.event-card-placeholder svg {
-  width: 3rem;
-  height: 3rem;
-}
-
-.event-card-status {
-  position: absolute;
-  top: var(--spacing-2);
-  right: var(--spacing-2);
-  padding: var(--spacing-1) var(--spacing-2);
-  border-radius: var(--radius-md);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-medium);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.event-card-status.upcoming {
-  background: var(--accent-green-light);
-  color: var(--accent-green);
-}
-
-.event-card-status.in-progress {
-  background: var(--accent-purple-light);
-  color: var(--accent-purple);
-}
-
-.event-card-status.completed {
-  background: var(--background-muted);
-  color: var(--text-muted);
-}
-
-.event-card-content {
-  flex: 1;
-  min-width: 0;
-}
-
-.event-card-meta {
-  display: flex;
   gap: var(--spacing-2);
-  margin-bottom: var(--spacing-2);
+  margin-bottom: var(--spacing-4);
   flex-wrap: wrap;
 }
 
-.event-card-type,
-.event-card-virtual {
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-medium);
-  padding: var(--spacing-1) var(--spacing-2);
+/* Primary Tag Styling - Date and Event Type Only */
+.event-card-date-badge,
+.event-card-type-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--spacing-1) var(--spacing-3);
   border-radius: var(--radius-md);
-  background: var(--background-muted);
-  color: var(--text-secondary);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  /* text-transform: uppercase; */
+  letter-spacing: 0.5px;
+  color: var(--white);
+  white-space: nowrap;
 }
 
-.event-card-virtual {
-  background: var(--accent-green-light);
-  color: var(--accent-green);
+/* ========================================
+   DATE BADGE COLORS
+   ======================================== */
+
+.event-card-date-badge.today {
+  background: #FF6B6B;
 }
+
+.event-card-date-badge.tomorrow {
+  background: #4ECDC4;
+}
+
+.event-card-date-badge.this-week {
+  background: #45B7D1;
+}
+
+.event-card-date-badge.this-weekend {
+  background: #96CEB4;
+}
+
+.event-card-date-badge.next-week {
+  background: #FECA57;
+  color: black;
+}
+
+.event-card-date-badge.next-weekend {
+  background: #FF9FF3;
+  color: black;
+
+}
+
+.event-card-date-badge.this-month {
+  background: #54A0FF;
+}
+
+.event-card-date-badge.default {
+  background: var(--accent-purple);
+}
+
+/* ========================================
+   EVENT TYPE TAGS (CATEGORY COLORS)
+   ======================================== */
+
+/* Education - Blue */
+
+.event-card-type-tag.tutoring-education,
+.event-card-type-tag.workshop-training,
+.event-card-type-tag.technology-digital,
+.event-card-type-tag.research-data {
+  background: #E3F2FD;                  /* Very light blue background */
+  color: #1565C0;                       /* Darker blue text */
+}
+
+/* ========================================
+   ENVIRONMENT - GREEN FAMILY
+   ======================================== */
+.event-card-type-tag.community-cleanup,
+.event-card-type-tag.environmental-conservation,
+.event-card-type-tag.gardening {
+  background: #E8F5E8;                  /* Very light green background */
+  color: #2E7D32;                       /* Darker green text */
+}
+
+/* ========================================
+   HEALTHCARE - RED FAMILY
+   ======================================== */
+.event-card-type-tag.healthcare-support,
+.event-card-type-tag.crisis-support,
+.event-card-type-tag.blood-drive {
+  background: #FFEBEE;                  /* Very light red background */
+  color: #C62828;                       /* Darker red text */
+}
+
+/* ========================================
+   COMMUNITY SERVICE - PURPLE FAMILY
+   ======================================== */
+.event-card-type-tag.advocacy-awareness {
+  background: #F3E5F5;                  /* Very light purple background */
+  color: #7B1FA2;                       /* Darker purple text */
+}
+
+/* ========================================
+   FOOD & ANIMAL CARE - ORANGE FAMILY
+   ======================================== */
+.event-card-type-tag.animal-care,
+.event-card-type-tag.food-service {
+  background: #FFF3E0;                  /* Very light orange background */
+  color: #E65100;                       /* Darker orange text */
+}
+
+/* ========================================
+   ARTS & CULTURE - PINK FAMILY
+   ======================================== */
+.event-card-type-tag.arts-culture,
+.event-card-type-tag.event-planning,
+.event-card-type-tag.festival-fair {
+  background: #FCE4EC;                  /* Very light pink background */
+  color: #AD1457;                       /* Darker pink text */
+}
+
+/* ========================================
+   HUMAN SERVICES - TEAL FAMILY
+   ======================================== */
+.event-card-type-tag.senior-support,
+.event-card-type-tag.youth-mentoring,
+.event-card-type-tag.transportation {
+  background: #E0F2F1;                  /* Very light teal background */
+  color: #00695C;                       /* Darker teal text */
+}
+
+/* ========================================
+   SPORTS & RECREATION - INDIGO FAMILY
+   ======================================== */
+.event-card-type-tag.sports-recreation {
+  background: #E8EAF6;                  /* Very light indigo background */
+  color: #303F9F;                       /* Darker indigo text */
+}
+
+/* ========================================
+   EMERGENCY SERVICES - DEEP ORANGE FAMILY
+   ======================================== */
+.event-card-type-tag.disaster-relief {
+  background: #FBE9E7;                  /* Very light deep orange background */
+  color: #BF360C;                       /* Darker deep orange text */
+}
+
+/* ========================================
+   FUNDRAISING - AMBER FAMILY
+   ======================================== */
+.event-card-type-tag.fundraising {
+  background: #FFFBF0;                  /* Very light amber background */
+  color: #FF8F00;                       /* Darker amber text */
+}
+
+/* ========================================
+   ADMINISTRATIVE - GRAY FAMILY
+   ======================================== */
+.event-card-type-tag.administrative-support {
+  background: #F5F5F5;                  /* Very light gray background */
+  color: #424242;                       /* Darker gray text */
+}
+
+/* ========================================
+   CONSTRUCTION - BROWN FAMILY
+   ======================================== */
+.event-card-type-tag.construction-building {
+  background: #EFEBE9;                  /* Very light brown background */
+  color: #5D4037;                       /* Darker brown text */
+}
+
+
+/* ========================================
+   EVENT CARD CONTENT
+   ======================================== */
 
 .event-card-title {
   font-size: var(--font-size-lg);
@@ -453,128 +691,86 @@
   line-height: var(--line-height-tight);
 }
 
-.event-card-description {
-  color: var(--text-secondary);
+.event-card-organization {
   font-size: var(--font-size-sm);
-  line-height: var(--line-height-relaxed);
+  color: var(--text-secondary);
   margin-bottom: var(--spacing-4);
+  font-weight: var(--font-weight-medium);
 }
 
-.event-card-details {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: var(--spacing-2);
-  margin-bottom: var(--spacing-4);
-}
-
-.event-card-detail {
+/* Updated Location Section - Now includes all secondary info */
+.event-card-location {
   display: flex;
   align-items: center;
   gap: var(--spacing-2);
   font-size: var(--font-size-sm);
-  color: var(--text-secondary);
+  color: var(--text-muted);
+  margin-bottom: var(--spacing-3);
+  flex-wrap: wrap;
+  line-height: 1.4;
 }
 
-.event-card-detail-icon {
-  width: 1rem;
-  height: 1rem;
+.event-card-location-icon {
+  width: 0.875rem;
+  height: 0.875rem;
   flex-shrink: 0;
+  margin-right: var(--spacing-1);
+}
+
+/* Secondary Tags - Time, Duration, Skill Level (inline with location) */
+.event-card-time,
+.event-card-duration-info,
+.event-card-skill-info {
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+  font-weight: var(--font-weight-medium);
+}
+
+/* Separator styling */
+.event-card-separator {
+  color: var(--text-muted);
+  margin: 0 var(--spacing-1);
+}
+
+.event-card-volunteers {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--spacing-1);
+  font-size: var(--font-size-sm);
   color: var(--text-muted);
 }
 
-.event-card-organization {
-  font-size: var(--font-size-sm);
-  color: var(--text-secondary);
-  padding: var(--spacing-3);
-  background: var(--background-muted);
-  border-radius: var(--radius-lg);
-  margin-bottom: var(--spacing-4);
-  border-left: 3px solid var(--accent-purple);
+.event-card-volunteers-icon {
+  width: 0.875rem;
+  height: 0.875rem;
+  flex-shrink: 0;
 }
 
-.event-card-organization strong {
-  color: var(--text-primary);
-  font-weight: var(--font-weight-semibold);
-}
-
-.event-card-stats {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: var(--spacing-4);
-  margin-bottom: var(--spacing-4);
-}
-
-.event-card-stat {
-  text-align: center;
-  padding: var(--spacing-3);
-  background: var(--background-muted);
-  border-radius: var(--radius-lg);
-}
-
-.event-card-stat-number {
-  display: block;
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-bold);
-  color: var(--accent-purple);
-  margin-bottom: var(--spacing-1);
-}
-
-.event-card-stat-label {
-  font-size: var(--font-size-xs);
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+.event-card-volunteers-count {
+  font-weight: var(--font-weight-medium);
 }
 
 .event-card-footer {
   display: flex;
-  gap: var(--spacing-3);
-  padding: var(--spacing-4) var(--spacing-6);
-  border-top: 1px solid var(--border-primary);
-  background: var(--background-muted);
-}
-
-.event-card-btn {
-  flex: 1;
-  display: flex;
   align-items: center;
-  justify-content: center;
-  gap: var(--spacing-2);
-  padding: var(--spacing-3) var(--spacing-4);
-  border-radius: var(--radius-lg);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  cursor: pointer;
-  transition: all var(--duration-200) var(--ease-out);
-  border: 1px solid transparent;
+  justify-content: space-between;
+  margin-top: var(--spacing-1);
 }
 
-.event-card-btn.primary {
-  background: var(--accent-purple);
-  color: var(--white);
-  border-color: var(--accent-purple);
+/* Virtual event styling */
+.event-card.virtual {
+  border-left: 4px solid var(--accent-green);
 }
 
-.event-card-btn.primary:hover {
-  background: var(--accent-purple-dark);
-  border-color: var(--accent-purple-dark);
-  transform: translateY(-1px);
+.event-card.virtual .event-card-location {
+  color: var(--accent-green);
 }
 
-.event-card-btn.secondary {
-  background: transparent;
-  color: var(--accent-purple);
-  border-color: var(--accent-purple);
-}
-
-.event-card-btn.secondary:hover {
-  background: var(--accent-purple);
-  color: var(--white);
-}
-
-.event-card-btn-icon {
-  width: 1rem;
-  height: 1rem;
+/* Urgent/Featured event styling */
+.event-card.featured {
+  border-left: 4px solid var(--accent-purple);
+  background: linear-gradient(135deg, var(--background-primary) 0%, rgba(139, 92, 246, 0.02) 100%);
 }
 
 /* Loading State */
@@ -811,7 +1007,10 @@
   color: var(--accent-purple-dark);
 }
 
-/* Responsive Design */
+/* ========================================
+   RESPONSIVE DESIGN
+   ======================================== */
+
 @media (max-width: 1024px) {
   .events-container {
     grid-template-columns: 1fr;
@@ -833,19 +1032,8 @@
     gap: var(--spacing-2);
   }
 
-  .event-card-header {
-    flex-direction: column;
-    gap: var(--spacing-3);
-  }
-
-  .event-card-image {
-    align-self: center;
-    width: 100px;
-    height: 100px;
-  }
-
-  .event-card-details {
-    grid-template-columns: 1fr;
+  .events-list {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   }
 }
 
@@ -889,12 +1077,18 @@
     font-size: var(--font-size-xl);
   }
 
-  .event-card-stats {
+  .events-list {
     grid-template-columns: 1fr;
   }
 
   .event-card-footer {
     flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-2);
+  }
+
+  .event-card-volunteers {
+    align-self: flex-end;
   }
 
   .events-pagination {
@@ -904,6 +1098,17 @@
 
   .events-pagination-numbers {
     margin: 0 var(--spacing-2);
+  }
+
+  /* Mobile tag adjustments */
+  .event-card-header {
+    flex-wrap: wrap;
+    gap: var(--spacing-1);
+  }
+
+  .event-card-location {
+    flex-wrap: wrap;
+    gap: var(--spacing-1);
   }
 }
 
@@ -972,12 +1177,17 @@
     padding: var(--spacing-4);
   }
 
-  .event-card-header {
-    padding: var(--spacing-4);
+  .event-card {
+    padding: var(--spacing-3);
+  }
+
+  .event-card-title {
+    font-size: var(--font-size-base);
   }
 
   .event-card-footer {
-    padding: var(--spacing-3) var(--spacing-4);
+    flex-direction: column;
+    gap: var(--spacing-2);
   }
 
   .events-pagination-btn {
@@ -990,7 +1200,23 @@
     height: 2rem;
     font-size: var(--font-size-xs);
   }
+
+  /* Ultra mobile tag adjustments */
+  .event-card-header {
+    gap: 2px;
+  }
+
+  .event-card-date-badge,
+  .event-card-type-tag {
+    font-size: 9px;
+    padding: 1px 4px;
+    letter-spacing: 0;
+  }
 }
+
+/* ========================================
+   ACCESSIBILITY IMPROVEMENTS
+   ======================================== */
 
 /* Focus styles for better accessibility */
 .events-filter-option:focus,
@@ -998,14 +1224,56 @@
 .events-clear-filters-btn:focus,
 .events-search-input:focus,
 .events-empty-state-cta-button:focus,
-.event-card-btn:focus,
+.event-card:focus,
 .events-pagination-btn:focus,
 .events-pagination-number:focus {
   outline: 2px solid var(--accent-purple);
   outline-offset: 2px;
 }
 
-/* Print styles */
+/* Reduced motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  .event-card,
+  .events-filter-option,
+  .events-pagination-btn,
+  .events-pagination-number {
+    transition: none;
+  }
+  
+  .event-card:hover {
+    transform: none;
+  }
+  
+  .events-clear-filters-btn:hover,
+  .events-retry-btn:hover {
+    transform: none;
+  }
+  
+  .events-loading-spinner {
+    animation: none;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .event-card {
+    border-width: 2px;
+  }
+  
+  .event-card-date-badge,
+  .event-card-type-tag {
+    border: 1px solid currentColor;
+  }
+  
+  .events-filter-option.active {
+    border-width: 2px;
+  }
+}
+
+/* ========================================
+   PRINT STYLES
+   ======================================== */
+
 @media print {
   .events-page {
     background: white !important;
@@ -1018,17 +1286,36 @@
   .event-card {
     border: 1px solid black !important;
     background: white !important;
+    box-shadow: none !important;
   }
   
   .events-clear-filters-btn,
   .events-empty-state-cta-button,
-  .event-card-btn {
+  .events-retry-btn {
     color: black !important;
     background: white !important;
     border: 1px solid black !important;
   }
 
-  .events-pagination {
+  .events-pagination,
+  .events-sidebar {
     display: none;
+  }
+  
+  .events-container {
+    grid-template-columns: 1fr;
+  }
+  
+  .event-card:hover {
+    transform: none;
+    box-shadow: none !important;
+  }
+
+  /* Print-friendly tag colors */
+  .event-card-date-badge,
+  .event-card-type-tag {
+    background: white !important;
+    color: black !important;
+    border: 1px solid black !important;
   }
 }

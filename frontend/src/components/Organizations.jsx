@@ -49,6 +49,66 @@ const Organizations = () => {
     'Small (1-50)', 'Medium (51-200)', 'Large (201-1000)', 'Enterprise (1000+)'
   ];
 
+  // Helper function to get category CSS class
+  const getCategoryClass = (category) => {
+    if (!category) return '';
+    
+    const categoryLower = category.toLowerCase().replace(/[^\w\s]/g, '').replace(/\s+/g, '-');
+    
+    // Map categories to CSS classes
+    const categoryMap = {
+      'education': 'education',
+      'environment': 'environment', 
+      'healthcare': 'healthcare',
+      'animal-welfare': 'animal-welfare',
+      'community-service': 'community-service',
+      'human-services': 'human-services',
+      'arts-culture': 'arts-culture',
+      'arts--culture': 'arts-culture',
+      'youth-development': 'youth-development',
+      'senior-services': 'senior-services',
+      'hunger--homelessness': 'hunger-homelessness',
+      'hunger-homelessness': 'hunger-homelessness',
+      'disaster-relief': 'disaster-relief',
+      'international': 'international',
+      'sports--recreation': 'sports-recreation',
+      'sports-recreation': 'sports-recreation',
+      'mental-health': 'mental-health',
+      'veterans': 'veterans',
+      'womens-issues': 'womens-issues',
+      'children--families': 'children-families',
+      'children-families': 'children-families',
+      'disability-services': 'disability-services',
+      'religious': 'religious',
+      'political': 'political',
+      'lgbtq': 'lgbtq',
+      'technology': 'technology',
+      'research--advocacy': 'research-advocacy',
+      'research-advocacy': 'research-advocacy',
+      'public-safety': 'public-safety'
+    };
+    
+    return categoryMap[categoryLower] || '';
+  };
+
+  // Helper function to get organization type CSS class
+  const getOrganizationTypeClass = (primaryCategory, categories) => {
+    const allCategories = [primaryCategory, ...(categories ? categories.split(',').map(cat => cat.trim()) : [])];
+    
+    // Check for specific categories and return corresponding CSS class
+    if (allCategories.some(cat => cat?.toLowerCase().includes('education'))) return 'education';
+    if (allCategories.some(cat => cat?.toLowerCase().includes('healthcare') || cat?.toLowerCase().includes('health'))) return 'healthcare';
+    if (allCategories.some(cat => cat?.toLowerCase().includes('environment'))) return 'environment';
+    if (allCategories.some(cat => cat?.toLowerCase().includes('animal'))) return 'animal-welfare';
+    if (allCategories.some(cat => cat?.toLowerCase().includes('community'))) return 'community-service';
+    if (allCategories.some(cat => cat?.toLowerCase().includes('human services'))) return 'human-services';
+    if (allCategories.some(cat => cat?.toLowerCase().includes('arts') || cat?.toLowerCase().includes('culture'))) return 'arts-culture';
+    if (allCategories.some(cat => cat?.toLowerCase().includes('youth'))) return 'youth-development';
+    if (allCategories.some(cat => cat?.toLowerCase().includes('senior'))) return 'senior-services';
+    
+    return 'default';
+  };
+
   // Load organizations on component mount
   useEffect(() => {
     loadOrganizations();
@@ -274,11 +334,25 @@ const Organizations = () => {
     return 'Enterprise (1000+)';
   };
 
-  const getCategoriesDisplay = (categories, primaryCategory) => {
-    if (categories) {
-      return categories.split(',').map(cat => cat.trim()).slice(0, 3).join(', ');
+  const getCategoriesArray = (categories, primaryCategory) => {
+    const categoryArray = [];
+    
+    if (primaryCategory) {
+      categoryArray.push(primaryCategory);
     }
-    return primaryCategory || 'General';
+    
+    if (categories) {
+      const additionalCategories = categories.split(',').map(cat => cat.trim());
+      // Add categories that aren't already included (avoid duplicates)
+      additionalCategories.forEach(cat => {
+        if (cat && !categoryArray.includes(cat)) {
+          categoryArray.push(cat);
+        }
+      });
+    }
+    
+    // Return first 3 categories max to avoid cluttering
+    return categoryArray.slice(0, 3);
   };
 
   return (
@@ -299,7 +373,7 @@ const Organizations = () => {
                 {categories.slice(0, showMoreCategories ? categories.length : 8).map((category) => (
                   <div
                     key={category}
-                    className={`organizations-filter-option ${selectedCategories.includes(category) ? 'active' : ''}`}
+                    className={`organizations-filter-option ${selectedCategories.includes(category) ? `active category-${getCategoryClass(category)}` : ''}`}
                     onClick={() => handleCategoryToggle(category)}
                   >
                     {category}
@@ -436,7 +510,7 @@ const Organizations = () => {
                 {selectedCategories.map((category) => (
                   <span
                     key={category}
-                    className="organizations-filter-chip category"
+                    className={`organizations-filter-chip category ${getCategoryClass(category)}`}
                   >
                     {category}
                     <button
@@ -532,19 +606,24 @@ const Organizations = () => {
                         {org.isVerified && (
                           <div className="organization-card-verified">
                             <Star className="organization-card-verified-icon" />
-                            <span>Verified</span>
                           </div>
                         )}
                       </div>
                       <div className="organization-card-content">
                         <div className="organization-card-meta">
-                          <span className="organization-card-type">{org.organizationType || 'Organization'}</span>
-                          <span className="organization-card-category">{getCategoriesDisplay(org.categories, org.primaryCategory)}</span>
+                          <span className={`organization-card-type ${getOrganizationTypeClass(org.primaryCategory, org.categories)}`}>
+                            {org.organizationType || org.primaryCategory || 'Organization'}
+                          </span>
+                          {getCategoriesArray(org.categories, org.primaryCategory).map((category, index) => (
+                            <span key={index} className={`organization-card-category ${getCategoryClass(category)}`}>
+                              {category}
+                            </span>
+                          ))}
                         </div>
                         <h3 className="organization-card-title">{org.organizationName}</h3>
                         <p className="organization-card-description">
-                          {org.description?.substring(0, 150)}
-                          {org.description?.length > 150 ? '...' : ''}
+                          {org.description?.substring(0, 120)}
+                          {org.description?.length > 120 ? '...' : ''}
                         </p>
                         <div className="organization-card-details">
                           <div className="organization-card-detail">
@@ -559,39 +638,16 @@ const Organizations = () => {
                             <Calendar className="organization-card-detail-icon" />
                             <span>{formatFoundedYear(org.foundedYear)}</span>
                           </div>
-                          {org.totalEventsHosted && (
-                            <div className="organization-card-detail">
-                              <Award className="organization-card-detail-icon" />
-                              <span>{org.totalEventsHosted} events hosted</span>
-                            </div>
-                          )}
-                        </div>
-                        {org.missionStatement && (
-                          <div className="organization-card-mission">
-                            <strong>Mission:</strong> {org.missionStatement.substring(0, 100)}
-                            {org.missionStatement.length > 100 ? '...' : ''}
+                          <div className="organization-card-detail">
+                            <Award className="organization-card-detail-icon" />
+                            <span>{org.totalEventsHosted || 0} events hosted</span>
                           </div>
-                        )}
-                        <div className="organization-card-stats">
-                          <div className="organization-card-stat">
-                            <span className="organization-card-stat-number">{org.totalVolunteersServed || 0}</span>
-                            <span className="organization-card-stat-label">Volunteers Served</span>
-                          </div>
-                          <div className="organization-card-stat">
-                            <span className="organization-card-stat-number">{org.totalEventsHosted || 0}</span>
-                            <span className="organization-card-stat-label">Events Hosted</span>
+                          <div className="organization-card-detail">
+                            <Users className="organization-card-detail-icon" />
+                            <span>{org.totalVolunteersServed || 0} volunteers served</span>
                           </div>
                         </div>
                       </div>
-                    </div>
-                    <div className="organization-card-footer">
-                      <button className="organization-card-btn primary">
-                        View Profile
-                        <ExternalLink className="organization-card-btn-icon" />
-                      </button>
-                      <button className="organization-card-btn secondary">
-                        View Events
-                      </button>
                     </div>
                   </div>
                 ))}

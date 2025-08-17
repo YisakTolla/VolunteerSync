@@ -1,4 +1,4 @@
-/* Organizations.css - Organizations Page Styling with Unique Class Names */
+/* Organizations.css - Minimalistic Organizations Page Styling */
 
 /* Page Container */
 .organizations-page {
@@ -93,6 +93,127 @@
   color: var(--accent-purple);
   border-color: var(--accent-purple);
   font-weight: var(--font-weight-semibold);
+}
+
+/* Category Filter Colors */
+.organizations-filter-option.active.category-education {
+  color: #3b82f6;
+  border-color: #3b82f6;
+}
+
+.organizations-filter-option.active.category-environment {
+  color: var(--accent-green);
+  border-color: var(--accent-green);
+}
+
+.organizations-filter-option.active.category-healthcare {
+  color: #ef4444;
+  border-color: #ef4444;
+}
+
+.organizations-filter-option.active.category-animal-welfare {
+  color: #f97316;
+  border-color: #f97316;
+}
+
+.organizations-filter-option.active.category-community-service {
+  color: var(--accent-purple);
+  border-color: var(--accent-purple);
+}
+
+.organizations-filter-option.active.category-human-services {
+  color: #14b8a6;
+  border-color: #14b8a6;
+}
+
+.organizations-filter-option.active.category-arts-culture {
+  color: #ec4899;
+  border-color: #ec4899;
+}
+
+.organizations-filter-option.active.category-youth-development {
+  color: #06b6d4;
+  border-color: #06b6d4;
+}
+
+.organizations-filter-option.active.category-senior-services {
+  color: #6366f1;
+  border-color: #6366f1;
+}
+
+.organizations-filter-option.active.category-hunger-homelessness {
+  color: #f56565;
+  border-color: #f56565;
+}
+
+.organizations-filter-option.active.category-disaster-relief {
+  color: #fb923c;
+  border-color: #fb923c;
+}
+
+.organizations-filter-option.active.category-international {
+  color: #22c55e;
+  border-color: #22c55e;
+}
+
+.organizations-filter-option.active.category-sports-recreation {
+  color: #a855f7;
+  border-color: #a855f7;
+}
+
+.organizations-filter-option.active.category-mental-health {
+  color: #34d399;
+  border-color: #34d399;
+}
+
+.organizations-filter-option.active.category-veterans {
+  color: #22c55e;
+  border-color: #22c55e;
+}
+
+.organizations-filter-option.active.category-womens-issues {
+  color: #f472b6;
+  border-color: #f472b6;
+}
+
+.organizations-filter-option.active.category-children-families {
+  color: #fbbf24;
+  border-color: #fbbf24;
+}
+
+.organizations-filter-option.active.category-disability-services {
+  color: #818cf8;
+  border-color: #818cf8;
+}
+
+.organizations-filter-option.active.category-religious {
+  color: #c4b5fd;
+  border-color: #c4b5fd;
+}
+
+.organizations-filter-option.active.category-political {
+  color: #6b7280;
+  border-color: #6b7280;
+}
+
+.organizations-filter-option.active.category-lgbtq {
+  color: #ec4899;
+  border-color: #ec4899;
+}
+
+.organizations-filter-option.active.category-technology {
+  color: #3b82f6;
+  border-color: #3b82f6;
+}
+
+.organizations-filter-option.active.category-research-advocacy {
+  color: var(--accent-purple);
+  border-color: var(--accent-purple);
+}
+
+.organizations-filter-option.active.category-public-safety {
+  color: #ef4444;
+  border-color: #ef4444;
 }
 
 .organizations-filter-option.active.location {
@@ -266,6 +387,151 @@
   border: 1px solid var(--accent-purple);
 }
 
+/* Active Filter Chip Colors - Category */
+.organizations-filter-chip.category.education {
+  background: rgba(59, 130, 246, 0.15);
+  color: #1e40af;
+  border-color: #3b82f6;
+}
+
+.organizations-filter-chip.category.environment {
+  background: rgba(16, 185, 129, 0.15);
+  color: #047857;
+  border-color: var(--accent-green);
+}
+
+.organizations-filter-chip.category.healthcare {
+  background: rgba(239, 68, 68, 0.15);
+  color: #dc2626;
+  border-color: #ef4444;
+}
+
+.organizations-filter-chip.category.animal-welfare {
+  background: rgba(249, 115, 22, 0.15);
+  color: #ea580c;
+  border-color: #f97316;
+}
+
+.organizations-filter-chip.category.community-service {
+  background: rgba(139, 92, 246, 0.15);
+  color: #7c3aed;
+  border-color: var(--accent-purple);
+}
+
+.organizations-filter-chip.category.human-services {
+  background: rgba(20, 184, 166, 0.15);
+  color: #0d9488;
+  border-color: #14b8a6;
+}
+
+.organizations-filter-chip.category.arts-culture {
+  background: rgba(236, 72, 153, 0.15);
+  color: #be185d;
+  border-color: #ec4899;
+}
+
+.organizations-filter-chip.category.youth-development {
+  background: rgba(6, 182, 212, 0.15);
+  color: #0891b2;
+  border-color: #06b6d4;
+}
+
+.organizations-filter-chip.category.senior-services {
+  background: rgba(99, 102, 241, 0.15);
+  color: #4f46e5;
+  border-color: #6366f1;
+}
+
+.organizations-filter-chip.category.hunger-homelessness {
+  background: rgba(245, 101, 101, 0.15);
+  color: #dc2626;
+  border-color: #f56565;
+}
+
+.organizations-filter-chip.category.disaster-relief {
+  background: rgba(251, 146, 60, 0.15);
+  color: #ea580c;
+  border-color: #fb923c;
+}
+
+.organizations-filter-chip.category.international {
+  background: rgba(34, 197, 94, 0.15);
+  color: #16a34a;
+  border-color: #22c55e;
+}
+
+.organizations-filter-chip.category.sports-recreation {
+  background: rgba(168, 85, 247, 0.15);
+  color: #9333ea;
+  border-color: #a855f7;
+}
+
+.organizations-filter-chip.category.mental-health {
+  background: rgba(52, 211, 153, 0.15);
+  color: #059669;
+  border-color: #34d399;
+}
+
+.organizations-filter-chip.category.veterans {
+  background: rgba(34, 197, 94, 0.15);
+  color: #16a34a;
+  border-color: #22c55e;
+}
+
+.organizations-filter-chip.category.womens-issues {
+  background: rgba(244, 114, 182, 0.15);
+  color: #be185d;
+  border-color: #f472b6;
+}
+
+.organizations-filter-chip.category.children-families {
+  background: rgba(251, 191, 36, 0.15);
+  color: #d97706;
+  border-color: #fbbf24;
+}
+
+.organizations-filter-chip.category.disability-services {
+  background: rgba(129, 140, 248, 0.15);
+  color: #4f46e5;
+  border-color: #818cf8;
+}
+
+.organizations-filter-chip.category.religious {
+  background: rgba(196, 181, 253, 0.15);
+  color: #7c3aed;
+  border-color: #c4b5fd;
+}
+
+.organizations-filter-chip.category.political {
+  background: rgba(107, 114, 128, 0.15);
+  color: #374151;
+  border-color: #6b7280;
+}
+
+.organizations-filter-chip.category.lgbtq {
+  background: rgba(236, 72, 153, 0.15);
+  color: #be185d;
+  border-color: #ec4899;
+}
+
+.organizations-filter-chip.category.technology {
+  background: rgba(59, 130, 246, 0.15);
+  color: #1e40af;
+  border-color: #3b82f6;
+}
+
+.organizations-filter-chip.category.research-advocacy {
+  background: rgba(139, 92, 246, 0.15);
+  color: #7c3aed;
+  border-color: var(--accent-purple);
+}
+
+.organizations-filter-chip.category.public-safety {
+  background: rgba(239, 68, 68, 0.15);
+  color: #dc2626;
+  border-color: #ef4444;
+}
+
 .organizations-filter-chip.location {
   color: var(--accent-green);
   border-color: var(--accent-green);
@@ -307,36 +573,43 @@
 /* Organizations List */
 .organizations-list {
   display: grid;
-  gap: var(--spacing-6);
+  gap: var(--spacing-4);
   margin-bottom: var(--spacing-8);
 }
 
-/* Organization Card */
+/* ========================================
+   MINIMALISTIC ORGANIZATION CARD
+   ======================================== */
+
+/* Organization Card - Compact Design */
 .organization-card {
   background: var(--background-primary);
   border: 1px solid var(--border-primary);
-  border-radius: var(--radius-xl);
-  overflow: hidden;
-  transition: all var(--duration-300) var(--ease-out);
-  box-shadow: var(--shadow-sm);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-4);
+  transition: all var(--duration-200) var(--ease-out);
+  cursor: pointer;
+  position: relative;
 }
 
 .organization-card:hover {
-  border-color: var(--accent-purple);
-  box-shadow: var(--shadow-lg);
-  transform: translateY(-2px);
+  border-color: var(--border-secondary);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
 }
 
+/* Card Header - Single Row Layout */
 .organization-card-header {
   display: flex;
-  gap: var(--spacing-4);
-  padding: var(--spacing-6);
+  align-items: center;
+  gap: var(--spacing-3);
+  margin-bottom: var(--spacing-3);
 }
 
 .organization-card-image {
   position: relative;
-  width: 80px;
-  height: 80px;
+  width: 40px;
+  height: 40px;
   flex-shrink: 0;
   border-radius: var(--radius-lg);
   overflow: hidden;
@@ -359,29 +632,27 @@
 }
 
 .organization-card-placeholder svg {
-  width: 2rem;
-  height: 2rem;
+  width: 1.25rem;
+  height: 1.25rem;
 }
 
 .organization-card-verified {
   position: absolute;
-  top: -4px;
-  right: -4px;
+  top: -2px;
+  right: -2px;
   background: var(--accent-green);
   color: var(--white);
   border-radius: var(--radius-full);
-  padding: var(--spacing-1) var(--spacing-2);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-medium);
+  padding: 1px;
+  font-size: 10px;
   display: flex;
   align-items: center;
-  gap: var(--spacing-1);
-  border: 2px solid var(--background-primary);
+  border: 1px solid var(--background-primary);
 }
 
 .organization-card-verified-icon {
-  width: 0.75rem;
-  height: 0.75rem;
+  width: 0.625rem;
+  height: 0.625rem;
 }
 
 .organization-card-content {
@@ -391,27 +662,200 @@
 
 .organization-card-meta {
   display: flex;
-  gap: var(--spacing-3);
-  margin-bottom: var(--spacing-2);
+  align-items: center;
+  gap: var(--spacing-2);
+  margin-bottom: var(--spacing-1);
+  flex-wrap: wrap;
 }
 
-.organization-card-type,
+/* Organization Type Tags with Colors */
+.organization-card-type {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  padding: var(--spacing-1) var(--spacing-2);
+  border-radius: var(--radius-md);
+  color: var(--white);
+  background: var(--gray-400);
+}
+
+/* Education - Blue */
+.organization-card-type.education {
+  background: #3b82f6;
+}
+
+/* Healthcare - Red */
+.organization-card-type.healthcare {
+  background: #ef4444;
+}
+
+/* Environment - Green */
+.organization-card-type.environment {
+  background: var(--accent-green);
+}
+
+/* Animal Welfare - Orange */
+.organization-card-type.animal-welfare {
+  background: #f97316;
+}
+
+/* Community Service - Purple */
+.organization-card-type.community-service {
+  background: var(--accent-purple);
+}
+
+/* Human Services - Teal */
+.organization-card-type.human-services {
+  background: #14b8a6;
+}
+
+/* Arts & Culture - Pink */
+.organization-card-type.arts-culture {
+  background: #ec4899;
+}
+
+/* Youth Development - Cyan */
+.organization-card-type.youth-development {
+  background: #06b6d4;
+}
+
+/* Senior Services - Indigo */
+.organization-card-type.senior-services {
+  background: #6366f1;
+}
+
+/* Cleanup other category tags for general categories */
 .organization-card-category {
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-medium);
   padding: var(--spacing-1) var(--spacing-2);
   border-radius: var(--radius-md);
-  background: var(--background-muted);
-  color: var(--text-secondary);
-}
-
-.organization-card-category {
   background: var(--accent-purple-light);
   color: var(--accent-purple);
 }
 
+/* Category Colors for Organization Cards */
+.organization-card-category.education {
+  background: rgba(59, 130, 246, 0.15);
+  color: #1e40af;
+}
+
+.organization-card-category.environment {
+  background: rgba(16, 185, 129, 0.15);
+  color: #047857;
+}
+
+.organization-card-category.healthcare {
+  background: rgba(239, 68, 68, 0.15);
+  color: #dc2626;
+}
+
+.organization-card-category.animal-welfare {
+  background: rgba(249, 115, 22, 0.15);
+  color: #ea580c;
+}
+
+.organization-card-category.community-service {
+  background: rgba(139, 92, 246, 0.15);
+  color: #7c3aed;
+}
+
+.organization-card-category.human-services {
+  background: rgba(20, 184, 166, 0.15);
+  color: #0d9488;
+}
+
+.organization-card-category.arts-culture {
+  background: rgba(236, 72, 153, 0.15);
+  color: #be185d;
+}
+
+.organization-card-category.youth-development {
+  background: rgba(6, 182, 212, 0.15);
+  color: #0891b2;
+}
+
+.organization-card-category.senior-services {
+  background: rgba(99, 102, 241, 0.15);
+  color: #4f46e5;
+}
+
+.organization-card-category.hunger-homelessness {
+  background: rgba(245, 101, 101, 0.15);
+  color: #dc2626;
+}
+
+.organization-card-category.disaster-relief {
+  background: rgba(251, 146, 60, 0.15);
+  color: #ea580c;
+}
+
+.organization-card-category.international {
+  background: rgba(34, 197, 94, 0.15);
+  color: #16a34a;
+}
+
+.organization-card-category.sports-recreation {
+  background: rgba(168, 85, 247, 0.15);
+  color: #9333ea;
+}
+
+.organization-card-category.mental-health {
+  background: rgba(52, 211, 153, 0.15);
+  color: #059669;
+}
+
+.organization-card-category.veterans {
+  background: rgba(34, 197, 94, 0.15);
+  color: #16a34a;
+}
+
+.organization-card-category.womens-issues {
+  background: rgba(244, 114, 182, 0.15);
+  color: #be185d;
+}
+
+.organization-card-category.children-families {
+  background: rgba(251, 191, 36, 0.15);
+  color: #d97706;
+}
+
+.organization-card-category.disability-services {
+  background: rgba(129, 140, 248, 0.15);
+  color: #4f46e5;
+}
+
+.organization-card-category.religious {
+  background: rgba(196, 181, 253, 0.15);
+  color: #7c3aed;
+}
+
+.organization-card-category.political {
+  background: rgba(107, 114, 128, 0.15);
+  color: #374151;
+}
+
+.organization-card-category.lgbtq {
+  background: rgba(236, 72, 153, 0.15);
+  color: #be185d;
+}
+
+.organization-card-category.technology {
+  background: rgba(59, 130, 246, 0.15);
+  color: #1e40af;
+}
+
+.organization-card-category.research-advocacy {
+  background: rgba(139, 92, 246, 0.15);
+  color: #7c3aed;
+}
+
+.organization-card-category.public-safety {
+  background: rgba(239, 68, 68, 0.15);
+  color: #dc2626;
+}
+
 .organization-card-title {
-  font-size: var(--font-size-lg);
+  font-size: var(--font-size-base);
   font-weight: var(--font-weight-semibold);
   color: var(--text-primary);
   margin-bottom: var(--spacing-2);
@@ -422,81 +866,40 @@
   color: var(--text-secondary);
   font-size: var(--font-size-sm);
   line-height: var(--line-height-relaxed);
-  margin-bottom: var(--spacing-4);
+  margin-bottom: var(--spacing-3);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
+/* Card Details - Compact Layout */
 .organization-card-details {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: var(--spacing-2);
-  margin-bottom: var(--spacing-4);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-3);
+  margin-bottom: 0;
 }
 
 .organization-card-detail {
   display: flex;
   align-items: center;
-  gap: var(--spacing-2);
-  font-size: var(--font-size-sm);
-  color: var(--text-secondary);
-}
-
-.organization-card-detail-icon {
-  width: 1rem;
-  height: 1rem;
-  flex-shrink: 0;
+  gap: var(--spacing-1);
+  font-size: var(--font-size-xs);
   color: var(--text-muted);
 }
 
-.organization-card-mission {
-  font-size: var(--font-size-sm);
-  color: var(--text-secondary);
-  padding: var(--spacing-3);
-  background: var(--background-muted);
-  border-radius: var(--radius-lg);
-  margin-bottom: var(--spacing-4);
-  border-left: 3px solid var(--accent-purple);
+.organization-card-detail-icon {
+  width: 0.75rem;
+  height: 0.75rem;
+  flex-shrink: 0;
 }
 
-.organization-card-mission strong {
-  color: var(--text-primary);
-  font-weight: var(--font-weight-semibold);
-}
-
-.organization-card-stats {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: var(--spacing-4);
-  margin-bottom: var(--spacing-4);
-}
-
-.organization-card-stat {
-  text-align: center;
-  padding: var(--spacing-3);
-  background: var(--background-muted);
-  border-radius: var(--radius-lg);
-}
-
-.organization-card-stat-number {
-  display: block;
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-bold);
-  color: var(--accent-purple);
-  margin-bottom: var(--spacing-1);
-}
-
-.organization-card-stat-label {
-  font-size: var(--font-size-xs);
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
+/* Remove Mission Statement and Footer */
+.organization-card-mission,
+.organization-card-stats,
 .organization-card-footer {
-  display: flex;
-  gap: var(--spacing-3);
-  padding: var(--spacing-4) var(--spacing-6);
-  border-top: 1px solid var(--border-primary);
-  background: var(--background-muted);
+  display: none;
 }
 
 .organization-card-btn {
@@ -504,14 +907,15 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--spacing-2);
-  padding: var(--spacing-3) var(--spacing-4);
-  border-radius: var(--radius-lg);
-  font-size: var(--font-size-sm);
+  gap: var(--spacing-1);
+  padding: var(--spacing-2) var(--spacing-3);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-xs);
   font-weight: var(--font-weight-medium);
   cursor: pointer;
   transition: all var(--duration-200) var(--ease-out);
   border: 1px solid transparent;
+  display: none;
 }
 
 .organization-card-btn.primary {
@@ -538,8 +942,9 @@
 }
 
 .organization-card-btn-icon {
-  width: 1rem;
-  height: 1rem;
+  width: 0.75rem;
+  height: 0.75rem;
+  display: none;
 }
 
 /* Loading State */
@@ -776,39 +1181,34 @@
   color: var(--accent-purple-dark);
 }
 
-/* Responsive Design */
+/* ========================================
+   RESPONSIVE DESIGN
+   ======================================== */
+
 @media (max-width: 1024px) {
   .organizations-container {
     grid-template-columns: 1fr;
     gap: var(--spacing-6);
   }
-
+  
   .organizations-sidebar {
     position: static;
     order: 2;
   }
-
+  
   .organizations-main {
     order: 1;
   }
-
+  
   .organizations-filter-options {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     gap: var(--spacing-2);
   }
 
-  .organization-card-header {
+  .organization-card-stats {
     flex-direction: column;
     gap: var(--spacing-3);
-  }
-
-  .organization-card-image {
-    align-self: center;
-  }
-
-  .organization-card-details {
-    grid-template-columns: 1fr;
   }
 }
 
@@ -816,48 +1216,62 @@
   .organizations-page {
     padding: calc(var(--spacing-16) + 72px) var(--spacing-3) var(--spacing-4) var(--spacing-3);
   }
-
+  
   .organizations-container {
     padding: 0 var(--spacing-3);
     gap: var(--spacing-4);
   }
-
+  
   .organizations-filter-card {
     padding: var(--spacing-4);
   }
-
+  
   .organizations-title {
     font-size: var(--font-size-2xl);
   }
-
+  
   .organizations-search-input {
     padding: var(--spacing-3) var(--spacing-4) var(--spacing-3) var(--spacing-10);
   }
-
+  
   .organizations-empty-state {
     padding: var(--spacing-12) var(--spacing-4);
   }
-
+  
   .organizations-empty-state-icon {
     width: 100px;
     height: 100px;
   }
-
+  
   .organizations-empty-state-icon svg {
     width: 50px;
     height: 50px;
   }
-
+  
   .organizations-empty-state-title {
     font-size: var(--font-size-xl);
   }
 
-  .organization-card-stats {
-    grid-template-columns: 1fr;
+  .organization-card {
+    padding: var(--spacing-4);
+  }
+
+  .organization-card-header {
+    gap: var(--spacing-3);
+  }
+
+  .organization-card-image {
+    width: 40px;
+    height: 40px;
   }
 
   .organization-card-footer {
     flex-direction: column;
+  }
+
+  .organization-card-details {
+    flex-direction: column;
+    gap: var(--spacing-2);
   }
 
   .organizations-pagination {
@@ -874,73 +1288,97 @@
   .organizations-page {
     padding: calc(var(--spacing-12) + 72px) var(--spacing-2) var(--spacing-3) var(--spacing-2);
   }
-
+  
   .organizations-container {
     padding: 0 var(--spacing-2);
     gap: var(--spacing-3);
   }
-
+  
   .organizations-filter-card {
     padding: var(--spacing-3);
   }
-
+  
   .organizations-filter-options {
     grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
     gap: var(--spacing-1);
   }
-
+  
   .organizations-filter-option {
     padding: var(--spacing-1) var(--spacing-2);
     font-size: var(--font-size-xs);
   }
-
+  
   .organizations-search-input {
     padding: var(--spacing-2) var(--spacing-3) var(--spacing-2) var(--spacing-8);
     font-size: var(--font-size-sm);
   }
-
+  
   .organizations-search-icon {
     left: var(--spacing-2);
     width: var(--spacing-4);
     height: var(--spacing-4);
   }
-
+  
   .organizations-title {
     font-size: var(--font-size-xl);
   }
-
+  
   .organizations-empty-state {
     padding: var(--spacing-8) var(--spacing-2);
   }
-
+  
   .organizations-empty-state-icon {
     width: 80px;
     height: 80px;
   }
-
+  
   .organizations-empty-state-icon svg {
     width: 40px;
     height: 40px;
   }
-
+  
   .organizations-empty-state-title {
     font-size: var(--font-size-lg);
   }
-
+  
   .organizations-empty-state-description {
     font-size: var(--font-size-sm);
   }
-
+  
   .organizations-empty-state-cta {
     padding: var(--spacing-4);
   }
 
+  .organization-card {
+    padding: var(--spacing-3);
+  }
+
   .organization-card-header {
-    padding: var(--spacing-4);
+    gap: var(--spacing-2);
+    margin-bottom: var(--spacing-3);
+  }
+
+  .organization-card-image {
+    width: 36px;
+    height: 36px;
+  }
+
+  .organization-card-title {
+    font-size: var(--font-size-base);
+  }
+
+  .organization-card-description {
+    font-size: var(--font-size-xs);
   }
 
   .organization-card-footer {
-    padding: var(--spacing-3) var(--spacing-4);
+    padding-top: var(--spacing-3);
+    gap: var(--spacing-2);
+  }
+
+  .organization-card-btn {
+    padding: var(--spacing-2);
+    font-size: var(--font-size-xs);
   }
 
   .organizations-pagination-btn {
@@ -955,11 +1393,17 @@
   }
 }
 
+/* ========================================
+   ACCESSIBILITY IMPROVEMENTS
+   ======================================== */
+
 /* Focus styles for better accessibility */
 .organizations-filter-option:focus,
 .organizations-show-more-btn:focus,
+.organizations-clear-filters-btn:focus,
 .organizations-search-input:focus,
 .organizations-empty-state-cta-button:focus,
+.organization-card:focus,
 .organization-card-btn:focus,
 .organizations-pagination-btn:focus,
 .organizations-pagination-number:focus {
@@ -967,30 +1411,88 @@
   outline-offset: 2px;
 }
 
-/* Print styles */
+/* Reduced motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  .organization-card,
+  .organization-card-btn,
+  .organizations-filter-option,
+  .organizations-pagination-btn,
+  .organizations-pagination-number {
+    transition: none;
+  }
+  
+  .organization-card:hover {
+    transform: none;
+  }
+  
+  .organization-card-btn:hover {
+    transform: none;
+  }
+  
+  .organizations-clear-filters-btn:hover,
+  .organizations-retry-btn:hover {
+    transform: none;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .organization-card {
+    border-width: 2px;
+  }
+  
+  .organization-card-btn {
+    border-width: 2px;
+  }
+  
+  .organizations-filter-option.active {
+    border-width: 2px;
+  }
+}
+
+/* ========================================
+   PRINT STYLES
+   ======================================== */
+
 @media print {
   .organizations-page {
     background: white !important;
     color: black !important;
   }
-
+  
   .organizations-filter-card,
   .organizations-active-filters,
   .organizations-empty-state-cta,
   .organization-card {
     border: 1px solid black !important;
     background: white !important;
+    box-shadow: none !important;
   }
-
+  
   .organizations-clear-filters-btn,
   .organizations-empty-state-cta-button,
-  .organization-card-btn {
+  .organization-card-btn,
+  .organizations-retry-btn {
     color: black !important;
     background: white !important;
     border: 1px solid black !important;
   }
 
-  .organizations-pagination {
+  .organizations-pagination,
+  .organizations-sidebar {
     display: none;
+  }
+  
+  .organizations-container {
+    grid-template-columns: 1fr;
+  }
+  
+  .organization-card::before {
+    display: none;
+  }
+  
+  .organization-card:hover {
+    transform: none;
+    box-shadow: none !important;
   }
 }
