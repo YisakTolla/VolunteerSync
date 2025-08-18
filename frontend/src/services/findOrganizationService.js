@@ -67,6 +67,59 @@ class FindOrganizationService {
   }
 
   /**
+   * Find organization by ID - ADDED METHOD
+   */
+  async findOrganizationById(id) {
+    try {
+      console.log(`Fetching organization with ID: ${id}`);
+      const response = await fetch(`${API_BASE_URL}/organizations/${id}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log(`✅ Success fetching organization:`, data);
+        return data;
+      } else if (response.status === 404) {
+        throw new Error('Organization not found');
+      } else {
+        console.log(`❌ Failed to fetch organization: ${response.status}: ${response.statusText}`);
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+    } catch (error) {
+      console.error('Error fetching organization by ID:', error);
+      
+      // Fallback: try the organization-profiles endpoint
+      try {
+        console.log(`🔄 Trying fallback endpoint: ${API_BASE_URL}/organization-profiles/${id}`);
+        const response = await fetch(`${API_BASE_URL}/organization-profiles/${id}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log(`✅ Success with fallback endpoint:`, data);
+          return data;
+        } else if (response.status === 404) {
+          throw new Error('Organization not found');
+        }
+      } catch (fallbackError) {
+        console.error('Fallback also failed:', fallbackError);
+      }
+      
+      throw error;
+    }
+  }
+
+  /**
    * Find organizations with pagination (using advanced search with empty criteria)
    */
   async findAllOrganizationsWithPagination(page = 0, size = 10, sortBy = 'organizationName', sortDirection = 'asc') {
@@ -91,25 +144,6 @@ class FindOrganizationService {
       return await response.json();
     } catch (error) {
       console.error('Error fetching paginated organizations:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Find organization by ID
-   */
-  async findOrganizationById(id) {
-    try {
-      const response = await fetch(`${API_BASE_URL}/organization-profiles/${id}`);
-      if (!response.ok) {
-        if (response.status === 404) {
-          return null;
-        }
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      return await response.json();
-    } catch (error) {
-      console.error(`Error fetching organization ${id}:`, error);
       throw error;
     }
   }

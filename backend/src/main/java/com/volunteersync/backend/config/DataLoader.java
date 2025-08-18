@@ -22,978 +22,782 @@ public class DataLoader implements CommandLineRunner {
     private OrganizationProfileRepository organizationRepository;
 
     @Autowired
-    private VolunteerProfileRepository volunteerRepository;
-
-    @Autowired
     private EventRepository eventRepository;
-
-    @Autowired
-    private ApplicationRepository applicationRepository;
-
-    @Autowired
-    private BadgeRepository badgeRepository;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
 
     private final Random random = new Random();
 
-    // Expanded sample data arrays for more variety
-    private final String[] firstNames = {
-            "John", "Jane", "Michael", "Sarah", "David", "Emily", "Robert", "Jessica", "William", "Ashley",
-            "James", "Amanda", "Christopher", "Stephanie", "Daniel", "Michelle", "Matthew", "Jennifer", "Anthony",
-            "Lisa",
-            "Mark", "Karen", "Paul", "Nancy", "Steven", "Betty", "Kenneth", "Helen", "Joshua", "Sandra",
-            "Kevin", "Donna", "Brian", "Carol", "George", "Ruth", "Edward", "Sharon", "Ronald", "Laura",
-            "Timothy", "Maria", "Jason", "Patricia", "Jeffrey", "Linda", "Ryan", "Barbara", "Jacob", "Elizabeth",
-            "Andrew", "Mary", "Alexander", "Susan", "Nicholas", "Angela", "Douglas", "Brenda", "Benjamin", "Emma",
-            "Charles", "Olivia", "Tyler", "Deborah", "Justin", "Rachel", "Samuel", "Catherine", "Gregory", "Carolyn",
-            "Frank", "Janet", "Raymond", "Virginia", "Jack", "Maria", "Dennis", "Heather", "Jerry", "Diane"
-    };
-
-    private final String[] lastNames = {
-            "Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis", "Rodriguez", "Martinez",
-            "Hernandez", "Lopez", "Gonzalez", "Wilson", "Anderson", "Thomas", "Taylor", "Moore", "Jackson", "Martin",
-            "Lee", "Perez", "Thompson", "White", "Harris", "Sanchez", "Clark", "Ramirez", "Lewis", "Robinson",
-            "Walker", "Young", "Allen", "King", "Wright", "Scott", "Torres", "Nguyen", "Hill", "Flores",
-            "Green", "Adams", "Nelson", "Baker", "Hall", "Rivera", "Campbell", "Mitchell", "Carter", "Roberts",
-            "Phillips", "Evans", "Turner", "Diaz", "Parker", "Cruz", "Edwards", "Collins", "Reyes", "Stewart",
-            "Morris", "Morales", "Murphy", "Cook", "Rogers", "Gutierrez", "Ortiz", "Morgan", "Cooper", "Peterson",
-            "Bailey", "Reed", "Kelly", "Howard", "Ramos", "Kim", "Cox", "Ward", "Richardson", "Watson"
-    };
-
-    // UPDATED organization names to match categories (145 total)
+    // Organization names (150 total to ensure variety)
     private final String[] orgNames = {
-            // Education (25)
+            // Education Organizations (30)
             "Future Leaders Academy", "Literacy Champions Network", "STEM Education Foundation",
-            "Digital Learning Initiative",
-            "Academic Excellence Society", "Children's Education Fund", "Youth Scholarship Foundation",
-            "Learning Support Network",
-            "Educational Technology Alliance", "Coding Bootcamp for Kids", "Reading Buddies Program",
-            "School Supply Drive",
+            "Digital Learning Initiative", "Academic Excellence Society", "Children's Education Fund",
+            "Youth Scholarship Foundation", "Learning Support Network", "Educational Technology Alliance",
+            "Coding Bootcamp for Kids", "Reading Buddies Program", "School Supply Drive",
             "College Prep Foundation", "Early Learning Center", "After School Programs United",
-            "Educational Equity Fund",
-            "Tutoring Heroes Network", "Student Success Coalition", "Knowledge Sharing Initiative",
-            "Youth Leadership Institute",
-            "Skills Development Hub", "Youth Innovation Lab", "Educational Research Institute", "Adult Learning Center",
-            "Multilingual Education Society",
+            "Educational Equity Fund", "Tutoring Heroes Network", "Student Success Coalition",
+            "Knowledge Sharing Initiative", "Youth Leadership Institute", "Skills Development Hub",
+            "Youth Innovation Lab", "Educational Research Institute", "Adult Learning Center",
+            "Multilingual Education Society", "Special Needs Learning Support", "Career Development Center",
+            "Academic Mentorship Network", "Educational Technology Hub", "Community Learning Center",
 
-            // Environment (25)
-            "Green Earth Initiative", "Environmental Warriors", "Clean Water Project", "Coastal Conservation Society",
-            "Urban Garden Project", "Climate Action Network", "Environmental Education Center",
-            "River Restoration Foundation",
-            "Wildlife Conservation Alliance", "Sustainable Future Coalition", "Ocean Cleanup Network",
-            "Forest Protection Society",
+            // Environment Organizations (30)
+            "Green Earth Initiative", "Environmental Warriors", "Clean Water Project", 
+            "Coastal Conservation Society", "Urban Garden Project", "Climate Action Network",
+            "Environmental Education Center", "River Restoration Foundation", "Wildlife Conservation Alliance",
+            "Sustainable Future Coalition", "Ocean Cleanup Network", "Forest Protection Society",
             "Green Energy Advocates", "Eco-Friendly Community", "Nature Preservation Trust",
-            "Earth Guardians Initiative",
-            "Renewable Resources Group", "Carbon Neutral Alliance", "Biodiversity Conservation Fund",
-            "Climate Change Response",
-            "Green Living Foundation", "Environmental Health Network", "Pollution Prevention Society",
-            "Ecological Restoration",
-            "Clean Air Initiative",
+            "Earth Guardians Initiative", "Renewable Resources Group", "Carbon Neutral Alliance",
+            "Biodiversity Conservation Fund", "Climate Change Response", "Green Living Foundation",
+            "Environmental Health Network", "Pollution Prevention Society", "Ecological Restoration",
+            "Clean Air Initiative", "Sustainable Agriculture Network", "Green Transportation Alliance",
+            "Environmental Justice Coalition", "Conservation Education Center", "Zero Waste Initiative",
 
-            // Healthcare (25)
+            // Healthcare Organizations (30)
             "Community Health Initiative", "Healthcare Heroes Network", "Medical Assistance Foundation",
-            "Public Health Alliance",
-            "Health Education Center", "Medical Outreach Program", "Preventive Care Initiative",
-            "Health Screening Network",
-            "Patient Support Alliance", "Health Awareness Campaign", "Community Wellness Center",
-            "Health Equity Initiative",
+            "Public Health Alliance", "Health Education Center", "Medical Outreach Program",
+            "Preventive Care Initiative", "Health Screening Network", "Patient Support Alliance",
+            "Health Awareness Campaign", "Community Wellness Center", "Health Equity Initiative",
             "Medical Research Foundation", "Health Technology Innovation", "Nutrition Education Hub",
-            "Healthcare Access Fund",
-            "Community Medical Center", "Health Advocacy Network", "Medical Equipment Foundation",
-            "Primary Care Initiative",
-            "Health Literacy Program", "Chronic Disease Support", "Women's Health Alliance", "Men's Health Foundation",
-            "Pediatric Care Network",
+            "Healthcare Access Fund", "Community Medical Center", "Health Advocacy Network",
+            "Medical Equipment Foundation", "Primary Care Initiative", "Health Literacy Program",
+            "Chronic Disease Support", "Women's Health Alliance", "Men's Health Foundation",
+            "Pediatric Care Network", "Mental Health Support Center", "Senior Health Services",
+            "Disability Health Services", "Emergency Medical Response", "Health Volunteer Corps",
 
-            // Animal Welfare (15)
-            "Animal Rescue Alliance", "Pet Adoption Network", "Wildlife Protection Society", "Animal Shelter Support",
-            "Stray Animal Care Foundation", "Animal Rights Advocacy", "Pet Therapy Program",
-            "Animal Rehabilitation Center",
-            "Wildlife Sanctuary Support", "Animal Cruelty Prevention", "Pet Food Bank", "Animal Emergency Response",
+            // Animal Welfare Organizations (15)
+            "Animal Rescue Alliance", "Pet Adoption Network", "Wildlife Protection Society",
+            "Animal Shelter Support", "Stray Animal Care Foundation", "Animal Rights Advocacy",
+            "Pet Therapy Program", "Animal Rehabilitation Center", "Wildlife Sanctuary Support",
+            "Animal Cruelty Prevention", "Pet Food Bank", "Animal Emergency Response",
             "Farm Animal Welfare", "Marine Animal Protection", "Endangered Species Foundation",
 
-            // Community Service (15)
+            // Community Service Organizations (15)
             "Community Kitchen Network", "Neighborhood Watch Alliance", "Community Development Fund",
-            "Local History Preservation",
-            "Emergency Response Volunteers", "Community Safety Patrol", "Volunteer Coordination Center",
-            "Community Unity Project",
-            "Neighborhood Improvement Society", "Community Building Initiative", "Public Service Fund",
-            "Civic Engagement Network",
+            "Local History Preservation", "Emergency Response Volunteers", "Community Safety Patrol",
+            "Volunteer Coordination Center", "Community Unity Project", "Neighborhood Improvement Society",
+            "Community Building Initiative", "Public Service Fund", "Civic Engagement Network",
             "Community Resource Center", "Social Impact Coalition", "Community Empowerment Hub",
 
-            // Human Services (15)
+            // Other Categories (30 total)
             "Social Services Alliance", "Human Services Coalition", "Family Support Network",
-            "Crisis Intervention Center",
-            "Social Work Foundation", "Community Advocacy Group", "Human Rights Alliance", "Social Justice Initiative",
-            "Community Outreach Program", "Social Welfare Network", "Public Good Foundation", "Social Change Coalition",
-            "Community Action Alliance", "Social Innovation Hub", "Human Development Foundation",
-
-            // Arts & Culture (10)
-            "Cultural Bridge Foundation", "Community Arts Collective", "Cultural Heritage Society",
-            "Arts Education Foundation",
-            "Cultural Festival Committee", "Creative Arts Alliance", "Visual Arts Society",
-            "Cultural Diversity Initiative",
-            "Performing Arts Center", "Cultural Exchange Program",
-
-            // Youth Development (10)
-            "Youth Mentorship Alliance", "Young Leaders Foundation", "Youth Empowerment Network", "Teen Support Center",
-            "Youth Career Development", "Leadership Training Institute", "Youth Community Service",
-            "Young Entrepreneurs Hub",
-            "Youth Sports Development", "Teen Academic Support",
-
-            // Additional organizations to reach 145 total (5 more)
-            "Senior Services Alliance", "Mental Health Support Network", "Technology for Good Foundation",
-            "Sports & Recreation Center", "Disaster Relief Coalition"
+            "Crisis Intervention Center", "Cultural Bridge Foundation", "Community Arts Collective",
+            "Youth Mentorship Alliance", "Young Leaders Foundation", "Senior Services Alliance",
+            "Mental Health Support Network", "Technology for Good Foundation", "Sports & Recreation Center",
+            "Disaster Relief Coalition", "Veterans Support Network", "Women's Empowerment Initiative",
+            "Children & Families First", "Disability Rights Alliance", "Religious Community Center",
+            "Political Action Committee", "LGBTQ+ Support Center", "Research & Advocacy Institute",
+            "Public Safety Foundation", "International Aid Society", "Hunger Relief Network",
+            "Homelessness Prevention Center", "Immigrant Support Services", "Elder Care Alliance",
+            "Youth Development Center", "Community Action Network", "Social Justice Initiative"
     };
 
-    // UPDATED event titles to better match categories (145 total)
+    // Event titles covering ALL event types (200+ events)
     private final String[] eventTitles = {
-            // Education Events (30)
-            "Youth Mentorship Program", "Reading to Children", "STEM Workshop for Kids", "Career Development Workshop",
-            "Coding Bootcamp for Kids", "Youth Leadership Summit", "After School Tutoring", "College Prep Session",
-            "Science Fair Judging", "Creative Writing Workshop", "Math Tutoring Session", "Language Learning Circle",
-            "Study Skills Seminar", "Scholarship Information Fair", "Educational Game Development",
-            "Public Speaking Training",
-            "Digital Literacy Class", "Homework Help Session", "Art Education Program", "Music Lesson Volunteer",
-            "Science Experiment Lab", "Reading Comprehension Workshop", "Computer Skills Training",
-            "Academic Mentoring",
-            "Educational Field Trip", "Learning Disability Support", "Gifted Student Program", "Parent Education Night",
-            "Teacher Appreciation Event", "School Supply Collection",
+            // Community Cleanup Events
+            "Beach Cleanup Drive", "Park Restoration Day", "River Cleanup Initiative", "Street Beautification Project",
+            "Neighborhood Cleanup Campaign", "Community Garden Cleanup", "Highway Cleanup Drive", 
+            "School Grounds Cleanup", "Historic Site Cleanup", "Downtown Cleanup Day",
 
-            // Environment Events (30)
-            "Community Garden Cleanup", "Beach Cleanup Initiative", "River Restoration Project",
-            "Tree Planting Initiative",
-            "Environmental Awareness Fair", "Recycling Education Program", "Wildlife Conservation Talk",
-            "Solar Panel Installation",
-            "Composting Workshop", "Native Plant Restoration", "Water Quality Testing", "Climate Action Rally",
-            "Green Energy Fair", "Sustainable Living Workshop", "Ocean Cleanup Drive", "Forest Trail Maintenance",
-            "Renewable Energy Seminar", "Carbon Footprint Reduction", "Eco-Friendly Gardening", "Pollution Monitoring",
-            "Green Building Tour", "Environmental Film Screening", "Zero Waste Challenge", "Nature Photography Contest",
-            "Butterfly Garden Creation", "Rain Garden Installation", "Environmental Science Fair",
-            "Green Transportation Day",
-            "Habitat Restoration Project", "Earth Day Festival",
+            // Food Service Events
+            "Community Kitchen Service", "Food Bank Sorting", "Meal Preparation for Homeless", "Food Drive Collection",
+            "Senior Meal Delivery", "School Lunch Program", "Holiday Meal Service", "Soup Kitchen Volunteer",
+            "Emergency Food Distribution", "Community Pantry Stocking",
 
-            // Healthcare Events (25)
-            "Health Screening Event", "Blood Drive Campaign", "Wellness Education Seminar", "Nutrition Workshop",
-            "First Aid Training", "Health Insurance Information", "Disease Prevention Talk",
-            "Medication Management Class",
-            "Healthy Cooking Class", "Vision Screening", "Dental Health Education", "Heart Health Awareness",
-            "Diabetes Education Program", "Cancer Support Group", "Physical Therapy Demo", "Senior Health Fair",
-            "Youth Health Education", "Community Health Assessment", "Health Technology Demo",
-            "Fitness Challenge Event",
-            "Vaccination Clinic", "Mental Health First Aid", "Chronic Disease Management", "Women's Health Workshop",
-            "Men's Health Screening",
+            // Tutoring & Education Events
+            "After School Tutoring", "Reading to Children", "Math Help Session", "ESL Classes",
+            "Computer Literacy Training", "Study Skills Workshop", "Homework Help Program", "College Prep Session",
+            "Adult Education Classes", "Special Needs Tutoring",
 
-            // Animal Welfare Events (15)
-            "Pet Adoption Drive", "Animal Shelter Volunteering", "Wildlife Habitat Cleanup",
-            "Pet Food Collection Drive",
-            "Animal Care Training", "Stray Animal Rescue", "Pet Therapy Session", "Animal Rights Awareness",
-            "Wildlife Education Program", "Pet Vaccination Clinic", "Animal Emergency Response", "Farm Animal Care",
-            "Marine Animal Protection", "Endangered Species Fundraiser", "Animal Cruelty Prevention Workshop",
+            // Animal Care Events
+            "Animal Shelter Volunteering", "Pet Adoption Event", "Dog Walking Program", "Cat Socialization",
+            "Wildlife Rehabilitation", "Pet Food Drive", "Animal Rescue Transport", "Pet Therapy Sessions",
+            "Veterinary Clinic Support", "Animal Education Program",
 
-            // Community Service Events (15)
-            "Food Drive Collection", "Community Cleanup Day", "Neighborhood Safety Patrol",
-            "Emergency Response Training",
-            "Community Garden Setup", "Senior Visit Day", "Homeless Shelter Meal Prep", "Winter Clothing Drive",
-            "Holiday Gift Wrapping", "Community Mural Painting", "Local History Documentation",
-            "Public Park Maintenance",
-            "Community Survey", "Voter Registration Drive", "Community Meeting Facilitation",
+            // Environmental Conservation Events
+            "Tree Planting Drive", "Nature Trail Maintenance", "Wildlife Habitat Restoration", "Recycling Education",
+            "Water Quality Testing", "Solar Panel Installation", "Composting Workshop", "Green Energy Fair",
+            "Conservation Photography", "Environmental Film Screening",
 
-            // Human Services Events (15)
-            "Social Services Fair", "Crisis Support Training", "Family Support Workshop", "Human Rights Rally",
-            "Social Justice Training", "Community Advocacy Meeting", "Social Work Volunteer",
-            "Homeless Support Services",
-            "Domestic Violence Awareness", "Immigration Support Services", "Refugee Assistance Program",
-            "Elder Care Support",
-            "Disability Services Training", "LGBTQ+ Support Group", "Veterans Support Services",
+            // Senior Support Events
+            "Senior Center Activities", "Elder Care Visits", "Technology Training for Seniors", "Senior Meal Delivery",
+            "Companion Services", "Senior Transportation", "Health Screening for Elderly", "Senior Exercise Classes",
+            "Intergenerational Programs", "Senior Holiday Celebration",
 
-            // Arts & Culture Events (10)
-            "Cultural Festival", "Art Therapy Session", "Community Theater Production", "Cultural Dance Workshop",
-            "Art Gallery Exhibition", "Music Concert for Charity", "Cultural Heritage Celebration",
-            "Photography Workshop",
-            "Creative Writing Contest", "Cultural Exchange Event",
+            // Youth Mentoring Events
+            "Youth Leadership Program", "Teen Mentorship Sessions", "Career Exploration Workshop", "Life Skills Training",
+            "Youth Sports Coaching", "Creative Arts Mentoring", "STEM Mentorship", "Youth Entrepreneurship",
+            "College Guidance Sessions", "Youth Community Service",
 
-            // Youth Development Events (5)
-            "Youth Leadership Training", "Teen Mentorship Program", "Young Entrepreneurs Workshop",
-            "Youth Community Service",
-            "Teen Career Exploration",
+            // Healthcare Support Events
+            "Health Screening Clinic", "Blood Drive Campaign", "First Aid Training", "Health Education Seminar",
+            "Vaccination Clinic Support", "Medical Equipment Drive", "Health Fair Volunteering", "Wellness Workshop",
+            "Chronic Disease Support", "Health Insurance Education",
 
-            // Additional events to reach 145 total (10 more)
-            "Senior Wellness Program", "Elder Care Volunteer", "Mental Health Awareness Walk",
-            "Mental Health Support Group",
-            "Tech Skills Workshop", "Computer Literacy Training", "Community Sports Tournament",
-            "Athletic Mentorship Program",
-            "Emergency Response Training", "Disaster Preparedness Workshop"
+            // Disaster Relief Events
+            "Emergency Response Training", "Disaster Preparedness Workshop", "Relief Supply Packing", "Evacuation Support",
+            "Emergency Shelter Setup", "Disaster Recovery Cleanup", "Emergency Communications", "Relief Fund Drive",
+            "Community Emergency Planning", "Post-Disaster Counseling",
+
+            // Arts & Culture Events
+            "Community Art Project", "Cultural Festival Planning", "Art Therapy Sessions", "Music Education Program",
+            "Theater Production Support", "Cultural Heritage Preservation", "Community Mural Painting", "Art Gallery Support",
+            "Creative Writing Workshop", "Dance Instruction Volunteer",
+
+            // Technology & Digital Events
+            "Computer Repair Workshop", "Digital Literacy Training", "Website Development", "Tech Support for Seniors",
+            "Equipment Setup", "Software Training", "IT Support Volunteer", "Digital Divide Bridge",
+            "Online Safety Education", "Tech Equipment Drive",
+
+            // Community Building Events
+            "Community Festival Planning", "Fundraising Event Coordination", "Wedding Planning for Low-Income",
+            "Birthday Party Organization", "Holiday Celebration Planning", "Awards Ceremony Setup",
+            "Conference Organization", "Workshop Coordination", "Volunteer Recognition Event", "Graduation Ceremony Support",
+
+            // Other Events
+            "Community Forum Facilitation", "Awareness Campaign", "Policy Research", "Community Surveying",
+            "Public Speaking Training", "Grassroots Organizing", "Petition Drive", "Educational Workshop",
+            "Community Meeting Support", "Advocacy Training", "Skills Training Workshop", "Professional Development"
     };
 
-    // UPDATED categories to match your filter requirements EXACTLY
-    private final String[] categories = {
-            "Education", "Environment", "Healthcare", "Animal Welfare", "Community Service", "Human Services",
-            "Arts & Culture", "Youth Development", "Senior Services", "Hunger & Homelessness", "Disaster Relief",
-            "International", "Sports & Recreation", "Mental Health", "Veterans", "Women's Issues",
-            "Children & Families", "Disability Services", "Religious", "Political", "LGBTQ+",
-            "Technology", "Research & Advocacy", "Public Safety"
+    // Complete filter coverage arrays - CORRECTED TO MATCH YOUR ACTUAL ENUMS
+    private final EventType[] allEventTypes = {
+            EventType.COMMUNITY_CLEANUP, EventType.FOOD_SERVICE, EventType.TUTORING_EDUCATION, 
+            EventType.ANIMAL_CARE, EventType.ENVIRONMENTAL_CONSERVATION, EventType.SENIOR_SUPPORT, 
+            EventType.YOUTH_MENTORING, EventType.HEALTHCARE_SUPPORT, EventType.ARTS_CULTURE,
+            EventType.TECHNOLOGY_DIGITAL, EventType.DISASTER_RELIEF, EventType.COMMUNITY_BUILDING, 
+            EventType.OTHER
     };
 
-    private final String[] orgTypes = {
-            "Non-Profit", "Charity", "Foundation", "Community Group", "Religious Organization",
-            "Educational Institution", "Government Agency", "Social Enterprise", "Cooperative", "NGO"
+    private final String[] allSkillLevels = {
+            "NO_EXPERIENCE_REQUIRED", "BEGINNER_FRIENDLY", "SOME_EXPERIENCE_PREFERRED",
+            "EXPERIENCED_VOLUNTEERS", "SPECIALIZED_SKILLS_REQUIRED", "TRAINING_PROVIDED"
     };
 
-    // UPDATED locations to match your filter requirements EXACTLY
-    private final String[] countries = {
-            "United States", "Canada", "United Kingdom", "Australia", "Germany", "France"
+    // CORRECTED TO MATCH YOUR ACTUAL EventDuration ENUM
+    private final EventDuration[] allDurations = {
+            EventDuration.SHORT, EventDuration.MEDIUM, EventDuration.FULL_DAY,
+            EventDuration.MULTI_DAY, EventDuration.WEEKLY_COMMITMENT, 
+            EventDuration.MONTHLY_COMMITMENT, EventDuration.ONGOING_LONG_TERM
     };
 
-    // US Cities for United States organizations
-    private final String[] usCities = {
-            "Portland", "Seattle", "San Francisco", "Los Angeles", "Denver", "Austin", "Chicago", "New York", "Boston",
-            "Miami",
-            "Phoenix", "Philadelphia", "San Antonio", "Dallas", "San Jose", "Jacksonville", "Indianapolis", "Columbus",
-            "Charlotte", "Detroit",
-            "Memphis", "Baltimore", "El Paso", "Nashville", "Oklahoma City", "Louisville", "Milwaukee", "Las Vegas",
-            "Albuquerque", "Tucson",
-            "Fresno", "Sacramento", "Long Beach", "Kansas City", "Mesa", "Virginia Beach", "Atlanta",
-            "Colorado Springs", "Omaha", "Raleigh",
-            "Minneapolis", "Tulsa", "Cleveland", "Wichita", "New Orleans", "Tampa", "Honolulu", "Anaheim", "Santa Ana",
-            "St. Louis"
+    private final String[] allCategories = {
+            "Education", "Environment", "Healthcare", "Animal Welfare", "Community Service",
+            "Human Services", "Arts & Culture", "Youth Development", "Senior Services",
+            "Hunger & Homelessness", "Disaster Relief", "International", "Sports & Recreation",
+            "Mental Health", "Veterans", "Women's Issues", "Children & Families",
+            "Disability Services", "Religious", "Political", "LGBTQ+", "Technology",
+            "Research & Advocacy", "Public Safety"
     };
 
-    private final String[] usStates = {
-            "OR", "WA", "CA", "CA", "CO", "TX", "IL", "NY", "MA", "FL",
-            "AZ", "PA", "TX", "TX", "CA", "FL", "IN", "OH", "NC", "MI",
-            "TN", "MD", "TX", "TN", "OK", "KY", "WI", "NV", "NM", "AZ",
-            "CA", "CA", "CA", "MO", "AZ", "VA", "GA", "CO", "NE", "NC",
-            "MN", "OK", "OH", "KS", "LA", "FL", "HI", "CA", "CA", "MO"
+    private final String[] allCountries = {
+            "United States", "Canada", "United Kingdom", "Australia", "Germany",
+            "France", "Netherlands", "Sweden", "Denmark", "Ireland", "Switzerland"
     };
 
-    // International Cities (for non-US countries)
-    private final String[] canadianCities = { "Toronto", "Vancouver", "Montreal", "Calgary", "Ottawa", "Edmonton",
-            "Winnipeg", "Quebec City" };
-    private final String[] ukCities = { "London", "Manchester", "Birmingham", "Liverpool", "Leeds", "Sheffield",
-            "Bristol", "Newcastle" };
-    private final String[] australianCities = { "Sydney", "Melbourne", "Brisbane", "Perth", "Adelaide", "Canberra",
-            "Darwin", "Hobart" };
-    private final String[] germanCities = { "Berlin", "Munich", "Hamburg", "Cologne", "Frankfurt", "Stuttgart",
-            "Dresden", "Leipzig" };
-    private final String[] frenchCities = { "Paris", "Lyon", "Marseille", "Toulouse", "Nice", "Nantes", "Strasbourg",
-            "Montpellier" };
-
-    private final String[] skills = {
-            "Leadership", "Communication", "Teaching", "Event Planning", "Photography", "Graphic Design",
-            "Marketing", "Project Management", "First Aid", "Language Translation", "Public Speaking",
-            "Social Media", "Web Development", "Data Analysis", "Fundraising", "Customer Service",
-            "Writing", "Research", "Team Building", "Problem Solving", "Counseling", "Tutoring",
-            "Coaching", "Administration", "Financial Management", "Grant Writing", "Program Development"
+    private final String[] allCities = {
+            // US Cities
+            "New York, NY", "Los Angeles, CA", "Chicago, IL",
+            // Canadian Cities
+            "Toronto, ON", "Vancouver, BC", "Montreal, QC",
+            // UK Cities
+            "London, UK", "Manchester, UK", "Edinburgh, UK",
+            // Australian Cities
+            "Sydney, NSW", "Melbourne, VIC", "Brisbane, QLD",
+            // German Cities
+            "Berlin, Germany", "Munich, Germany", "Hamburg, Germany",
+            // French Cities
+            "Paris, France", "Lyon, France", "Marseille, France",
+            // Netherlands Cities
+            "Amsterdam, Netherlands", "Rotterdam, Netherlands", "The Hague, Netherlands",
+            // Swedish Cities
+            "Stockholm, Sweden", "Gothenburg, Sweden", "Malmö, Sweden",
+            // Danish Cities
+            "Copenhagen, Denmark", "Aarhus, Denmark", "Odense, Denmark",
+            // Irish Cities
+            "Dublin, Ireland", "Cork, Ireland", "Galway, Ireland",
+            // Swiss Cities
+            "Zurich, Switzerland", "Geneva, Switzerland", "Basel, Switzerland"
     };
 
-    private final String[] interests = {
-            "Environment", "Education", "Healthcare", "Technology", "Arts", "Sports", "Community Development",
-            "Animal Welfare", "Senior Care", "Youth Programs", "Mental Health", "Social Justice",
-            "Cultural Events", "Disaster Relief", "Poverty Alleviation", "Science", "Music", "Reading",
-            "Outdoor Activities", "Cooking", "Gardening", "Travel", "Photography", "Writing"
+    private final String[] organizationSizes = {
+            "Small (1-50)", "Medium (51-200)", "Large (201-1000)", "Enterprise (1000+)"
     };
 
     @Override
     public void run(String... args) throws Exception {
         if (userRepository.count() == 0) {
-            System.out.println("🚀 Loading expanded mock data...");
+            System.out.println("🚀 Loading comprehensive mock data...");
             loadMockData();
             System.out.println("✅ Mock data loaded successfully!");
-            System.out.println(
-                    "📊 Created: 180 users, 145 organizations, 35 volunteer profiles, 145 events, and 200 applications");
+            System.out.println("📊 Created: 200 organizations and 500 events covering all filter options");
         } else {
             System.out.println("📋 Data already exists, skipping mock data load");
         }
     }
 
     private void loadMockData() {
-        // Create users first (180 total: 35 volunteers + 145 organizations)
-        List<User> users = createMockUsers();
-
-        // Create organizations and volunteer profiles
-        List<OrganizationProfile> organizations = createMockOrganizations(users);
-        List<VolunteerProfile> volunteers = createMockVolunteers(users);
-
-        // Create events for organizations
-        List<Event> events = createMockEvents(organizations);
-
-        // Create applications
-        createMockApplications(volunteers, events);
-
-        // Create badges
-        createMockBadges(users);
+        // Create organization users and profiles
+        List<User> organizationUsers = createOrganizationUsers();
+        List<OrganizationProfile> organizations = createComprehensiveOrganizations(organizationUsers);
+        
+        // Create comprehensive events covering all filters
+        createComprehensiveEvents(organizations);
     }
 
-    private List<User> createMockUsers() {
+    private List<User> createOrganizationUsers() {
         List<User> users = new ArrayList<>();
-
-        // Create 180 users (35 volunteers, 145 organizations)
-        for (int i = 0; i < 180; i++) {
+        
+        // Create 200 organization users
+        for (int i = 0; i < 200; i++) {
             User user = new User();
-            String firstName = firstNames[i % firstNames.length];
-            String lastName = lastNames[i % lastNames.length];
-
-            // Make email unique by adding index
-            user.setEmail(firstName.toLowerCase() + "." + lastName.toLowerCase() + i + "@example.com");
+            user.setEmail("org" + i + "@volunteersync.example.com");
             user.setPassword(passwordEncoder.encode("password123"));
-
-            // First 35 are volunteers, rest are organizations
-            user.setUserType(i < 35 ? UserType.VOLUNTEER : UserType.ORGANIZATION);
+            user.setUserType(UserType.ORGANIZATION);
             user.setIsActive(true);
             user.setEmailVerified(random.nextBoolean());
-            user.setCreatedAt(LocalDateTime.now().minusDays(random.nextInt(365)));
-            user.setUpdatedAt(LocalDateTime.now().minusDays(random.nextInt(30)));
-
+            user.setCreatedAt(generateDistributedCreatedAt());
+            user.setUpdatedAt(generateUpdatedAt(user.getCreatedAt()));
+            
             users.add(userRepository.save(user));
         }
-
+        
         return users;
     }
 
-    private List<OrganizationProfile> createMockOrganizations(List<User> users) {
+    private List<OrganizationProfile> createComprehensiveOrganizations(List<User> users) {
         List<OrganizationProfile> organizations = new ArrayList<>();
-
-        // Create 145 organizations for the organization users (users 35-179)
-        for (int i = 35; i < 180; i++) {
+        
+        for (int i = 0; i < users.size(); i++) {
             OrganizationProfile org = new OrganizationProfile();
-
-            // Link to user
             org.setUser(users.get(i));
-
-            // Basic info
-            int orgIndex = i - 35; // 0-144
-            org.setOrganizationName(orgNames[orgIndex]);
-
-            // Get category based on organization index to ensure proper distribution
-            String primaryCategory = getCategoryForOrganization(orgIndex);
+            
+            // Ensure even distribution across categories
+            String primaryCategory = allCategories[i % allCategories.length];
             org.setPrimaryCategory(primaryCategory);
-            org.setCategories(getRandomCategoriesIncludingPrimary(primaryCategory));
-
-            org.setDescription("A dedicated organization focused on " + primaryCategory.toLowerCase()
-                    + " and community impact. We strive to make meaningful change through volunteer engagement and community partnerships.");
-            org.setMissionStatement(
-                    "To make a positive difference in our community through dedicated service, collaboration, and sustainable impact initiatives.");
-            org.setWebsite("https://" + orgNames[orgIndex].toLowerCase().replace(" ", "").replace("'", "") + ".org");
-            org.setPhoneNumber("+1-555-" + String.format("%04d", random.nextInt(10000)));
-            org.setAddress((100 + random.nextInt(9900)) + " " + getRandomStreetName());
-
-            // Set location based on country distribution
-            setOrganizationLocation(org);
-
-            org.setOrganizationType(orgTypes[random.nextInt(orgTypes.length)]);
-
-            // Enhanced fields with proper organization size categories
-            int employeeCount = generateEmployeeCount();
-            org.setEmployeeCount(employeeCount);
-            org.setOrganizationSize(getOrganizationSizeCategory(employeeCount));
-
-            org.setFoundedYear(1970 + random.nextInt(55)); // 1970-2024
-            org.setFundingGoal(25000 + random.nextInt(2000000)); // $25K-$2M
+            org.setCategories(generateMultipleCategories(primaryCategory));
+            
+            // Organization details
+            org.setOrganizationName(orgNames[i % orgNames.length] + " " + (i / orgNames.length > 0 ? (i / orgNames.length + 1) : ""));
+            org.setDescription("A dedicated organization focused on " + primaryCategory.toLowerCase() + 
+                             " and community impact. We strive to make meaningful change through volunteer engagement.");
+            org.setMissionStatement("To create positive change in our community through " + primaryCategory.toLowerCase() + 
+                                  " initiatives and volunteer collaboration.");
+            
+            // Location - ensure coverage of all countries and cities
+            setComprehensiveLocation(org, i);
+            
+            // Organization characteristics
+            org.setOrganizationType(getRandomOrgType());
+            org.setOrganizationSize(organizationSizes[i % organizationSizes.length]);
+            org.setEmployeeCount(generateEmployeeCountForSize(org.getOrganizationSize()));
+            org.setFoundedYear(1970 + random.nextInt(55));
+            org.setIsVerified(random.nextDouble() < 0.7);
+            
+            // Contact info
+            org.setWebsite("https://" + org.getOrganizationName().toLowerCase().replaceAll("[^a-z0-9]", "") + ".org");
+            org.setPhoneNumber(generatePhoneNumber());
+            org.setAddress(generateAddress());
+            
+            // Financial info
+            org.setFundingGoal(25000 + random.nextInt(2000000));
             org.setFundingRaised(random.nextInt(org.getFundingGoal()));
-            org.setIsVerified(random.nextDouble() < 0.7); // 70% chance of being verified
-            org.setTotalEventsHosted(random.nextInt(150));
-            org.setTotalVolunteersServed(random.nextInt(2000));
-            org.setLanguagesSupported(getRandomLanguages());
+            
+            // Stats
+            org.setTotalEventsHosted(random.nextInt(200));
+            org.setTotalVolunteersServed(random.nextInt(5000));
+            
+            // Additional fields
+            org.setLanguagesSupported(generateLanguages());
             org.setTaxExemptStatus(getTaxExemptStatus());
             org.setVerificationLevel(getVerificationLevel());
-
-            // Additional fields
-            org.setServices(getRandomServices());
-            org.setCauses(getRandomCauses());
-            org.setCoverImageUrl("https://images.unsplash.com/photo-" + (1500000000 + random.nextInt(200000000))
-                    + "?w=1200&h=400&fit=crop");
-            org.setProfileImageUrl("https://images.unsplash.com/photo-" + (1500000000 + random.nextInt(200000000))
-                    + "?w=400&h=400&fit=crop");
-
-            // Timestamps - ensure proper distribution for date filters
-            org.setCreatedAt(generateCreatedAt());
+            org.setServices(generateServices());
+            org.setCauses(generateCauses());
+            
+            // Images
+            org.setProfileImageUrl("https://images.unsplash.com/photo-" + (1500000000 + random.nextInt(200000000)) + "?w=400&h=400");
+            org.setCoverImageUrl("https://images.unsplash.com/photo-" + (1500000000 + random.nextInt(200000000)) + "?w=1200&h=400");
+            
+            // Timestamps to cover all date filter options
+            org.setCreatedAt(generateDistributedCreatedAt());
             org.setUpdatedAt(generateUpdatedAt(org.getCreatedAt()));
-
+            
             organizations.add(organizationRepository.save(org));
         }
-
+        
         return organizations;
     }
 
-    private List<VolunteerProfile> createMockVolunteers(List<User> users) {
-        List<VolunteerProfile> volunteers = new ArrayList<>();
-
-        // Create volunteer profiles for the first 35 users (volunteer users)
-        for (int i = 0; i < 35; i++) {
-            VolunteerProfile volunteer = new VolunteerProfile();
-
-            // Link to user
-            volunteer.setUser(users.get(i));
-
-            // Basic info
-            volunteer.setFirstName(firstNames[i % firstNames.length]);
-            volunteer.setLastName(lastNames[i % lastNames.length]);
-            volunteer.setBio(getRandomVolunteerBio());
-
-            // Set location for volunteers (primarily US for simplicity)
-            String city = usCities[random.nextInt(usCities.length)];
-            String state = usStates[random.nextInt(usStates.length)];
-            volunteer.setLocation(city + ", " + state);
-            volunteer.setPhoneNumber("+1-555-" + String.format("%04d", random.nextInt(10000)));
-            volunteer.setProfileImageUrl("https://images.unsplash.com/photo-" + (1500000000 + random.nextInt(200000000))
-                    + "?w=400&h=400&fit=crop");
-
-            // Volunteer-specific fields with realistic ranges
-            volunteer.setTotalVolunteerHours(random.nextInt(1000));
-            volunteer.setEventsParticipated(random.nextInt(75));
-            volunteer.setIsAvailable(random.nextDouble() < 0.8); // 80% available
-            volunteer.setSkills(getRandomSkills());
-            volunteer.setInterests(getRandomInterests());
-            volunteer.setAvailabilityPreference(getAvailabilityPreference());
-
-            // Timestamps
-            volunteer.setCreatedAt(LocalDateTime.now().minusDays(random.nextInt(365)));
-            volunteer.setUpdatedAt(LocalDateTime.now().minusDays(random.nextInt(30)));
-
-            volunteers.add(volunteerRepository.save(volunteer));
-        }
-
-        return volunteers;
-    }
-
-    private List<Event> createMockEvents(List<OrganizationProfile> organizations) {
-        List<Event> events = new ArrayList<>();
-
-        // Create 145 events
-        for (int i = 0; i < 145; i++) {
+    private void createComprehensiveEvents(List<OrganizationProfile> organizations) {
+        // Create 500 events to ensure comprehensive coverage
+        for (int i = 0; i < 500; i++) {
             Event event = new Event();
-
-            // Basic info - match event with organization category
-            String eventTitle = eventTitles[i];
-            event.setTitle(eventTitle);
-            event.setDescription(getRandomEventDescription(eventTitle));
-
-            // Get organization for this event
-            OrganizationProfile organization = organizations.get(i % organizations.size());
-            event.setOrganization(organization);
-
-            // Location details - match organization location
-            event.setAddress((100 + random.nextInt(9900)) + " " + getRandomStreetName());
-            event.setCity(organization.getCity());
-            event.setState(organization.getState());
-            event.setZipCode(String.format("%05d", 10000 + random.nextInt(90000)));
-            event.setLocation(organization.getCity() + ", " + organization.getState());
-
-            // Contact info
-            event.setContactEmail("contact@"
-                    + organization.getOrganizationName().toLowerCase().replace(" ", "").replace("'", "") + ".org");
-            event.setContactPhone("+1-555-" + String.format("%04d", random.nextInt(10000)));
-
-            // Dates and timing - mix of past, current, and future events
-            LocalDateTime startDate;
-            if (random.nextDouble() < 0.2) {
-                // 20% past events
-                startDate = LocalDateTime.now().minusDays(random.nextInt(180));
-            } else if (random.nextDouble() < 0.1) {
-                // 10% current/today events
-                startDate = LocalDateTime.now().plusHours(random.nextInt(12));
+            
+            // Ensure coverage of all event types
+            EventType eventType = allEventTypes[i % allEventTypes.length];
+            event.setEventType(eventType);
+            
+            // Match title to event type
+            event.setTitle(getEventTitleForType(eventType, i));
+            event.setDescription(generateEventDescription(event.getTitle()));
+            
+            // Assign to organization
+            OrganizationProfile org = organizations.get(i % organizations.size());
+            event.setOrganization(org);
+            
+            // Location - ensure coverage including Virtual/Remote
+            if (i % 10 == 0) {
+                // 10% virtual events
+                event.setIsVirtual(true);
+                event.setLocation("Virtual/Remote");
+                event.setVirtualMeetingLink("https://meet.google.com/" + generateMeetingId());
             } else {
-                // 70% future events
-                startDate = LocalDateTime.now().plusDays(random.nextInt(120));
+                event.setIsVirtual(false);
+                String city = allCities[i % allCities.length];
+                event.setLocation(city);
+                String[] cityParts = city.split(", ");
+                event.setCity(cityParts[0]);
+                if (cityParts.length > 1) {
+                    event.setState(cityParts[1]);
+                }
+                event.setAddress(generateAddress());
+                event.setZipCode(generateZipCode());
             }
-
+            
+            // Date and time - ensure coverage of all date filters
+            LocalDateTime startDate = generateComprehensiveDateTime(i);
             event.setStartDate(startDate);
-            event.setEndDate(startDate.plusHours(1 + random.nextInt(10))); // 1-10 hour events
-
-            // Volunteer details with more realistic ranges
-            int maxVolunteers = 3 + random.nextInt(197); // 3-200 max volunteers
+            
+            // Duration - ensure coverage of all duration options
+            SkillLevel skillLevel = SkillLevel.valueOf(allSkillLevels[i % allSkillLevels.length]);
+            event.setSkillLevelRequired(skillLevel);
+            
+            // Duration category - ensure coverage
+            EventDuration duration = allDurations[i % allDurations.length];
+            event.setDurationCategory(duration);
+            event.setEstimatedHours(generateHoursForDuration(duration));
+            
+            // End date based on duration
+            event.setEndDate(calculateEndDate(startDate, duration));
+            
+            // Time-based flags for time filter coverage
+            setTimeBasedFlags(event, startDate, i);
+            
+            // Volunteer details
+            int maxVolunteers = 5 + random.nextInt(195); // 5-200
             event.setMaxVolunteers(maxVolunteers);
             event.setCurrentVolunteers(random.nextInt(maxVolunteers + 1));
-            event.setEstimatedHours(1 + random.nextInt(12)); // 1-12 hours
-
-            // Event characteristics (using your actual enum values)
-            event.setEventType(EventType.values()[random.nextInt(EventType.values().length)]);
-            event.setSkillLevelRequired(SkillLevel.values()[random.nextInt(SkillLevel.values().length)]);
-            event.setDurationCategory(EventDuration.values()[random.nextInt(EventDuration.values().length)]);
-            event.setStatus(getRealisticEventStatus(startDate));
-
-            // Boolean flags with realistic distributions
-            event.setIsVirtual(random.nextDouble() < 0.3); // 30% virtual
-            event.setHasFlexibleTiming(random.nextDouble() < 0.4); // 40% flexible
-            event.setIsRecurring(random.nextDouble() < 0.25); // 25% recurring
-            event.setIsWeekdaysOnly(random.nextDouble() < 0.3); // 30% weekdays only
-            event.setIsWeekendsOnly(!event.getIsWeekdaysOnly() && random.nextDouble() < 0.4); // 40% weekends only if
-                                                                                              // not weekdays
-
-            // Additional details
+            
+            // Event status based on date
+            event.setStatus(calculateEventStatus(startDate));
+            
+            // Other flags
+            event.setIsRecurring(random.nextDouble() < 0.25);
+            event.setHasFlexibleTiming(random.nextDouble() < 0.4);
+            
+            // Contact info
+            event.setContactEmail("events@" + org.getOrganizationName().toLowerCase().replaceAll("[^a-z0-9]", "") + ".org");
+            event.setContactPhone(generatePhoneNumber());
+            
+            // Requirements
             event.setRequirements(generateRequirements());
-
-            // Virtual event details
-            if (event.getIsVirtual()) {
-                event.setVirtualMeetingLink("https://meet.google.com/" + generateMeetingId());
-            }
-
-            // Recurring event details
-            if (event.getIsRecurring()) {
-                String[] patterns = { "Weekly", "Monthly", "Bi-weekly", "Quarterly" };
-                event.setRecurrencePattern(patterns[random.nextInt(patterns.length)]);
-            }
-
-            // Image URL
-            event.setImageUrl("https://images.unsplash.com/photo-" + (1500000000 + random.nextInt(200000000))
-                    + "?w=800&h=400&fit=crop");
-
+            
+            // Image
+            event.setImageUrl("https://images.unsplash.com/photo-" + (1500000000 + random.nextInt(200000000)) + "?w=800&h=400");
+            
             // Timestamps
             event.setCreatedAt(LocalDateTime.now().minusDays(random.nextInt(90)));
             event.setUpdatedAt(LocalDateTime.now().minusDays(random.nextInt(14)));
-
-            events.add(eventRepository.save(event));
-        }
-
-        return events;
-    }
-
-    private void createMockApplications(List<VolunteerProfile> volunteers, List<Event> events) {
-        // Create 200 random applications (increased from 75)
-        for (int i = 0; i < 200; i++) {
-            Application application = new Application();
-
-            // Random volunteer and event
-            VolunteerProfile volunteer = volunteers.get(random.nextInt(volunteers.size()));
-            Event event = events.get(random.nextInt(events.size()));
-
-            application.setVolunteer(volunteer);
-            application.setEvent(event);
-            application.setStatus(getRealisticApplicationStatus());
-            application.setMessage(getRandomApplicationMessage());
-
-            if (application.getStatus() != ApplicationStatus.PENDING) {
-                application.setOrganizationNotes(getRandomOrganizationNotes());
-                application.setRespondedAt(LocalDateTime.now().minusDays(random.nextInt(30)));
-            }
-
-            if (application.getStatus() == ApplicationStatus.ATTENDED) {
-                application.setHoursCompleted(1 + random.nextInt(12));
-                application.setCompletedAt(LocalDateTime.now().minusDays(random.nextInt(10)));
-            }
-
-            application.setAppliedAt(LocalDateTime.now().minusDays(random.nextInt(60)));
-
-            applicationRepository.save(application);
+            
+            eventRepository.save(event);
         }
     }
 
-    private void createMockBadges(List<User> users) {
-        // Create badges for 60% of users
-        for (User user : users) {
-            if (random.nextDouble() < 0.6) {
-                Badge badge = new Badge();
-                badge.setUser(user);
-                badge.setBadgeType(BadgeType.values()[random.nextInt(BadgeType.values().length)]);
-                badge.setProgressValue(random.nextInt(badge.getBadgeType().getRequiredCount() + 20));
-                badge.setIsFeatured(random.nextDouble() < 0.3); // 30% featured
-                badge.setNotes(getRandomBadgeNotes());
-                badge.setEarnedAt(LocalDateTime.now().minusDays(random.nextInt(365)));
+    // Helper methods for comprehensive coverage
 
-                badgeRepository.save(badge);
-            }
-        }
-    }
-
-    // Helper methods for more realistic data generation
-
-    /**
-     * Get category for organization based on index to ensure proper distribution
-     */
-    private String getCategoryForOrganization(int orgIndex) {
-        // First 25 organizations are Education
-        if (orgIndex < 25)
-            return "Education";
-        // Next 25 are Environment
-        if (orgIndex < 50)
-            return "Environment";
-        // Next 25 are Healthcare
-        if (orgIndex < 75)
-            return "Healthcare";
-        // Next 15 are Animal Welfare
-        if (orgIndex < 90)
-            return "Animal Welfare";
-        // Next 15 are Community Service
-        if (orgIndex < 105)
-            return "Community Service";
-        // Next 15 are Human Services
-        if (orgIndex < 120)
-            return "Human Services";
-        // Next 10 are Arts & Culture
-        if (orgIndex < 130)
-            return "Arts & Culture";
-        // Next 10 are Youth Development
-        if (orgIndex < 140)
-            return "Youth Development";
-        // Remaining 5 distributed among other categories
-        String[] remainingCategories = { "Senior Services", "Mental Health", "Technology", "Sports & Recreation",
-                "Disaster Relief" };
-        return remainingCategories[(orgIndex - 140) % remainingCategories.length];
-    }
-
-    /**
-     * Generate categories including the primary category
-     */
-    private String getRandomCategoriesIncludingPrimary(String primaryCategory) {
-        List<String> selectedCategories = new ArrayList<>();
-        selectedCategories.add(primaryCategory); // Always include primary
-
-        int numAdditionalCategories = random.nextInt(3); // 0-2 additional categories
-
-        for (int i = 0; i < numAdditionalCategories; i++) {
-            String category = categories[random.nextInt(categories.length)];
-            if (!selectedCategories.contains(category)) {
-                selectedCategories.add(category);
-            }
-        }
-
-        return String.join(",", selectedCategories);
-    }
-
-    /**
-     * Set organization location based on country distribution
-     */
-    private void setOrganizationLocation(OrganizationProfile org) {
-        // 60% United States, 40% international
-        if (random.nextDouble() < 0.6) {
-            // United States
-            String city = usCities[random.nextInt(usCities.length)];
-            String state = usStates[random.nextInt(usStates.length)];
-            org.setCity(city);
-            org.setState(state);
-            org.setCountry("United States");
-            org.setZipCode(String.format("%05d", 10000 + random.nextInt(90000)));
+    private void setComprehensiveLocation(OrganizationProfile org, int index) {
+        // Ensure even distribution across all countries
+        String country = allCountries[index % allCountries.length];
+        org.setCountry(country);
+        
+        // Set city based on country
+        if (country.equals("United States")) {
+            String[] usCities = {"New York, NY", "Los Angeles, CA", "Chicago, IL"};
+            String city = usCities[index % usCities.length];
+            String[] parts = city.split(", ");
+            org.setCity(parts[0]);
+            org.setState(parts[1]);
         } else {
-            // International
-            String country = countries[1 + random.nextInt(countries.length - 1)]; // Skip US
-            org.setCountry(country);
+            // International cities
+            String city = getCityForCountry(country, index);
+            String[] parts = city.split(", ");
+            org.setCity(parts[0]);
+            org.setState(parts.length > 1 ? parts[1] : getStateForCountry(country));
+        }
+        
+        org.setZipCode(generateZipCode());
+    }
 
-            String city;
-            String stateProvince;
-            String postalCode;
-
-            switch (country) {
-                case "Canada":
-                    city = canadianCities[random.nextInt(canadianCities.length)];
-                    stateProvince = getCanadianProvince();
-                    postalCode = generateCanadianPostalCode();
-                    break;
-                case "United Kingdom":
-                    city = ukCities[random.nextInt(ukCities.length)];
-                    stateProvince = "England"; // Simplified
-                    postalCode = generateUKPostalCode();
-                    break;
-                case "Australia":
-                    city = australianCities[random.nextInt(australianCities.length)];
-                    stateProvince = getAustralianState();
-                    postalCode = String.format("%04d", 1000 + random.nextInt(8999));
-                    break;
-                case "Germany":
-                    city = germanCities[random.nextInt(germanCities.length)];
-                    stateProvince = getGermanState();
-                    postalCode = String.format("%05d", 10000 + random.nextInt(89999));
-                    break;
-                case "France":
-                    city = frenchCities[random.nextInt(frenchCities.length)];
-                    stateProvince = getFrenchRegion();
-                    postalCode = String.format("%05d", 10000 + random.nextInt(89999));
-                    break;
-                default:
-                    city = "International City";
-                    stateProvince = "Region";
-                    postalCode = "00000";
-            }
-
-            org.setCity(city);
-            org.setState(stateProvince);
-            org.setZipCode(postalCode);
+    private LocalDateTime generateComprehensiveDateTime(int index) {
+        LocalDateTime now = LocalDateTime.now();
+        
+        // Ensure coverage of all date filter options
+        int dateFilter = index % 10;
+        switch (dateFilter) {
+            case 0: // Today
+                return now.plusHours(random.nextInt(12));
+            case 1: // Tomorrow
+                return now.plusDays(1).plusHours(random.nextInt(12));
+            case 2: // This Week (next 7 days)
+                return now.plusDays(2 + random.nextInt(5)).plusHours(random.nextInt(12));
+            case 3: // Next Week
+                return now.plusDays(7 + random.nextInt(7)).plusHours(random.nextInt(12));
+            case 4: // This Weekend
+                int daysUntilWeekend = 6 - now.getDayOfWeek().getValue(); // Saturday
+                if (daysUntilWeekend <= 0) daysUntilWeekend += 7;
+                return now.plusDays(daysUntilWeekend).plusHours(random.nextInt(12));
+            case 5: // Next Weekend
+                int daysUntilNextWeekend = 13 - now.getDayOfWeek().getValue(); // Next Saturday
+                return now.plusDays(daysUntilNextWeekend).plusHours(random.nextInt(12));
+            case 6: // This Month
+                return now.plusDays(8 + random.nextInt(22)).plusHours(random.nextInt(12));
+            case 7: // Next Month
+                return now.plusMonths(1).plusDays(random.nextInt(28)).plusHours(random.nextInt(12));
+            case 8: // Next 3 Months
+                return now.plusMonths(2).plusDays(random.nextInt(30)).plusHours(random.nextInt(12));
+            case 9: // Future
+                return now.plusMonths(3 + random.nextInt(6)).plusHours(random.nextInt(12));
+            default:
+                return now.plusDays(random.nextInt(365)).plusHours(random.nextInt(12));
         }
     }
 
-    /**
-     * Generate employee count with realistic distribution
-     */
-    private int generateEmployeeCount() {
+    private void setTimeBasedFlags(Event event, LocalDateTime startDate, int index) {
+        int hour = startDate.getHour();
+        
+        // Time of day coverage
+        if (hour >= 6 && hour < 12) {
+            // Morning event
+        } else if (hour >= 12 && hour < 18) {
+            // Afternoon event
+        } else {
+            // Evening event
+        }
+        
+        // Weekday/Weekend flags
+        int dayOfWeek = startDate.getDayOfWeek().getValue(); // 1=Monday, 7=Sunday
+        if (index % 5 == 0) {
+            event.setIsWeekdaysOnly(true);
+            event.setIsWeekendsOnly(false);
+        } else if (index % 5 == 1) {
+            event.setIsWeekdaysOnly(false);
+            event.setIsWeekendsOnly(true);
+        } else {
+            event.setIsWeekdaysOnly(false);
+            event.setIsWeekendsOnly(false);
+        }
+    }
+
+    private LocalDateTime generateDistributedCreatedAt() {
+        LocalDateTime now = LocalDateTime.now();
         double rand = random.nextDouble();
-        if (rand < 0.4)
-            return 1 + random.nextInt(50); // 40% Small (1-50)
-        if (rand < 0.7)
-            return 51 + random.nextInt(150); // 30% Medium (51-200)
-        if (rand < 0.9)
-            return 201 + random.nextInt(800); // 20% Large (201-1000)
-        return 1001 + random.nextInt(4000); // 10% Enterprise (1000+)
+        
+        if (rand < 0.05) {
+            // Last 24 hours
+            return now.minusHours(random.nextInt(24));
+        } else if (rand < 0.15) {
+            // Last 3 days
+            return now.minusDays(random.nextInt(3));
+        } else if (rand < 0.25) {
+            // Last 7 days
+            return now.minusDays(random.nextInt(7));
+        } else if (rand < 0.35) {
+            // Last 14 days
+            return now.minusDays(random.nextInt(14));
+        } else if (rand < 0.50) {
+            // Last 30 days
+            return now.minusDays(random.nextInt(30));
+        } else {
+            // Older than 30 days
+            return now.minusDays(30 + random.nextInt(335));
+        }
     }
 
-    /**
-     * Get organization size category based on employee count
-     */
-    private String getOrganizationSizeCategory(int employeeCount) {
-        if (employeeCount <= 50)
-            return "Small (1-50)";
-        if (employeeCount <= 200)
-            return "Medium (51-200)";
-        if (employeeCount <= 1000)
-            return "Large (201-1000)";
-        return "Enterprise (1000+)";
-    }
-
-    /**
-     * Generate created date with proper distribution for date filters
-     */
-    private LocalDateTime generateCreatedAt() {
-        double rand = random.nextDouble();
-        if (rand < 0.05)
-            return LocalDateTime.now().minusHours(random.nextInt(24)); // 5% Last 24 hours
-        if (rand < 0.15)
-            return LocalDateTime.now().minusDays(random.nextInt(3)); // 10% Last 3 days
-        if (rand < 0.25)
-            return LocalDateTime.now().minusDays(random.nextInt(7)); // 10% Last 7 days
-        if (rand < 0.35)
-            return LocalDateTime.now().minusDays(random.nextInt(14)); // 10% Last 14 days
-        if (rand < 0.50)
-            return LocalDateTime.now().minusDays(random.nextInt(30)); // 15% Last 30 days
-        return LocalDateTime.now().minusDays(30 + random.nextInt(335)); // 50% Older than 30 days
-    }
-
-    /**
-     * Generate updated date after created date
-     */
     private LocalDateTime generateUpdatedAt(LocalDateTime createdAt) {
-        // Updated date should be between created date and now
         long daysBetween = java.time.temporal.ChronoUnit.DAYS.between(createdAt, LocalDateTime.now());
-        if (daysBetween <= 0)
-            return createdAt;
-
+        if (daysBetween <= 0) return createdAt;
         return createdAt.plusDays(random.nextInt((int) daysBetween + 1));
     }
 
-    private String getRandomLanguages() {
-        String[] languages = { "English", "Spanish", "French", "German", "Italian", "Portuguese", "Chinese", "Japanese",
-                "Korean", "Arabic" };
-        List<String> selected = new ArrayList<>();
-        selected.add("English"); // Always include English
+    private String getEventTitleForType(EventType eventType, int index) {
+        // Return appropriate title based on event type
+        switch (eventType) {
+            case COMMUNITY_CLEANUP:
+                String[] cleanupTitles = {"Beach Cleanup Drive", "Park Restoration Day", "River Cleanup Initiative", 
+                                        "Street Beautification Project", "Neighborhood Cleanup Campaign"};
+                return cleanupTitles[index % cleanupTitles.length];
+            case FOOD_SERVICE:
+                String[] foodTitles = {"Community Kitchen Service", "Food Bank Sorting", "Meal Preparation for Homeless",
+                                     "Food Drive Collection", "Senior Meal Delivery"};
+                return foodTitles[index % foodTitles.length];
+            case TUTORING_EDUCATION:
+                String[] tutorTitles = {"After School Tutoring", "Reading to Children", "Math Help Session",
+                                      "ESL Classes", "Computer Literacy Training"};
+                return tutorTitles[index % tutorTitles.length];
+            case ANIMAL_CARE:
+                String[] animalTitles = {"Animal Shelter Volunteering", "Pet Adoption Event", "Dog Walking Program",
+                                       "Cat Socialization", "Wildlife Rehabilitation"};
+                return animalTitles[index % animalTitles.length];
+            case ENVIRONMENTAL_CONSERVATION:
+                String[] envTitles = {"Tree Planting Drive", "Nature Trail Maintenance", "Wildlife Habitat Restoration",
+                                    "Recycling Education", "Water Quality Testing"};
+                return envTitles[index % envTitles.length];
+            case SENIOR_SUPPORT:
+                String[] seniorTitles = {"Senior Center Activities", "Elder Care Visits", "Technology Training for Seniors",
+                                       "Senior Meal Delivery", "Companion Services"};
+                return seniorTitles[index % seniorTitles.length];
+            case YOUTH_MENTORING:
+                String[] youthTitles = {"Youth Leadership Program", "Teen Mentorship Sessions", "Career Exploration Workshop",
+                                      "Life Skills Training", "Youth Sports Coaching"};
+                return youthTitles[index % youthTitles.length];
+            case HEALTHCARE_SUPPORT:
+                String[] healthTitles = {"Health Screening Clinic", "Blood Drive Campaign", "First Aid Training",
+                                       "Health Education Seminar", "Vaccination Clinic Support"};
+                return healthTitles[index % healthTitles.length];
+            case ARTS_CULTURE:
+                String[] artsTitles = {"Community Art Project", "Cultural Festival Planning", "Art Therapy Sessions",
+                                     "Music Education Program", "Theater Production Support"};
+                return artsTitles[index % artsTitles.length];
+            case TECHNOLOGY_DIGITAL:
+                String[] techTitles = {"Computer Repair Workshop", "Digital Literacy Training", "Website Development",
+                                     "Tech Support for Seniors", "Equipment Setup"};
+                return techTitles[index % techTitles.length];
+            case DISASTER_RELIEF:
+                String[] disasterTitles = {"Emergency Response Training", "Disaster Preparedness Workshop", "Relief Supply Packing",
+                                         "Evacuation Support", "Emergency Shelter Setup"};
+                return disasterTitles[index % disasterTitles.length];
+            case COMMUNITY_BUILDING:
+                String[] communityTitles = {"Community Festival Planning", "Fundraising Event Coordination", "Wedding Planning for Low-Income",
+                                          "Birthday Party Organization", "Holiday Celebration Planning"};
+                return communityTitles[index % communityTitles.length];
+            default:
+                return eventTitles[index % eventTitles.length];
+        }
+    }
 
-        int numLanguages = random.nextInt(3); // 0-2 additional languages
-        for (int i = 0; i < numLanguages; i++) {
-            String language = languages[1 + random.nextInt(languages.length - 1)]; // Skip English
-            if (!selected.contains(language)) {
-                selected.add(language);
+    // CORRECTED TO USE YOUR ACTUAL EventDuration ENUM VALUES
+    private int generateHoursForDuration(EventDuration duration) {
+        switch (duration) {
+            case SHORT: return duration.getMinHours() + random.nextInt(duration.getMaxHours() - duration.getMinHours() + 1);
+            case MEDIUM: return duration.getMinHours() + random.nextInt(duration.getMaxHours() - duration.getMinHours() + 1);
+            case FULL_DAY: return duration.getMinHours() + random.nextInt(duration.getMaxHours() - duration.getMinHours() + 1);
+            case MULTI_DAY: return 8 + random.nextInt(16); // 8-24 hours for multi-day
+            case WEEKLY_COMMITMENT: return 4 + random.nextInt(6); // 4-10 hours weekly
+            case MONTHLY_COMMITMENT: return 2 + random.nextInt(4); // 2-6 hours monthly
+            case ONGOING_LONG_TERM: return 3 + random.nextInt(5); // 3-8 hours ongoing
+            default: return 2 + random.nextInt(4);
+        }
+    }
+
+    private LocalDateTime calculateEndDate(LocalDateTime startDate, EventDuration duration) {
+        switch (duration) {
+            case SHORT: return startDate.plusHours(1 + random.nextInt(2));
+            case MEDIUM: return startDate.plusHours(3 + random.nextInt(2));
+            case FULL_DAY: return startDate.plusHours(5 + random.nextInt(4));
+            case MULTI_DAY: return startDate.plusDays(1 + random.nextInt(6));
+            case WEEKLY_COMMITMENT: return startDate.plusWeeks(1);
+            case MONTHLY_COMMITMENT: return startDate.plusMonths(1);
+            case ONGOING_LONG_TERM: return startDate.plusMonths(3 + random.nextInt(9));
+            default: return startDate.plusHours(2 + random.nextInt(4));
+        }
+    }
+
+    private EventStatus calculateEventStatus(LocalDateTime startDate) {
+        LocalDateTime now = LocalDateTime.now();
+        
+        if (startDate.isBefore(now.minusDays(1))) {
+            return random.nextDouble() < 0.9 ? EventStatus.COMPLETED : EventStatus.CANCELLED;
+        } else if (startDate.isAfter(now.plusDays(7))) {
+            double rand = random.nextDouble();
+            if (rand < 0.7) return EventStatus.ACTIVE;
+            if (rand < 0.85) return EventStatus.DRAFT;
+            return EventStatus.FULL;
+        } else {
+            return EventStatus.ACTIVE;
+        }
+    }
+
+    private String getCityForCountry(String country, int index) {
+        switch (country) {
+            case "Canada":
+                String[] canadaCities = {"Toronto, ON", "Vancouver, BC", "Montreal, QC"};
+                return canadaCities[index % canadaCities.length];
+            case "United Kingdom":
+                String[] ukCities = {"London, UK", "Manchester, UK", "Edinburgh, UK"};
+                return ukCities[index % ukCities.length];
+            case "Australia":
+                String[] ausCities = {"Sydney, NSW", "Melbourne, VIC", "Brisbane, QLD"};
+                return ausCities[index % ausCities.length];
+            case "Germany":
+                String[] germanCities = {"Berlin, Germany", "Munich, Germany", "Hamburg, Germany"};
+                return germanCities[index % germanCities.length];
+            case "France":
+                String[] frenchCities = {"Paris, France", "Lyon, France", "Marseille, France"};
+                return frenchCities[index % frenchCities.length];
+            case "Netherlands":
+                String[] dutchCities = {"Amsterdam, Netherlands", "Rotterdam, Netherlands", "The Hague, Netherlands"};
+                return dutchCities[index % dutchCities.length];
+            case "Sweden":
+                String[] swedishCities = {"Stockholm, Sweden", "Gothenberg, Sweden", "Malmö, Sweden"};
+                return swedishCities[index % swedishCities.length];
+            case "Denmark":
+                String[] danishCities = {"Copenhagen, Denmark", "Aarhus, Denmark", "Odense, Denmark"};
+                return danishCities[index % danishCities.length];
+            case "Ireland":
+                String[] irishCities = {"Dublin, Ireland", "Cork, Ireland", "Galway, Ireland"};
+                return irishCities[index % irishCities.length];
+            case "Switzerland":
+                String[] swissCities = {"Zurich, Switzerland", "Geneva, Switzerland", "Basel, Switzerland"};
+                return swissCities[index % swissCities.length];
+            default:
+                return "International City";
+        }
+    }
+
+    private String getStateForCountry(String country) {
+        switch (country) {
+            case "Canada": return "Province";
+            case "United Kingdom": return "England";
+            case "Australia": return "State";
+            case "Germany": return "State";
+            case "France": return "Region";
+            case "Netherlands": return "Province";
+            case "Sweden": return "County";
+            case "Denmark": return "Region";
+            case "Ireland": return "County";
+            case "Switzerland": return "Canton";
+            default: return "Region";
+        }
+    }
+
+    private int generateEmployeeCountForSize(String size) {
+        switch (size) {
+            case "Small (1-50)": return 1 + random.nextInt(50);
+            case "Medium (51-200)": return 51 + random.nextInt(150);
+            case "Large (201-1000)": return 201 + random.nextInt(800);
+            case "Enterprise (1000+)": return 1001 + random.nextInt(4000);
+            default: return 1 + random.nextInt(100);
+        }
+    }
+
+    private String generateMultipleCategories(String primaryCategory) {
+        List<String> categories = new ArrayList<>();
+        categories.add(primaryCategory);
+        
+        // Add 1-3 additional categories
+        int additionalCount = random.nextInt(3);
+        for (int i = 0; i < additionalCount; i++) {
+            String category = allCategories[random.nextInt(allCategories.length)];
+            if (!categories.contains(category)) {
+                categories.add(category);
             }
         }
+        
+        return String.join(",", categories);
+    }
 
+    private String getRandomOrgType() {
+        String[] types = {"Non-Profit", "Charity", "Foundation", "Community Group", "Religious Organization",
+                         "Educational Institution", "Government Agency", "Social Enterprise", "Cooperative", "NGO"};
+        return types[random.nextInt(types.length)];
+    }
+
+    private String generatePhoneNumber() {
+        return "+1-555-" + String.format("%04d", random.nextInt(10000));
+    }
+
+    private String generateAddress() {
+        String[] streets = {"Main St", "Oak Ave", "Pine Rd", "Elm Dr", "Maple Ln", "Cedar Blvd", "Park Ave"};
+        return (100 + random.nextInt(9900)) + " " + streets[random.nextInt(streets.length)];
+    }
+
+    private String generateZipCode() {
+        return String.format("%05d", 10000 + random.nextInt(90000));
+    }
+
+    private String generateLanguages() {
+        String[] languages = {"English", "Spanish", "French", "German", "Italian", "Portuguese", "Chinese", "Japanese"};
+        List<String> selected = new ArrayList<>();
+        selected.add("English");
+        
+        int count = random.nextInt(3);
+        for (int i = 0; i < count; i++) {
+            String lang = languages[1 + random.nextInt(languages.length - 1)];
+            if (!selected.contains(lang)) {
+                selected.add(lang);
+            }
+        }
+        
         return String.join(",", selected);
     }
 
     private String getTaxExemptStatus() {
-        String[] statuses = { "501(c)(3)", "501(c)(4)", "501(c)(6)", "501(c)(7)", "Not Applicable" };
+        String[] statuses = {"501(c)(3)", "501(c)(4)", "501(c)(6)", "501(c)(7)", "Not Applicable"};
         return statuses[random.nextInt(statuses.length)];
     }
 
     private String getVerificationLevel() {
-        String[] levels = { "Unverified", "Basic", "Verified", "Premium" };
+        String[] levels = {"Unverified", "Basic", "Verified", "Premium"};
         double rand = random.nextDouble();
-        if (rand < 0.1)
-            return "Premium";
-        if (rand < 0.4)
-            return "Verified";
-        if (rand < 0.7)
-            return "Basic";
+        if (rand < 0.1) return "Premium";
+        if (rand < 0.4) return "Verified";
+        if (rand < 0.7) return "Basic";
         return "Unverified";
     }
 
-    private String getRandomServices() {
-        String[] services = {
-                "Tutoring", "Cleanup Events", "Food Distribution", "Mentoring", "Fundraising", "Community Outreach",
-                "Health Screenings", "Emergency Response", "Educational Workshops", "Social Services",
-                "Environmental Education",
-                "Senior Care", "Youth Programs", "Technology Training", "Arts & Crafts", "Sports Coaching",
-                "Language Classes",
-                "Job Training", "Financial Literacy", "Housing Assistance", "Transportation Services",
-                "Childcare Support",
-                "Mental Health Counseling", "Addiction Recovery", "Disability Services", "Immigration Support"
-        };
+    private String generateServices() {
+        String[] services = {"Tutoring", "Cleanup Events", "Food Distribution", "Mentoring", "Fundraising",
+                           "Community Outreach", "Health Screenings", "Emergency Response", "Educational Workshops",
+                           "Social Services", "Environmental Education", "Senior Care", "Youth Programs"};
         List<String> selected = new ArrayList<>();
-        int numServices = 1 + random.nextInt(4);
-
-        for (int i = 0; i < numServices; i++) {
+        int count = 1 + random.nextInt(4);
+        
+        for (int i = 0; i < count; i++) {
             String service = services[random.nextInt(services.length)];
             if (!selected.contains(service)) {
                 selected.add(service);
             }
         }
-
+        
         return String.join(",", selected);
     }
 
-    private String getRandomCauses() {
-        // Use the categories array for causes to maintain consistency
+    private String generateCauses() {
         List<String> selected = new ArrayList<>();
-        int numCauses = 1 + random.nextInt(4);
-
-        for (int i = 0; i < numCauses; i++) {
-            String cause = categories[random.nextInt(categories.length)];
+        int count = 1 + random.nextInt(4);
+        
+        for (int i = 0; i < count; i++) {
+            String cause = allCategories[random.nextInt(allCategories.length)];
             if (!selected.contains(cause)) {
                 selected.add(cause);
             }
         }
-
+        
         return String.join(",", selected);
     }
 
-    private String getRandomSkills() {
-        List<String> selected = new ArrayList<>();
-        int numSkills = 1 + random.nextInt(5);
-
-        for (int i = 0; i < numSkills; i++) {
-            String skill = skills[random.nextInt(skills.length)];
-            if (!selected.contains(skill)) {
-                selected.add(skill);
-            }
-        }
-
-        return String.join(",", selected);
-    }
-
-    private String getRandomInterests() {
-        List<String> selected = new ArrayList<>();
-        int numInterests = 1 + random.nextInt(5);
-
-        for (int i = 0; i < numInterests; i++) {
-            String interest = interests[random.nextInt(interests.length)];
-            if (!selected.contains(interest)) {
-                selected.add(interest);
-            }
-        }
-
-        return String.join(",", selected);
-    }
-
-    private String getAvailabilityPreference() {
-        String[] preferences = { "weekends", "weekdays", "evenings", "flexible", "mornings", "afternoons" };
-        return preferences[random.nextInt(preferences.length)];
-    }
-
-    private String getRandomVolunteerBio() {
-        String[] bios = {
-                "Passionate volunteer dedicated to making a positive impact in the community through meaningful service and collaboration.",
-                "Experienced volunteer with a strong commitment to environmental conservation and community outreach programs.",
-                "Enthusiastic about helping others and contributing to causes that promote education and youth development.",
-                "Community-minded individual with expertise in event planning and a passion for social justice initiatives.",
-                "Dedicated volunteer with experience in healthcare support and senior care programs.",
-                "Technology professional committed to bridging the digital divide and supporting educational initiatives.",
-                "Creative individual passionate about arts education and cultural preservation in the community.",
-                "Experienced mentor focused on youth development and leadership training programs.",
-                "Health advocate with a background in nutrition and wellness education for underserved communities.",
-                "Environmental scientist dedicated to conservation efforts and sustainability education.",
-                "Former educator committed to literacy programs and academic support for students of all ages.",
-                "Social worker passionate about mental health awareness and community support systems."
-        };
-        return bios[random.nextInt(bios.length)];
-    }
-
-    private String getRandomEventDescription(String title) {
+    private String generateEventDescription(String title) {
         String[] templates = {
-                "Join us for " + title.toLowerCase()
-                        + ". This is a fantastic opportunity to make a meaningful difference in our community while connecting with like-minded individuals who share your passion for positive change.",
-                "We're excited to invite you to participate in " + title.toLowerCase()
-                        + ". Whether you're new to volunteering or an experienced community member, we welcome your participation and unique contributions.",
-                "Come be part of " + title.toLowerCase()
-                        + " and help us create lasting positive impact in our community. This event offers a great way to meet new people while supporting an important cause.",
-                "Volunteers needed for " + title.toLowerCase()
-                        + "! This is an excellent opportunity to gain hands-on experience while making a real difference in the lives of others.",
-                "Join our team for " + title.toLowerCase()
-                        + " and experience the joy of community service. All skill levels welcome - we'll provide training and support.",
-                "Make a difference at " + title.toLowerCase()
-                        + "! This volunteer opportunity allows you to contribute directly to our mission while developing new skills and connections."
+            "Join us for " + title.toLowerCase() + ". This is a fantastic opportunity to make a meaningful difference in our community.",
+            "We're excited to invite you to participate in " + title.toLowerCase() + ". All skill levels welcome!",
+            "Come be part of " + title.toLowerCase() + " and help us create lasting positive impact in our community.",
+            "Volunteers needed for " + title.toLowerCase() + "! This is an excellent opportunity to gain hands-on experience.",
+            "Join our team for " + title.toLowerCase() + " and experience the joy of community service.",
+            "Make a difference at " + title.toLowerCase() + "! This volunteer opportunity allows you to contribute directly to our mission."
         };
         return templates[random.nextInt(templates.length)];
-    }
-
-    private EventStatus getRealisticEventStatus(LocalDateTime startDate) {
-        LocalDateTime now = LocalDateTime.now();
-
-        if (startDate.isBefore(now.minusDays(1))) {
-            // Past events
-            return random.nextDouble() < 0.9 ? EventStatus.COMPLETED : EventStatus.CANCELLED;
-        } else if (startDate.isAfter(now.plusDays(7))) {
-            // Future events
-            double rand = random.nextDouble();
-            if (rand < 0.7)
-                return EventStatus.ACTIVE;
-            if (rand < 0.85)
-                return EventStatus.DRAFT;
-            return EventStatus.FULL;
-        } else {
-            // Near-term events
-            return EventStatus.ACTIVE;
-        }
-    }
-
-    private ApplicationStatus getRealisticApplicationStatus() {
-        double rand = random.nextDouble();
-        if (rand < 0.3)
-            return ApplicationStatus.PENDING;
-        if (rand < 0.6)
-            return ApplicationStatus.ACCEPTED;
-        if (rand < 0.75)
-            return ApplicationStatus.ATTENDED;
-        if (rand < 0.85)
-            return ApplicationStatus.REJECTED;
-        if (rand < 0.95)
-            return ApplicationStatus.NO_SHOW;
-        return ApplicationStatus.WITHDRAWN;
-    }
-
-    private String getRandomApplicationMessage() {
-        String[] messages = {
-                "I'm excited to volunteer for this event and contribute to the community!",
-                "This cause is very important to me and I'd love to help make a difference.",
-                "I have relevant experience and skills that would be valuable for this event.",
-                "Looking forward to meeting other volunteers and learning more about your organization.",
-                "I'm passionate about this cause and eager to contribute my time and energy.",
-                "I believe in the mission of your organization and want to support your work.",
-                "This event aligns perfectly with my interests and availability.",
-                "I'm committed to making a positive impact and would be honored to volunteer.",
-                "I have experience in this area and am excited to put my skills to good use.",
-                "This sounds like a meaningful way to give back to the community.",
-                "I'm available for the full duration and ready to help in any way needed.",
-                "I'm interested in learning more about your organization while volunteering."
-        };
-        return messages[random.nextInt(messages.length)];
-    }
-
-    private String getRandomOrganizationNotes() {
-        String[] notes = {
-                "Thank you for your interest in volunteering with us. We're excited to have you join our team!",
-                "We appreciate your application and look forward to working with you on this important initiative.",
-                "Your skills and enthusiasm make you a great fit for this volunteer opportunity.",
-                "We're grateful for volunteers like you who help make our mission possible.",
-                "Thank you for your dedication to community service and positive change.",
-                "We look forward to your participation and the unique perspective you'll bring to our team.",
-                "Your commitment to this cause is evident and we're honored to have your support.",
-                "We believe you'll find this volunteer experience both rewarding and impactful.",
-                "Thank you for choosing to volunteer with us - together we can make a difference!",
-                "Your application stood out to us and we're excited to welcome you to our volunteer family."
-        };
-        return notes[random.nextInt(notes.length)];
-    }
-
-    private String getRandomBadgeNotes() {
-        String[] notes = {
-                "Earned through dedicated community service and outstanding volunteer work.",
-                "Recognized for exceptional commitment to environmental conservation efforts.",
-                "Awarded for leadership in youth mentorship and educational programs.",
-                "Achieved through consistent participation in community outreach initiatives.",
-                "Earned for significant contributions to healthcare and social service programs.",
-                "Recognized for innovation in technology education and digital literacy programs.",
-                "Awarded for outstanding performance in disaster relief and emergency response.",
-                "Earned through exemplary service in arts and cultural preservation programs.",
-                "Recognized for dedication to senior care and intergenerational programs.",
-                "Awarded for excellence in fundraising and resource development activities."
-        };
-        return notes[random.nextInt(notes.length)];
     }
 
     private String generateMeetingId() {
@@ -1003,110 +807,29 @@ public class DataLoader implements CommandLineRunner {
             for (int j = 0; j < 4; j++) {
                 id.append(chars.charAt(random.nextInt(chars.length())));
             }
-            if (i < 2)
-                id.append("-");
+            if (i < 2) id.append("-");
         }
         return id.toString();
     }
 
-    private String getRandomStreetName() {
-        String[] streetNames = {
-                "Main St", "Oak Ave", "Pine Rd", "Elm Dr", "Maple Ln", "Cedar Blvd", "Park Ave", "First St",
-                "Second St", "Broadway",
-                "Washington St", "Lincoln Ave", "Jefferson Rd", "Madison Dr", "Monroe Ln", "Jackson Blvd", "Adams Ave",
-                "Franklin St",
-                "State St", "Church St", "School St", "High St", "Mill St", "Water St", "Spring St", "Market St",
-                "Union St", "Hill St"
-        };
-        return streetNames[random.nextInt(streetNames.length)];
-    }
-
     private String generateRequirements() {
         String[] requirements = {
-                "No experience necessary",
-                "Must be 18 or older",
-                "Physical activity required",
-                "Background check required",
-                "Own transportation preferred",
-                "Comfortable working with children",
-                "Lifting up to 25 lbs required",
-                "Outdoor work in various weather",
-                "Must be comfortable with public speaking",
-                "Basic computer skills helpful",
-                "Flexible schedule preferred",
-                "Team player attitude essential",
-                "Professional appearance required",
-                "Bilingual skills a plus",
-                "Previous volunteer experience preferred",
-                "Must be able to stand for extended periods",
-                "Valid driver's license required",
-                "First aid certification preferred",
-                "Comfortable with technology",
-                "Strong communication skills needed",
-                "Ability to work independently",
-                "Weekend availability required",
-                "Evening hours available",
-                "Must be reliable and punctual"
+            "No experience necessary", "Must be 18 or older", "Physical activity required",
+            "Background check required", "Own transportation preferred", "Comfortable working with children",
+            "Lifting up to 25 lbs required", "Outdoor work in various weather", "Must be comfortable with public speaking",
+            "Basic computer skills helpful", "Flexible schedule preferred", "Team player attitude essential"
         };
-
+        
         List<String> selected = new ArrayList<>();
-        int numReqs = 1 + random.nextInt(4); // 1-4 requirements
-
-        for (int i = 0; i < numReqs; i++) {
+        int count = 1 + random.nextInt(4);
+        
+        for (int i = 0; i < count; i++) {
             String req = requirements[random.nextInt(requirements.length)];
             if (!selected.contains(req)) {
                 selected.add(req);
             }
         }
-
+        
         return String.join("; ", selected);
-    }
-
-    // International location helper methods
-    private String getCanadianProvince() {
-        String[] provinces = { "ON", "BC", "QC", "AB", "MB", "SK", "NS", "NB", "NL", "PE", "NT", "YT", "NU" };
-        return provinces[random.nextInt(provinces.length)];
-    }
-
-    private String generateCanadianPostalCode() {
-        String letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        String digits = "0123456789";
-        return "" + letters.charAt(random.nextInt(letters.length())) +
-                digits.charAt(random.nextInt(digits.length())) +
-                letters.charAt(random.nextInt(letters.length())) + " " +
-                digits.charAt(random.nextInt(digits.length())) +
-                letters.charAt(random.nextInt(letters.length())) +
-                digits.charAt(random.nextInt(digits.length()));
-    }
-
-    private String generateUKPostalCode() {
-        String letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        String digits = "0123456789";
-        return "" + letters.charAt(random.nextInt(letters.length())) +
-                letters.charAt(random.nextInt(letters.length())) +
-                digits.charAt(random.nextInt(digits.length())) + " " +
-                digits.charAt(random.nextInt(digits.length())) +
-                letters.charAt(random.nextInt(letters.length())) +
-                letters.charAt(random.nextInt(letters.length()));
-    }
-
-    private String getAustralianState() {
-        String[] states = { "NSW", "VIC", "QLD", "WA", "SA", "TAS", "ACT", "NT" };
-        return states[random.nextInt(states.length)];
-    }
-
-    private String getGermanState() {
-        String[] states = { "Baden-Württemberg", "Bayern", "Berlin", "Brandenburg", "Bremen", "Hamburg",
-                "Hessen", "Mecklenburg-Vorpommern", "Niedersachsen", "Nordrhein-Westfalen",
-                "Rheinland-Pfalz", "Saarland", "Sachsen", "Sachsen-Anhalt", "Schleswig-Holstein", "Thüringen" };
-        return states[random.nextInt(states.length)];
-    }
-
-    private String getFrenchRegion() {
-        String[] regions = { "Île-de-France", "Provence-Alpes-Côte d'Azur", "Auvergne-Rhône-Alpes",
-                "Nouvelle-Aquitaine", "Occitanie", "Hauts-de-France", "Grand Est",
-                "Pays de la Loire", "Bretagne", "Normandie", "Bourgogne-Franche-Comté",
-                "Centre-Val de Loire", "Corse" };
-        return regions[random.nextInt(regions.length)];
     }
 }

@@ -4,6 +4,7 @@ import Navbar from './components/Navbar';
 import Home from './components/Home';
 import HowItWorks from './components/HowItWorks';
 import Organizations from './components/Organizations';
+import ViewOrganization from './components/ViewOrganization'; // ADD THIS IMPORT
 import Events from './components/Events';
 import About from './components/About';
 import Login from './components/Login';
@@ -48,6 +49,18 @@ function App() {
               <>
                 <Navbar />
                 <Organizations />
+                <Footer />
+              </>
+            } 
+          />
+
+          {/* ADD THIS NEW ROUTE FOR ORGANIZATION DETAILS */}
+          <Route 
+            path="/find-organizations/:id" 
+            element={
+              <>
+                <Navbar />
+                <ViewOrganization />
                 <Footer />
               </>
             } 

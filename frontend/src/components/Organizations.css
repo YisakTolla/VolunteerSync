@@ -578,10 +578,10 @@
 }
 
 /* ========================================
-   MINIMALISTIC ORGANIZATION CARD
+   ENHANCED CLICKABLE ORGANIZATION CARD
    ======================================== */
 
-/* Organization Card - Compact Design */
+/* Organization Card - Enhanced with Clickable Features */
 .organization-card {
   background: var(--background-primary);
   border: 1px solid var(--border-primary);
@@ -598,12 +598,81 @@
   transform: translateY(-1px);
 }
 
-/* Card Header - Single Row Layout */
+/* Enhanced focus styles for accessibility */
+.organization-card:focus {
+  outline: 2px solid var(--accent-purple);
+  outline-offset: 2px;
+}
+
+/* Ensure the card is accessible via keyboard */
+.organization-card[role="button"] {
+  cursor: pointer;
+}
+
+.organization-card[role="button"]:focus {
+  outline: 2px solid var(--accent-purple);
+  outline-offset: 2px;
+}
+
+/* Subtle hover effect to indicate interactivity */
+.organization-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--accent-purple);
+  opacity: 0;
+  border-radius: var(--radius-lg);
+  transition: opacity var(--duration-200) var(--ease-out);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.organization-card:hover::before {
+  opacity: 0.02;
+}
+
+/* Ensure all text and elements inside cards are not selectable for better click experience */
+.organization-card * {
+  user-select: none;
+  pointer-events: none;
+}
+
+/* Re-enable pointer events for specific interactive elements if needed */
+.organization-card button,
+.organization-card a {
+  pointer-events: auto;
+  user-select: auto;
+}
+
+/* Visual indicator that the card is clickable */
 .organization-card-header {
   display: flex;
   align-items: center;
   gap: var(--spacing-3);
   margin-bottom: var(--spacing-3);
+  position: relative;
+}
+
+.organization-card-title {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-2);
+  line-height: var(--line-height-tight);
+  transition: color var(--duration-200) var(--ease-out);
+}
+
+.organization-card:hover .organization-card-title {
+  color: var(--accent-purple);
+}
+
+/* Improve the visual feedback for better UX */
+.organization-card:active {
+  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
 }
 
 .organization-card-image {
@@ -723,7 +792,7 @@
   background: #6366f1;
 }
 
-/* Cleanup other category tags for general categories */
+/* Category tags for general categories */
 .organization-card-category {
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-medium);
@@ -854,14 +923,6 @@
   color: #dc2626;
 }
 
-.organization-card-title {
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-semibold);
-  color: var(--text-primary);
-  margin-bottom: var(--spacing-2);
-  line-height: var(--line-height-tight);
-}
-
 .organization-card-description {
   color: var(--text-secondary);
   font-size: var(--font-size-sm);
@@ -895,7 +956,7 @@
   flex-shrink: 0;
 }
 
-/* Remove Mission Statement and Footer */
+/* Remove Mission Statement and Footer for compact design */
 .organization-card-mission,
 .organization-card-stats,
 .organization-card-footer {
@@ -1182,6 +1243,30 @@
 }
 
 /* ========================================
+   MOBILE TOUCH IMPROVEMENTS
+   ======================================== */
+
+/* Mobile touch improvements */
+@media (hover: none) and (pointer: coarse) {
+  .organization-card:hover {
+    transform: none;
+  }
+  
+  .organization-card:hover::before {
+    opacity: 0;
+  }
+  
+  .organization-card:hover .organization-card-title {
+    color: var(--text-primary);
+  }
+  
+  .organization-card:active {
+    background: var(--background-muted);
+    transform: scale(0.98);
+  }
+}
+
+/* ========================================
    RESPONSIVE DESIGN
    ======================================== */
 
@@ -1433,6 +1518,14 @@
   .organizations-retry-btn:hover {
     transform: none;
   }
+  
+  .organization-card:active {
+    transform: none;
+  }
+  
+  .organization-card::before {
+    transition: none;
+  }
 }
 
 /* High contrast mode support */
@@ -1447,6 +1540,10 @@
   
   .organizations-filter-option.active {
     border-width: 2px;
+  }
+  
+  .organization-card:focus {
+    outline-width: 3px;
   }
 }
 
