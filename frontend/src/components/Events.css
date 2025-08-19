@@ -577,8 +577,10 @@
 .event-card-type-tag.workshop-training,
 .event-card-type-tag.technology-digital,
 .event-card-type-tag.research-data {
-  background: #E3F2FD;                  /* Very light blue background */
-  color: #1565C0;                       /* Darker blue text */
+  background: #E3F2FD;
+  /* Very light blue background */
+  color: #1565C0;
+  /* Darker blue text */
 }
 
 /* ========================================
@@ -587,8 +589,10 @@
 .event-card-type-tag.community-cleanup,
 .event-card-type-tag.environmental-conservation,
 .event-card-type-tag.gardening {
-  background: #E8F5E8;                  /* Very light green background */
-  color: #2E7D32;                       /* Darker green text */
+  background: #E8F5E8;
+  /* Very light green background */
+  color: #2E7D32;
+  /* Darker green text */
 }
 
 /* ========================================
@@ -597,16 +601,20 @@
 .event-card-type-tag.healthcare-support,
 .event-card-type-tag.crisis-support,
 .event-card-type-tag.blood-drive {
-  background: #FFEBEE;                  /* Very light red background */
-  color: #C62828;                       /* Darker red text */
+  background: #FFEBEE;
+  /* Very light red background */
+  color: #C62828;
+  /* Darker red text */
 }
 
 /* ========================================
    COMMUNITY SERVICE - PURPLE FAMILY
    ======================================== */
 .event-card-type-tag.advocacy-awareness {
-  background: #F3E5F5;                  /* Very light purple background */
-  color: #7B1FA2;                       /* Darker purple text */
+  background: #F3E5F5;
+  /* Very light purple background */
+  color: #7B1FA2;
+  /* Darker purple text */
 }
 
 /* ========================================
@@ -614,8 +622,10 @@
    ======================================== */
 .event-card-type-tag.animal-care,
 .event-card-type-tag.food-service {
-  background: #FFF3E0;                  /* Very light orange background */
-  color: #E65100;                       /* Darker orange text */
+  background: #FFF3E0;
+  /* Very light orange background */
+  color: #E65100;
+  /* Darker orange text */
 }
 
 /* ========================================
@@ -624,8 +634,10 @@
 .event-card-type-tag.arts-culture,
 .event-card-type-tag.event-planning,
 .event-card-type-tag.festival-fair {
-  background: #FCE4EC;                  /* Very light pink background */
-  color: #AD1457;                       /* Darker pink text */
+  background: #FCE4EC;
+  /* Very light pink background */
+  color: #AD1457;
+  /* Darker pink text */
 }
 
 /* ========================================
@@ -634,48 +646,60 @@
 .event-card-type-tag.senior-support,
 .event-card-type-tag.youth-mentoring,
 .event-card-type-tag.transportation {
-  background: #E0F2F1;                  /* Very light teal background */
-  color: #00695C;                       /* Darker teal text */
+  background: #E0F2F1;
+  /* Very light teal background */
+  color: #00695C;
+  /* Darker teal text */
 }
 
 /* ========================================
    SPORTS & RECREATION - INDIGO FAMILY
    ======================================== */
 .event-card-type-tag.sports-recreation {
-  background: #E8EAF6;                  /* Very light indigo background */
-  color: #303F9F;                       /* Darker indigo text */
+  background: #E8EAF6;
+  /* Very light indigo background */
+  color: #303F9F;
+  /* Darker indigo text */
 }
 
 /* ========================================
    EMERGENCY SERVICES - DEEP ORANGE FAMILY
    ======================================== */
 .event-card-type-tag.disaster-relief {
-  background: #FBE9E7;                  /* Very light deep orange background */
-  color: #BF360C;                       /* Darker deep orange text */
+  background: #FBE9E7;
+  /* Very light deep orange background */
+  color: #BF360C;
+  /* Darker deep orange text */
 }
 
 /* ========================================
    FUNDRAISING - AMBER FAMILY
    ======================================== */
 .event-card-type-tag.fundraising {
-  background: #FFFBF0;                  /* Very light amber background */
-  color: #FF8F00;                       /* Darker amber text */
+  background: #FFFBF0;
+  /* Very light amber background */
+  color: #FF8F00;
+  /* Darker amber text */
 }
 
 /* ========================================
    ADMINISTRATIVE - GRAY FAMILY
    ======================================== */
 .event-card-type-tag.administrative-support {
-  background: #F5F5F5;                  /* Very light gray background */
-  color: #424242;                       /* Darker gray text */
+  background: #F5F5F5;
+  /* Very light gray background */
+  color: #424242;
+  /* Darker gray text */
 }
 
 /* ========================================
    CONSTRUCTION - BROWN FAMILY
    ======================================== */
 .event-card-type-tag.construction-building {
-  background: #EFEBE9;                  /* Very light brown background */
-  color: #5D4037;                       /* Darker brown text */
+  background: #EFEBE9;
+  /* Very light brown background */
+  color: #5D4037;
+  /* Darker brown text */
 }
 
 
@@ -794,8 +818,13 @@
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .events-loading p {
@@ -1007,6 +1036,39 @@
   color: var(--accent-purple-dark);
 }
 
+.event-card.clickable:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  border-color: #10b981;
+}
+
+.event-card.clickable:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Hover effect for event card titles */
+.event-card.clickable:hover .event-card-title {
+  color: #10b981;
+}
+
+/* Subtle animation for card elements on hover */
+.event-card.clickable:hover .event-card-date-badge,
+.event-card.clickable:hover .event-card-type-tag {
+  transform: scale(1.02);
+}
+
+/* Focus states for accessibility */
+.event-card.clickable:focus {
+  outline: 2px solid #10b981;
+  outline-offset: 2px;
+}
+
+.event-card.clickable:focus-visible {
+  outline: 2px solid #10b981;
+  outline-offset: 2px;
+}
+
 /* ========================================
    RESPONSIVE DESIGN
    ======================================== */
@@ -1016,16 +1078,16 @@
     grid-template-columns: 1fr;
     gap: var(--spacing-6);
   }
-  
+
   .events-sidebar {
     position: static;
     order: 2;
   }
-  
+
   .events-main {
     order: 1;
   }
-  
+
   .events-filter-options {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -1041,38 +1103,38 @@
   .events-page {
     padding: calc(var(--spacing-16) + 72px) var(--spacing-3) var(--spacing-4) var(--spacing-3);
   }
-  
+
   .events-container {
     padding: 0 var(--spacing-3);
     gap: var(--spacing-4);
   }
-  
+
   .events-filter-card {
     padding: var(--spacing-4);
   }
-  
+
   .events-title {
     font-size: var(--font-size-2xl);
   }
-  
+
   .events-search-input {
     padding: var(--spacing-3) var(--spacing-4) var(--spacing-3) var(--spacing-10);
   }
-  
+
   .events-empty-state {
     padding: var(--spacing-12) var(--spacing-4);
   }
-  
+
   .events-empty-state-icon {
     width: 100px;
     height: 100px;
   }
-  
+
   .events-empty-state-icon svg {
     width: 50px;
     height: 50px;
   }
-  
+
   .events-empty-state-title {
     font-size: var(--font-size-xl);
   }
@@ -1116,63 +1178,63 @@
   .events-page {
     padding: calc(var(--spacing-12) + 72px) var(--spacing-2) var(--spacing-3) var(--spacing-2);
   }
-  
+
   .events-container {
     padding: 0 var(--spacing-2);
     gap: var(--spacing-3);
   }
-  
+
   .events-filter-card {
     padding: var(--spacing-3);
   }
-  
+
   .events-filter-options {
     grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
     gap: var(--spacing-1);
   }
-  
+
   .events-filter-option {
     padding: var(--spacing-1) var(--spacing-2);
     font-size: var(--font-size-xs);
   }
-  
+
   .events-search-input {
     padding: var(--spacing-2) var(--spacing-3) var(--spacing-2) var(--spacing-8);
     font-size: var(--font-size-sm);
   }
-  
+
   .events-search-icon {
     left: var(--spacing-2);
     width: var(--spacing-4);
     height: var(--spacing-4);
   }
-  
+
   .events-title {
     font-size: var(--font-size-xl);
   }
-  
+
   .events-empty-state {
     padding: var(--spacing-8) var(--spacing-2);
   }
-  
+
   .events-empty-state-icon {
     width: 80px;
     height: 80px;
   }
-  
+
   .events-empty-state-icon svg {
     width: 40px;
     height: 40px;
   }
-  
+
   .events-empty-state-title {
     font-size: var(--font-size-lg);
   }
-  
+
   .events-empty-state-description {
     font-size: var(--font-size-sm);
   }
-  
+
   .events-empty-state-cta {
     padding: var(--spacing-4);
   }
@@ -1233,22 +1295,23 @@
 
 /* Reduced motion for users who prefer it */
 @media (prefers-reduced-motion: reduce) {
+
   .event-card,
   .events-filter-option,
   .events-pagination-btn,
   .events-pagination-number {
     transition: none;
   }
-  
+
   .event-card:hover {
     transform: none;
   }
-  
+
   .events-clear-filters-btn:hover,
   .events-retry-btn:hover {
     transform: none;
   }
-  
+
   .events-loading-spinner {
     animation: none;
   }
@@ -1259,12 +1322,12 @@
   .event-card {
     border-width: 2px;
   }
-  
+
   .event-card-date-badge,
   .event-card-type-tag {
     border: 1px solid currentColor;
   }
-  
+
   .events-filter-option.active {
     border-width: 2px;
   }
@@ -1279,7 +1342,7 @@
     background: white !important;
     color: black !important;
   }
-  
+
   .events-filter-card,
   .events-active-filters,
   .events-empty-state-cta,
@@ -1288,7 +1351,7 @@
     background: white !important;
     box-shadow: none !important;
   }
-  
+
   .events-clear-filters-btn,
   .events-empty-state-cta-button,
   .events-retry-btn {
@@ -1301,11 +1364,11 @@
   .events-sidebar {
     display: none;
   }
-  
+
   .events-container {
     grid-template-columns: 1fr;
   }
-  
+
   .event-card:hover {
     transform: none;
     box-shadow: none !important;

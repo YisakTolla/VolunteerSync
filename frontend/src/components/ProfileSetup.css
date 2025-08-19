@@ -137,14 +137,18 @@
 
 /* Interests and Skills sections */
 .interests-description,
-.skills-description {
+.skills-description,
+.org-types-description,
+.org-size-description {
   font-size: var(--font-size-sm);
   color: var(--text-secondary);
   margin-bottom: var(--spacing-3);
 }
 
 .interests-container,
-.skills-container {
+.skills-container,
+.org-types-container,
+.org-size-container {
   display: flex;
   flex-wrap: wrap;
   gap: var(--spacing-2);
@@ -180,11 +184,247 @@
   border-color: var(--accent-green);
 }
 
+/* ========================================
+   ORGANIZATION TYPE TAGS
+   With colors matching Organizations.css
+   ======================================== */
+
+.org-type-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--spacing-2) var(--spacing-3);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-full);
+  background: var(--background-primary);
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--duration-200) var(--ease-out);
+  white-space: nowrap;
+}
+
+.org-type-tag:hover {
+  background: var(--gray-50);
+  transform: translateY(-1px);
+}
+
+/* Organization Type Colors - Following Organizations.css color scheme */
+.org-type-tag.education.selected {
+  background: rgba(59, 130, 246, 0.15);
+  color: #1e40af;
+  border-color: #3b82f6;
+}
+
+.org-type-tag.environment.selected {
+  background: rgba(16, 185, 129, 0.15);
+  color: #047857;
+  border-color: var(--accent-green);
+}
+
+.org-type-tag.healthcare.selected {
+  background: rgba(239, 68, 68, 0.15);
+  color: #dc2626;
+  border-color: #ef4444;
+}
+
+.org-type-tag.animal-welfare.selected {
+  background: rgba(249, 115, 22, 0.15);
+  color: #ea580c;
+  border-color: #f97316;
+}
+
+.org-type-tag.community-service.selected {
+  background: rgba(139, 92, 246, 0.15);
+  color: #7c3aed;
+  border-color: var(--accent-purple);
+}
+
+.org-type-tag.human-services.selected {
+  background: rgba(20, 184, 166, 0.15);
+  color: #0d9488;
+  border-color: #14b8a6;
+}
+
+.org-type-tag.arts-culture.selected {
+  background: rgba(236, 72, 153, 0.15);
+  color: #be185d;
+  border-color: #ec4899;
+}
+
+.org-type-tag.youth-development.selected {
+  background: rgba(6, 182, 212, 0.15);
+  color: #0891b2;
+  border-color: #06b6d4;
+}
+
+.org-type-tag.senior-services.selected {
+  background: rgba(99, 102, 241, 0.15);
+  color: #4f46e5;
+  border-color: #6366f1;
+}
+
+.org-type-tag.hunger-homelessness.selected {
+  background: rgba(245, 101, 101, 0.15);
+  color: #dc2626;
+  border-color: #f56565;
+}
+
+.org-type-tag.disaster-relief.selected {
+  background: rgba(251, 146, 60, 0.15);
+  color: #ea580c;
+  border-color: #fb923c;
+}
+
+.org-type-tag.international.selected {
+  background: rgba(34, 197, 94, 0.15);
+  color: #16a34a;
+  border-color: #22c55e;
+}
+
+.org-type-tag.sports-recreation.selected {
+  background: rgba(168, 85, 247, 0.15);
+  color: #9333ea;
+  border-color: #a855f7;
+}
+
+.org-type-tag.mental-health.selected {
+  background: rgba(52, 211, 153, 0.15);
+  color: #059669;
+  border-color: #34d399;
+}
+
+.org-type-tag.veterans.selected {
+  background: rgba(34, 197, 94, 0.15);
+  color: #16a34a;
+  border-color: #22c55e;
+}
+
+.org-type-tag.womens-issues.selected {
+  background: rgba(244, 114, 182, 0.15);
+  color: #be185d;
+  border-color: #f472b6;
+}
+
+.org-type-tag.children-families.selected {
+  background: rgba(251, 191, 36, 0.15);
+  color: #d97706;
+  border-color: #fbbf24;
+}
+
+.org-type-tag.disability-services.selected {
+  background: rgba(129, 140, 248, 0.15);
+  color: #4f46e5;
+  border-color: #818cf8;
+}
+
+.org-type-tag.religious.selected {
+  background: rgba(196, 181, 253, 0.15);
+  color: #7c3aed;
+  border-color: #c4b5fd;
+}
+
+.org-type-tag.political.selected {
+  background: rgba(107, 114, 128, 0.15);
+  color: #374151;
+  border-color: #6b7280;
+}
+
+.org-type-tag.lgbtq.selected {
+  background: rgba(236, 72, 153, 0.15);
+  color: #be185d;
+  border-color: #ec4899;
+}
+
+.org-type-tag.technology.selected {
+  background: rgba(59, 130, 246, 0.15);
+  color: #1e40af;
+  border-color: #3b82f6;
+}
+
+.org-type-tag.research-advocacy.selected {
+  background: rgba(139, 92, 246, 0.15);
+  color: #7c3aed;
+  border-color: var(--accent-purple);
+}
+
+.org-type-tag.public-safety.selected {
+  background: rgba(239, 68, 68, 0.15);
+  color: #dc2626;
+  border-color: #ef4444;
+}
+
+/* ========================================
+   ORGANIZATION SIZE TAGS
+   ======================================== */
+
+.org-size-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--spacing-2) var(--spacing-4);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-full);
+  background: var(--background-primary);
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--duration-200) var(--ease-out);
+  white-space: nowrap;
+}
+
+.org-size-tag:hover {
+  background: var(--gray-50);
+  transform: translateY(-1px);
+}
+
+.org-size-tag.selected {
+  background: rgba(139, 92, 246, 0.15);
+  color: #7c3aed;
+  border-color: var(--accent-purple);
+}
+
+/* Specific size colors */
+.org-size-tag.size-small.selected {
+  background: rgba(34, 197, 94, 0.15);
+  color: #16a34a;
+  border-color: #22c55e;
+}
+
+.org-size-tag.size-medium.selected {
+  background: rgba(59, 130, 246, 0.15);
+  color: #1e40af;
+  border-color: #3b82f6;
+}
+
+.org-size-tag.size-large.selected {
+  background: rgba(139, 92, 246, 0.15);
+  color: #7c3aed;
+  border-color: var(--accent-purple);
+}
+
+.org-size-tag.size-enterprise.selected {
+  background: rgba(239, 68, 68, 0.15);
+  color: #dc2626;
+  border-color: #ef4444;
+}
+
+/* Count displays */
 .interests-count,
-.skills-count {
+.skills-count,
+.org-types-count,
+.org-size-count {
   font-size: var(--font-size-sm);
   color: var(--accent-green);
   font-weight: var(--font-weight-medium);
+}
+
+.org-types-count {
+  color: var(--accent-purple);
+}
+
+.org-size-count {
+  color: var(--accent-purple);
 }
 
 /* Buttons */
@@ -317,12 +557,16 @@
   }
 
   .interests-container,
-  .skills-container {
+  .skills-container,
+  .org-types-container,
+  .org-size-container {
     gap: var(--spacing-1);
   }
 
   .interest-tag,
-  .skill-tag {
+  .skill-tag,
+  .org-type-tag,
+  .org-size-tag {
     font-size: var(--font-size-xs);
     padding: var(--spacing-1) var(--spacing-2);
   }
@@ -342,7 +586,9 @@
   }
 
   .interests-container,
-  .skills-container {
+  .skills-container,
+  .org-types-container,
+  .org-size-container {
     justify-content: center;
   }
 }
@@ -355,7 +601,9 @@
 }
 
 .interest-tag:focus,
-.skill-tag:focus {
+.skill-tag:focus,
+.org-type-tag:focus,
+.org-size-tag:focus {
   outline: 2px solid var(--focus);
   outline-offset: 2px;
 }
@@ -369,7 +617,9 @@
 
   .profile-setup-submit-btn:hover,
   .interest-tag,
-  .skill-tag {
+  .skill-tag,
+  .org-type-tag,
+  .org-size-tag {
     transform: none;
   }
 }

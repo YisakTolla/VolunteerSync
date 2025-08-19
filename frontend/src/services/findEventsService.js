@@ -1,21 +1,95 @@
-// frontend/src/services/findEventsService.js
+// frontend/src/services/findEventService.js
 
 const API_BASE_URL = 'http://localhost:8080/api';
 
-class FindEventsService {
+class FindEventService {
   
   /**
-   * Find all events
+   * Find all events (using multiple fallback strategies)
    */
   async findAllEvents() {
     try {
-      const response = await fetch(`${API_BASE_URL}/events`);
-      if (!response.ok) {
+      console.log(`Trying primary endpoint: ${API_BASE_URL}/events`);
+      const response = await fetch(`${API_BASE_URL}/events`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log(`✅ Success with primary endpoint`, data);
+        return Array.isArray(data) ? data : [];
+      } else {
+        console.log(`❌ Primary endpoint failed: ${response.status}: ${response.statusText}`);
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
-      return await response.json();
     } catch (error) {
       console.error('Error fetching all events:', error);
+      
+      // Fallback strategies
+      const fallbackEndpoints = [
+        'events/active',
+        'events/upcoming',
+        'events/featured'
+      ];
+
+      for (const endpoint of fallbackEndpoints) {
+        try {
+          console.log(`🔄 Trying fallback: ${API_BASE_URL}/${endpoint}`);
+          const response = await fetch(`${API_BASE_URL}/${endpoint}`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            }
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            console.log(`✅ Success with fallback: ${endpoint}`, data);
+            return Array.isArray(data) ? data : [];
+          }
+        } catch (fallbackError) {
+          console.log(`❌ Fallback failed: ${endpoint}`, fallbackError.message);
+          continue;
+        }
+      }
+
+      // Final fallback - return empty array to prevent crashes
+      console.warn('⚠️ All event endpoints failed, returning empty array');
+      return [];
+    }
+  }
+
+  /**
+   * Find event by ID
+   */
+  async findEventById(id) {
+    try {
+      console.log(`Fetching event with ID: ${id}`);
+      const response = await fetch(`${API_BASE_URL}/events/${id}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log(`✅ Success fetching event:`, data);
+        return data;
+      } else if (response.status === 404) {
+        throw new Error('Event not found');
+      } else {
+        console.log(`❌ Failed to fetch event: ${response.status}: ${response.statusText}`);
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+    } catch (error) {
+      console.error('Error fetching event by ID:', error);
       throw error;
     }
   }
@@ -25,14 +99,18 @@ class FindEventsService {
    */
   async findAllEventsWithPagination(page = 0, size = 10, sortBy = 'startDate', sortDirection = 'asc') {
     try {
-      const params = new URLSearchParams({
-        page: page.toString(),
-        size: size.toString(),
-        sortBy,
-        sortDirection
+      const response = await fetch(`${API_BASE_URL}/events/search?page=${page}&size=${size}&sortBy=${sortBy}&sortDirection=${sortDirection}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          searchTerm: '',
+          eventType: '',
+          location: '',
+          skillLevel: ''
+        })
       });
-      
-      const response = await fetch(`${API_BASE_URL}/events/paginated?${params}`);
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
@@ -44,30 +122,11 @@ class FindEventsService {
   }
 
   /**
-   * Find event by ID
-   */
-  async findEventById(id) {
-    try {
-      const response = await fetch(`${API_BASE_URL}/events/${id}`);
-      if (!response.ok) {
-        if (response.status === 404) {
-          return null;
-        }
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      return await response.json();
-    } catch (error) {
-      console.error(`Error fetching event ${id}:`, error);
-      throw error;
-    }
-  }
-
-  /**
    * Search events by title
    */
   async findEventsByTitle(title) {
     try {
-      const params = new URLSearchParams({ title });
+      const params = new URLSearchParams({ q: title });
       const response = await fetch(`${API_BASE_URL}/events/search/title?${params}`);
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -80,17 +139,43 @@ class FindEventsService {
   }
 
   /**
-   * Find events by organization
+   * Find events by type
    */
-  async findEventsByOrganization(organizationId) {
+  async findEventsByType(eventType) {
     try {
-      const response = await fetch(`${API_BASE_URL}/events/organization/${organizationId}`);
+      const response = await fetch(`${API_BASE_URL}/events/type/${encodeURIComponent(eventType)}`);
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
       return await response.json();
     } catch (error) {
-      console.error('Error finding events by organization:', error);
+      console.error('Error finding events by type:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Find events by location
+   */
+  async findEventsByLocation(city, state) {
+    try {
+      let location = '';
+      if (city && state) {
+        location = `${city}, ${state}`;
+      } else if (city) {
+        location = city;
+      } else if (state) {
+        location = state;
+      }
+      
+      const params = new URLSearchParams({ q: location });
+      const response = await fetch(`${API_BASE_URL}/events/search/location?${params}`);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error finding events by location:', error);
       throw error;
     }
   }
@@ -112,83 +197,17 @@ class FindEventsService {
   }
 
   /**
-   * Find past events
+   * Find events by organization
    */
-  async findPastEvents() {
+  async findEventsByOrganization(organizationId) {
     try {
-      const response = await fetch(`${API_BASE_URL}/events/past`);
+      const response = await fetch(`${API_BASE_URL}/events/organization/${organizationId}`);
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
       return await response.json();
     } catch (error) {
-      console.error('Error fetching past events:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Find ongoing events
-   */
-  async findOngoingEvents() {
-    try {
-      const response = await fetch(`${API_BASE_URL}/events/ongoing`);
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching ongoing events:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Find events by status
-   */
-  async findEventsByStatus(status) {
-    try {
-      const params = new URLSearchParams({ status });
-      const response = await fetch(`${API_BASE_URL}/events/search/status?${params}`);
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      return await response.json();
-    } catch (error) {
-      console.error('Error finding events by status:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Find active events
-   */
-  async findActiveEvents() {
-    try {
-      const response = await fetch(`${API_BASE_URL}/events/active`);
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching active events:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Find events by type
-   */
-  async findEventsByType(eventType) {
-    try {
-      const params = new URLSearchParams({ type: eventType });
-      const response = await fetch(`${API_BASE_URL}/events/search/type?${params}`);
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      return await response.json();
-    } catch (error) {
-      console.error('Error finding events by type:', error);
+      console.error('Error finding events by organization:', error);
       throw error;
     }
   }
@@ -198,8 +217,7 @@ class FindEventsService {
    */
   async findEventsBySkillLevel(skillLevel) {
     try {
-      const params = new URLSearchParams({ skillLevel });
-      const response = await fetch(`${API_BASE_URL}/events/search/skill-level?${params}`);
+      const response = await fetch(`${API_BASE_URL}/events/skill-level/${encodeURIComponent(skillLevel)}`);
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
@@ -227,123 +245,6 @@ class FindEventsService {
   }
 
   /**
-   * Find in-person events
-   */
-  async findInPersonEvents() {
-    try {
-      const response = await fetch(`${API_BASE_URL}/events/in-person`);
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching in-person events:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Find events by location
-   */
-  async findEventsByLocation(city, state) {
-    try {
-      const params = new URLSearchParams();
-      if (city) params.append('city', city);
-      if (state) params.append('state', state);
-      
-      const response = await fetch(`${API_BASE_URL}/events/search/location?${params}`);
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      return await response.json();
-    } catch (error) {
-      console.error('Error finding events by location:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Find events by time of day
-   */
-  async findEventsByTimeOfDay(timeOfDay) {
-    try {
-      const params = new URLSearchParams({ timeOfDay });
-      const response = await fetch(`${API_BASE_URL}/events/search/time-of-day?${params}`);
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      return await response.json();
-    } catch (error) {
-      console.error('Error finding events by time of day:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Find weekend events
-   */
-  async findWeekendEvents() {
-    try {
-      const response = await fetch(`${API_BASE_URL}/events/weekend`);
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching weekend events:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Find weekday events
-   */
-  async findWeekdayEvents() {
-    try {
-      const response = await fetch(`${API_BASE_URL}/events/weekday`);
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching weekday events:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Find recurring events
-   */
-  async findRecurringEvents() {
-    try {
-      const response = await fetch(`${API_BASE_URL}/events/recurring`);
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching recurring events:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Find events with flexible timing
-   */
-  async findFlexibleTimingEvents() {
-    try {
-      const response = await fetch(`${API_BASE_URL}/events/flexible-timing`);
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching flexible timing events:', error);
-      throw error;
-    }
-  }
-
-  /**
    * Find events by date range
    */
   async findEventsByDateRange(startDate, endDate) {
@@ -352,7 +253,7 @@ class FindEventsService {
       if (startDate) params.append('startDate', startDate);
       if (endDate) params.append('endDate', endDate);
       
-      const response = await fetch(`${API_BASE_URL}/events/search/date-range?${params}`);
+      const response = await fetch(`${API_BASE_URL}/events/date-range?${params}`);
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
@@ -364,148 +265,28 @@ class FindEventsService {
   }
 
   /**
-   * Find today's events
-   */
-  async findTodaysEvents() {
-    try {
-      const response = await fetch(`${API_BASE_URL}/events/today`);
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching today\'s events:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Find this week's events
-   */
-  async findThisWeeksEvents() {
-    try {
-      const response = await fetch(`${API_BASE_URL}/events/this-week`);
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching this week\'s events:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Find this month's events
-   */
-  async findThisMonthsEvents() {
-    try {
-      const response = await fetch(`${API_BASE_URL}/events/this-month`);
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching this month\'s events:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Find available events (not full)
-   */
-  async findAvailableEvents() {
-    try {
-      const response = await fetch(`${API_BASE_URL}/events/available`);
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching available events:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Find urgent events (need volunteers, happening soon)
-   */
-  async findUrgentEvents() {
-    try {
-      const response = await fetch(`${API_BASE_URL}/events/urgent`);
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching urgent events:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Find beginner-friendly events
-   */
-  async findBeginnerFriendlyEvents() {
-    try {
-      const response = await fetch(`${API_BASE_URL}/events/beginner-friendly`);
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching beginner-friendly events:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Find specialized skill events
-   */
-  async findSpecializedSkillEvents() {
-    try {
-      const response = await fetch(`${API_BASE_URL}/events/specialized-skills`);
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching specialized skill events:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Find featured events (from verified organizations)
-   */
-  async findFeaturedEvents() {
-    try {
-      const response = await fetch(`${API_BASE_URL}/events/featured`);
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching featured events:', error);
-      throw error;
-    }
-  }
-
-  /**
    * Search events with multiple filters
    */
   async searchEvents(filters = {}) {
     try {
-      const params = new URLSearchParams();
+      const searchRequest = {
+        searchTerm: filters.title || '',
+        eventType: filters.eventType || '',
+        location: filters.location || '',
+        skillLevel: filters.skillLevel || '',
+        isVirtual: filters.isVirtual,
+        startDate: filters.startDate,
+        endDate: filters.endDate
+      };
       
-      // Add all provided filters to params
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value !== null && value !== undefined && value !== '') {
-          params.append(key, value.toString());
-        }
+      const response = await fetch(`${API_BASE_URL}/events/search`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(searchRequest)
       });
       
-      const response = await fetch(`${API_BASE_URL}/events/search?${params}`);
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
@@ -517,62 +298,458 @@ class FindEventsService {
   }
 
   /**
+   * Get events sorted by start date
+   */
+  async findEventsSortedByDate() {
+    try {
+      return await this.findAllEvents();
+    } catch (error) {
+      console.error('Error fetching events sorted by date:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get featured events
+   */
+  async findFeaturedEvents() {
+    try {
+      const response = await fetch(`${API_BASE_URL}/events/featured`);
+      if (!response.ok) {
+        return await this.findUpcomingEvents();
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching featured events:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * NEW METHOD - Find events from newly created organizations
+   * Helps users discover events from organizations that were recently established
+   */
+  async findEventsFromNewOrganizations(days = 30, limit = 50) {
+    try {
+      console.log(`🔍 Searching for events from organizations created within the last ${days} days`);
+      
+      // Strategy 1: Try dedicated endpoint for events from new organizations
+      try {
+        const response = await fetch(`${API_BASE_URL}/events/from-new-organizations?days=${days}&limit=${limit}`);
+        if (response.ok) {
+          const data = await response.json();
+          console.log(`✅ Found ${data.length} events from new organizations`);
+          return Array.isArray(data) ? data : [];
+        } else {
+          console.log(`❌ New organizations events endpoint failed: ${response.status}`);
+        }
+      } catch (endpointError) {
+        console.log(`❌ New organizations events endpoint error:`, endpointError.message);
+      }
+      
+      // Strategy 2: Get recently created organizations and find their events
+      try {
+        // Import the organization service to get new organizations
+        // Note: In a real implementation, you might want to inject this dependency
+        const organizationResponse = await fetch(`${API_BASE_URL}/organization-profiles/recently-created?days=${days}`);
+        if (organizationResponse.ok) {
+          const newOrganizations = await organizationResponse.json();
+          console.log(`📋 Found ${newOrganizations.length} recently created organizations`);
+          
+          // Get events for each new organization
+          const eventPromises = newOrganizations.map(async (org) => {
+            try {
+              const orgEvents = await this.findEventsByOrganization(org.id || org.organizationId);
+              return orgEvents.map(event => ({
+                ...event,
+                organizationInfo: {
+                  id: org.id || org.organizationId,
+                  name: org.organizationName || org.name,
+                  isNew: true,
+                  createdDate: org.createdDate || org.registrationDate
+                }
+              }));
+            } catch (error) {
+              console.log(`❌ Failed to get events for organization ${org.id}:`, error.message);
+              return [];
+            }
+          });
+          
+          const eventsArrays = await Promise.all(eventPromises);
+          const allEvents = eventsArrays.flat();
+          
+          // Sort by event start date and limit results
+          const sortedEvents = allEvents
+            .sort((a, b) => new Date(a.startDate || a.eventDate) - new Date(b.startDate || b.eventDate))
+            .slice(0, limit);
+          
+          console.log(`✅ Found ${sortedEvents.length} events from ${newOrganizations.length} new organizations`);
+          return sortedEvents;
+        }
+      } catch (orgError) {
+        console.log(`❌ Failed to get new organizations:`, orgError.message);
+      }
+      
+      // Strategy 3: Use general search with organization creation date filter
+      try {
+        const searchRequest = {
+          searchTerm: '',
+          eventType: '',
+          location: '',
+          skillLevel: '',
+          organizationCreatedAfter: new Date(Date.now() - (days * 24 * 60 * 60 * 1000)).toISOString()
+        };
+        
+        const response = await fetch(`${API_BASE_URL}/events/search?page=0&size=${limit}&sortBy=startDate&sortDirection=asc`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(searchRequest)
+        });
+        
+        if (response.ok) {
+          const searchData = await response.json();
+          const events = searchData.content || searchData || [];
+          console.log(`✅ Found events using search with organization filter`);
+          return events;
+        }
+      } catch (searchError) {
+        console.log(`❌ Search with organization filter failed:`, searchError.message);
+      }
+      
+      // Final fallback: Get upcoming events and mark them as potentially from new organizations
+      console.log(`🔄 Using upcoming events as final fallback`);
+      const upcomingEvents = await this.findUpcomingEvents();
+      return upcomingEvents.slice(0, limit);
+      
+    } catch (error) {
+      console.error('Error fetching events from new organizations:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * NEW METHOD - Find recent events from newly created organizations
+   * More targeted search for events created recently by new organizations
+   */
+  async findRecentEventsFromNewOrganizations({
+    organizationAgeDays = 30,
+    eventAgeDays = 14,
+    limit = 30,
+    eventType = '',
+    location = '',
+    sortBy = 'startDate',
+    sortDirection = 'asc'
+  } = {}) {
+    try {
+      console.log(`🔍 Searching for events created within ${eventAgeDays} days by organizations created within ${organizationAgeDays} days`);
+      
+      // Calculate date thresholds
+      const orgCreatedAfter = new Date(Date.now() - (organizationAgeDays * 24 * 60 * 60 * 1000));
+      const eventCreatedAfter = new Date(Date.now() - (eventAgeDays * 24 * 60 * 60 * 1000));
+      
+      // Strategy 1: Try dedicated endpoint with advanced filters
+      try {
+        const params = new URLSearchParams({
+          orgAgeDays: organizationAgeDays.toString(),
+          eventAgeDays: eventAgeDays.toString(),
+          limit: limit.toString(),
+          sortBy,
+          sortDirection
+        });
+        
+        if (eventType) params.append('eventType', eventType);
+        if (location) params.append('location', location);
+        
+        const response = await fetch(`${API_BASE_URL}/events/recent-from-new-organizations?${params}`);
+        if (response.ok) {
+          const data = await response.json();
+          console.log(`✅ Found ${data.length} recent events from new organizations`);
+          return Array.isArray(data) ? data : [];
+        }
+      } catch (endpointError) {
+        console.log(`❌ Recent events from new organizations endpoint failed:`, endpointError.message);
+      }
+      
+      // Strategy 2: Combine organization and event searches
+      try {
+        // First get new organizations
+        const newOrgsResponse = await fetch(`${API_BASE_URL}/organization-profiles/recently-created?days=${organizationAgeDays}`);
+        if (newOrgsResponse.ok) {
+          const newOrganizations = await newOrgsResponse.json();
+          console.log(`📋 Found ${newOrganizations.length} new organizations`);
+          
+          // Then get recent events from those organizations
+          const recentEventsPromises = newOrganizations.map(async (org) => {
+            try {
+              // Get all events from this organization
+              const orgEvents = await this.findEventsByOrganization(org.id || org.organizationId);
+              
+              // Filter for events created recently
+              const recentEvents = orgEvents.filter(event => {
+                const eventCreated = new Date(event.createdDate || event.publishedDate);
+                return eventCreated >= eventCreatedAfter;
+              });
+              
+              // Add organization metadata
+              return recentEvents.map(event => ({
+                ...event,
+                organizationInfo: {
+                  id: org.id || org.organizationId,
+                  name: org.organizationName || org.name,
+                  isNew: true,
+                  createdDate: org.createdDate || org.registrationDate,
+                  daysSinceCreated: Math.floor((Date.now() - new Date(org.createdDate || org.registrationDate)) / (1000 * 60 * 60 * 24))
+                }
+              }));
+            } catch (error) {
+              console.log(`❌ Failed to get recent events for organization ${org.id}:`, error.message);
+              return [];
+            }
+          });
+          
+          const eventsArrays = await Promise.all(recentEventsPromises);
+          let allEvents = eventsArrays.flat();
+          
+          // Apply additional filters
+          if (eventType) {
+            allEvents = allEvents.filter(event => 
+              event.eventType?.toLowerCase() === eventType.toLowerCase() ||
+              event.type?.toLowerCase() === eventType.toLowerCase()
+            );
+          }
+          
+          if (location) {
+            allEvents = allEvents.filter(event => 
+              event.location?.toLowerCase().includes(location.toLowerCase()) ||
+              event.city?.toLowerCase().includes(location.toLowerCase()) ||
+              event.state?.toLowerCase().includes(location.toLowerCase())
+            );
+          }
+          
+          // Sort and limit results
+          const sortedEvents = allEvents
+            .sort((a, b) => {
+              const aDate = new Date(a[sortBy] || a.startDate || a.eventDate);
+              const bDate = new Date(b[sortBy] || b.startDate || b.eventDate);
+              return sortDirection === 'desc' ? bDate - aDate : aDate - bDate;
+            })
+            .slice(0, limit);
+          
+          console.log(`✅ Found ${sortedEvents.length} recent events from new organizations`);
+          return sortedEvents;
+        }
+      } catch (combinedError) {
+        console.log(`❌ Combined search strategy failed:`, combinedError.message);
+      }
+      
+      // Final fallback: Get events from new organizations without recency filter
+      console.log(`🔄 Falling back to general new organization events`);
+      return await this.findEventsFromNewOrganizations(organizationAgeDays, limit);
+      
+    } catch (error) {
+      console.error('Error fetching recent events from new organizations:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * NEW METHOD - Refresh events from new organizations
+   * Forces a fresh fetch to ensure users see the latest events from newly created organizations
+   */
+  async refreshEventsFromNewOrganizations(organizationMaxAge = 7, limit = 50) {
+    try {
+      console.log(`🔄 Refreshing events from organizations created within ${organizationMaxAge} days`);
+      
+      // Add cache-busting parameter
+      const cacheBuster = new Date().getTime();
+      
+      // Try multiple endpoints with cache busting
+      const refreshEndpoints = [
+        `events/from-new-organizations?days=${organizationMaxAge}&limit=${limit}&_t=${cacheBuster}`,
+        `events/recent-from-new-organizations?orgAgeDays=${organizationMaxAge}&limit=${limit}&_t=${cacheBuster}`,
+        `events/by-new-organizations?maxAge=${organizationMaxAge}&limit=${limit}&_t=${cacheBuster}`
+      ];
+      
+      for (const endpoint of refreshEndpoints) {
+        try {
+          console.log(`🔄 Trying fresh data from: ${API_BASE_URL}/${endpoint}`);
+          const response = await fetch(`${API_BASE_URL}/${endpoint}`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'Cache-Control': 'no-cache',
+              'Pragma': 'no-cache'
+            }
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            console.log(`✅ Successfully refreshed events from ${endpoint}:`, data.length);
+            return Array.isArray(data) ? data : [];
+          }
+        } catch (endpointError) {
+          console.log(`❌ Refresh failed for ${endpoint}:`, endpointError.message);
+          continue;
+        }
+      }
+      
+      // Fallback: Use the standard method with forced refresh
+      console.log(`🔄 Using standard method with forced refresh`);
+      return await this.findEventsFromNewOrganizations(organizationMaxAge, limit);
+      
+    } catch (error) {
+      console.error('Error refreshing events from new organizations:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * NEW METHOD - Find events from a specific newly created organization
+   * Helps users find events after they've just created an organization
+   */
+  async findEventsFromNewlyCreatedOrganization(organizationId, timeWindowHours = 24) {
+    try {
+      console.log(`🔍 Searching for events from newly created organization ${organizationId} within ${timeWindowHours} hours`);
+      
+      // Strategy 1: Get all events from the organization
+      try {
+        const orgEvents = await this.findEventsByOrganization(organizationId);
+        
+        // Filter for events created within the time window
+        const timeWindowMs = timeWindowHours * 60 * 60 * 1000;
+        const cutoffTime = new Date(Date.now() - timeWindowMs);
+        
+        const recentEvents = orgEvents.filter(event => {
+          const eventCreated = new Date(event.createdDate || event.publishedDate || event.startDate);
+          return eventCreated >= cutoffTime;
+        });
+        
+        console.log(`✅ Found ${recentEvents.length} recent events from organization ${organizationId}`);
+        return recentEvents;
+        
+      } catch (orgError) {
+        console.log(`❌ Failed to get events for organization ${organizationId}:`, orgError.message);
+      }
+      
+      // Strategy 2: Search by organization ID in general search
+      try {
+        const searchRequest = {
+          searchTerm: '',
+          eventType: '',
+          location: '',
+          skillLevel: '',
+          organizationId: organizationId
+        };
+        
+        const response = await fetch(`${API_BASE_URL}/events/search?page=0&size=50&sortBy=createdDate&sortDirection=desc`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(searchRequest)
+        });
+        
+        if (response.ok) {
+          const searchData = await response.json();
+          const events = searchData.content || searchData || [];
+          console.log(`✅ Found events using organization search`);
+          return events;
+        }
+      } catch (searchError) {
+        console.log(`❌ Organization search failed:`, searchError.message);
+      }
+      
+      // Strategy 3: Refresh and try again
+      console.log(`🔄 Refreshing data and searching again...`);
+      const refreshedEvents = await this.refreshEventsFromNewOrganizations(1, 100);
+      const orgEvents = refreshedEvents.filter(event => 
+        event.organizationId === organizationId ||
+        event.organizationInfo?.id === organizationId
+      );
+      
+      console.log(`✅ Found ${orgEvents.length} events after refresh`);
+      return orgEvents;
+      
+    } catch (error) {
+      console.error('Error finding events from newly created organization:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get event types
+   */
+  async getEventTypes() {
+    try {
+      return [
+        'Community Service', 'Fundraising', 'Education', 'Environment', 
+        'Healthcare', 'Animal Welfare', 'Disaster Relief', 'Arts & Culture',
+        'Sports & Recreation', 'Senior Services', 'Youth Development',
+        'Mental Health', 'Technology', 'Religious', 'International'
+      ];
+    } catch (error) {
+      console.error('Error fetching event types:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get skill levels
+   */
+  async getSkillLevels() {
+    try {
+      return [
+        'No Experience Required', 'Beginner', 'Intermediate', 
+        'Advanced', 'Expert', 'Professional'
+      ];
+    } catch (error) {
+      console.error('Error fetching skill levels:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Advanced search with multiple criteria
    */
   async advancedSearch({
     title,
     eventType,
-    status,
-    skillLevel,
-    duration,
-    isVirtual,
+    location,
     city,
     state,
-    timeOfDay,
-    isRecurring,
-    hasFlexibleTiming,
+    skillLevel,
+    isVirtual,
     startDate,
     endDate,
     organizationId,
-    minVolunteers,
-    maxVolunteers,
-    minHours,
-    maxHours,
     sortBy = 'startDate',
     sortDirection = 'asc',
     page = 0,
     size = 20
   } = {}) {
     try {
-      const params = new URLSearchParams();
+      const searchRequest = {
+        searchTerm: title || '',
+        eventType: eventType || '',
+        location: location || (city && state ? `${city}, ${state}` : city || state || ''),
+        skillLevel: skillLevel || '',
+        isVirtual: isVirtual,
+        startDate: startDate,
+        endDate: endDate,
+        organizationId: organizationId
+      };
       
-      // Add search filters
-      if (title) params.append('title', title);
-      if (eventType) params.append('eventType', eventType);
-      if (status) params.append('status', status);
-      if (skillLevel) params.append('skillLevel', skillLevel);
-      if (duration) params.append('duration', duration);
-      if (isVirtual !== null && isVirtual !== undefined) params.append('isVirtual', isVirtual);
-      if (city) params.append('city', city);
-      if (state) params.append('state', state);
-      if (timeOfDay) params.append('timeOfDay', timeOfDay);
-      if (isRecurring !== null && isRecurring !== undefined) params.append('isRecurring', isRecurring);
-      if (hasFlexibleTiming !== null && hasFlexibleTiming !== undefined) params.append('hasFlexibleTiming', hasFlexibleTiming);
-      if (startDate) params.append('startDate', startDate);
-      if (endDate) params.append('endDate', endDate);
-      if (organizationId) params.append('organizationId', organizationId);
-      if (minVolunteers !== null && minVolunteers !== undefined) params.append('minVolunteers', minVolunteers);
-      if (maxVolunteers !== null && maxVolunteers !== undefined) params.append('maxVolunteers', maxVolunteers);
-      if (minHours !== null && minHours !== undefined) params.append('minHours', minHours);
-      if (maxHours !== null && maxHours !== undefined) params.append('maxHours', maxHours);
+      const response = await fetch(`${API_BASE_URL}/events/search?page=${page}&size=${size}&sortBy=${sortBy}&sortDirection=${sortDirection}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(searchRequest)
+      });
       
-      // Add pagination and sorting
-      params.append('sortBy', sortBy);
-      params.append('sortDirection', sortDirection);
-      params.append('page', page.toString());
-      params.append('size', size.toString());
-      
-      const response = await fetch(`${API_BASE_URL}/events/advanced-search?${params}`);
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
@@ -584,114 +761,27 @@ class FindEventsService {
   }
 
   /**
-   * Get events sorted by date (nearest first)
+   * Apply to event (placeholder)
    */
-  async findEventsSortedByDate() {
+  async applyToEvent(eventId, applicationData) {
     try {
-      const response = await fetch(`${API_BASE_URL}/events/sorted/date`);
+      const response = await fetch(`${API_BASE_URL}/applications`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          eventId: eventId,
+          message: applicationData.message || ''
+        })
+      });
+      
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
       return await response.json();
     } catch (error) {
-      console.error('Error fetching events sorted by date:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Get events sorted by title
-   */
-  async findEventsSortedByTitle() {
-    try {
-      const response = await fetch(`${API_BASE_URL}/events/sorted/title`);
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching events sorted by title:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Get newest events
-   */
-  async findNewestEvents() {
-    try {
-      const response = await fetch(`${API_BASE_URL}/events/sorted/newest`);
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching newest events:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Get events sorted by capacity (largest first)
-   */
-  async findEventsByCapacity() {
-    try {
-      const response = await fetch(`${API_BASE_URL}/events/sorted/capacity`);
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching events sorted by capacity:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Get events sorted by available spots
-   */
-  async findEventsByAvailableSpots() {
-    try {
-      const response = await fetch(`${API_BASE_URL}/events/sorted/available-spots`);
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching events sorted by available spots:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Find similar events to a given event
-   */
-  async findSimilarEvents(eventId) {
-    try {
-      const response = await fetch(`${API_BASE_URL}/events/${eventId}/similar`);
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      return await response.json();
-    } catch (error) {
-      console.error('Error finding similar events:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Get recommended events for user skill level
-   */
-  async findRecommendedEvents(userSkillLevel) {
-    try {
-      const params = new URLSearchParams({ skillLevel: userSkillLevel });
-      const response = await fetch(`${API_BASE_URL}/events/recommended?${params}`);
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching recommended events:', error);
+      console.error('Error applying to event:', error);
       throw error;
     }
   }
@@ -701,241 +791,26 @@ class FindEventsService {
    */
   async getEventStats() {
     try {
-      const response = await fetch(`${API_BASE_URL}/events/stats`);
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      return await response.json();
+      const [upcoming, featured, virtual] = await Promise.all([
+        this.findUpcomingEvents(),
+        this.findFeaturedEvents(),
+        this.findVirtualEvents()
+      ]);
+
+      return {
+        total: upcoming.length + featured.length,
+        upcoming: upcoming.length,
+        featured: featured.length,
+        virtual: virtual.length,
+        lastUpdated: new Date().toISOString()
+      };
     } catch (error) {
       console.error('Error fetching event stats:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Get event types (for filter dropdowns)
-   */
-  async getEventTypes() {
-    try {
-      const response = await fetch(`${API_BASE_URL}/events/types`);
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching event types:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Get skill levels (for filter dropdowns)
-   */
-  async getSkillLevels() {
-    try {
-      const response = await fetch(`${API_BASE_URL}/events/skill-levels`);
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching skill levels:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Get event durations (for filter dropdowns)
-   */
-  async getEventDurations() {
-    try {
-      const response = await fetch(`${API_BASE_URL}/events/durations`);
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching event durations:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Get event statuses (for filter dropdowns)
-   */
-  async getEventStatuses() {
-    try {
-      const response = await fetch(`${API_BASE_URL}/events/statuses`);
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching event statuses:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Get event locations (for filter dropdowns)
-   */
-  async getEventLocations() {
-    try {
-      const response = await fetch(`${API_BASE_URL}/events/locations`);
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching event locations:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Check if user can register for event
-   */
-  async canRegisterForEvent(eventId, userId) {
-    try {
-      const params = new URLSearchParams({ userId: userId.toString() });
-      const response = await fetch(`${API_BASE_URL}/events/${eventId}/can-register?${params}`);
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      const result = await response.json();
-      return result.canRegister;
-    } catch (error) {
-      console.error('Error checking registration eligibility:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Get events happening near a location
-   */
-  async findEventsNearLocation(latitude, longitude, radiusKm = 25) {
-    try {
-      const params = new URLSearchParams({
-        lat: latitude.toString(),
-        lng: longitude.toString(),
-        radius: radiusKm.toString()
-      });
-      const response = await fetch(`${API_BASE_URL}/events/near?${params}`);
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      return await response.json();
-    } catch (error) {
-      console.error('Error finding events near location:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Get trending events (popular, high registration)
-   */
-  async findTrendingEvents() {
-    try {
-      const response = await fetch(`${API_BASE_URL}/events/trending`);
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching trending events:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Find events by duration category
-   */
-  async findEventsByDuration(duration) {
-    try {
-      const params = new URLSearchParams({ duration });
-      const response = await fetch(`${API_BASE_URL}/events/search/duration?${params}`);
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      return await response.json();
-    } catch (error) {
-      console.error('Error finding events by duration:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Find short events (1-2 hours)
-   */
-  async findShortEvents() {
-    return this.findEventsByDuration('SHORT');
-  }
-
-  /**
-   * Find long-term commitment events
-   */
-  async findLongTermEvents() {
-    try {
-      const response = await fetch(`${API_BASE_URL}/events/long-term`);
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching long-term events:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Find events by volunteer capacity range
-   */
-  async findEventsByVolunteerCapacity(minCapacity, maxCapacity) {
-    try {
-      const params = new URLSearchParams();
-      if (minCapacity !== null && minCapacity !== undefined) {
-        params.append('minCapacity', minCapacity.toString());
-      }
-      if (maxCapacity !== null && maxCapacity !== undefined) {
-        params.append('maxCapacity', maxCapacity.toString());
-      }
-      
-      const response = await fetch(`${API_BASE_URL}/events/search/capacity?${params}`);
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      return await response.json();
-    } catch (error) {
-      console.error('Error finding events by capacity:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Find events requiring specific time commitment
-   */
-  async findEventsByHours(minHours, maxHours) {
-    try {
-      const params = new URLSearchParams();
-      if (minHours !== null && minHours !== undefined) {
-        params.append('minHours', minHours.toString());
-      }
-      if (maxHours !== null && maxHours !== undefined) {
-        params.append('maxHours', maxHours.toString());
-      }
-      
-      const response = await fetch(`${API_BASE_URL}/events/search/hours?${params}`);
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      return await response.json();
-    } catch (error) {
-      console.error('Error finding events by hours:', error);
       throw error;
     }
   }
 }
 
 // Export singleton instance
-const findEventsService = new FindEventsService();
-export default findEventsService;
+const findEventService = new FindEventService();
+export default findEventService;

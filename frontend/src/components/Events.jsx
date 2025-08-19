@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom"; // ADD THIS IMPORT
 import {
   Search,
   MapPin,
@@ -15,6 +16,8 @@ import "./Events.css";
 import findEventsService from "../services/findEventsService";
 
 const Events = () => {
+  const navigate = useNavigate(); // ADD THIS LINE
+
   const [searchTerm, setSearchTerm] = useState("");
   const [locationSearchTerm, setLocationSearchTerm] = useState("");
   const [selectedEventTypes, setSelectedEventTypes] = useState([]);
@@ -37,6 +40,11 @@ const Events = () => {
   const [itemsPerPage] = useState(20);
   const [totalPages, setTotalPages] = useState(1);
   const [paginatedEvents, setPaginatedEvents] = useState([]);
+
+  // ADD THIS FUNCTION FOR HANDLING CARD CLICKS
+  const handleEventCardClick = (eventId) => {
+    navigate(`/find-events/${eventId}`);
+  };
 
   // Enum-to-Display-Name Translation Function
   const getEventTypeDisplayName = (enumValue) => {
@@ -65,6 +73,7 @@ const Events = () => {
       FESTIVAL_FAIR: "Festival & Fair",
       WORKSHOP_TRAINING: "Workshop & Training",
       BLOOD_DRIVE: "Blood Drive",
+      COMMUNITY_BUILDING: "Construction & Building"
     };
 
     return eventTypeMap[enumValue] || enumValue;
@@ -135,6 +144,7 @@ const Events = () => {
     "Basel, Switzerland",
     "Other"
   ];
+  
   const dateOptions = [
     "Today",
     "Tomorrow",
@@ -1007,7 +1017,9 @@ const Events = () => {
                       key={event.id}
                       className={`event-card ${
                         event.isVirtual ? "virtual" : ""
-                      } ${event.featured ? "featured" : ""}`}
+                      } ${event.featured ? "featured" : ""} clickable`} // ADD 'clickable' CLASS
+                      onClick={() => handleEventCardClick(event.id)} // ADD CLICK HANDLER
+                      style={{ cursor: "pointer" }} // ADD CURSOR STYLE
                     >
                       {/* Event Card Header with Primary Tags Only */}
                       <div className="event-card-header">

@@ -137,10 +137,14 @@ const formatProfileData = (profileData, userType) => {
     const formattedData = {
       ...baseData,
       organizationName: ensureString(profileData.organizationName),
+      // ✅ NEW: Handle organization type tags (comma-separated string)
       organizationType: ensureString(profileData.organizationType),
+      // ✅ NEW: Handle organization size
+      organizationSize: ensureString(profileData.organizationSize),
       website: ensureString(profileData.website),
       missionStatement: ensureString(profileData.missionStatement || profileData.bio),
-      categories: ensureString(profileData.categories),
+      // ✅ UPDATED: Categories can be derived from organizationType for backward compatibility
+      categories: ensureString(profileData.categories || profileData.organizationType),
       // ✅ FIXED: Convert services array to string
       services: arrayToString(profileData.services),
       profileImageUrl: profileData.profileImageUrl || null,
@@ -153,7 +157,6 @@ const formatProfileData = (profileData, userType) => {
       zipCode: ensureString(profileData.zipCode),
       country: ensureString(profileData.country),
       primaryCategory: ensureString(profileData.primaryCategory),
-      organizationSize: ensureString(profileData.organizationSize),
       languagesSupported: ensureString(profileData.languagesSupported),
       taxExemptStatus: ensureString(profileData.taxExemptStatus),
       // Handle numeric fields properly
@@ -165,7 +168,7 @@ const formatProfileData = (profileData, userType) => {
     return formattedData;
   }
 
-  console.log('📝 Formatted base data:', baseData);
+  console.log('📄 Formatted base data:', baseData);
   return baseData;
 };
 
@@ -197,7 +200,8 @@ const checkProfileCompleteness = (profileData, userType) => {
       profileData.organizationName &&
       profileData.bio &&
       profileData.location &&
-      profileData.categories
+      // ✅ UPDATED: Check for organizationType instead of just categories
+      (profileData.organizationType || profileData.categories)
     );
   }
 
@@ -211,7 +215,7 @@ const checkProfileCompleteness = (profileData, userType) => {
 const createOrUpdateProfile = async (profileData) => {
   try {
     console.log('=== CREATING OR UPDATING PROFILE ===');
-    console.log('🔍 Profile data received:', profileData);
+    console.log('📝 Profile data received:', profileData);
 
     const user = getCurrentUser();
     if (!user) {
@@ -236,6 +240,12 @@ const createOrUpdateProfile = async (profileData) => {
     } else if (userType === 'ORGANIZATION') {
       endpoint = '/organization-profiles/me';
       console.log('🏢 Creating/updating organization profile...');
+      
+      // ✅ NEW: Log organization-specific data for debugging
+      console.log('🏷️ Organization Types:', formattedData.organizationType);
+      console.log('📏 Organization Size:', formattedData.organizationSize);
+      console.log('📂 Categories (backward compatibility):', formattedData.categories);
+      
       response = await profileApi.put(endpoint, formattedData);
     } else {
       throw new Error(`Invalid user type: ${userType}`);
@@ -384,6 +394,12 @@ const fetchMyProfile = async () => {
     }
 
     console.log('Profile fetch response:', response.data);
+
+    // ✅ NEW: Log organization-specific data when fetching
+    if (userType === 'ORGANIZATION') {
+      console.log('🏷️ Fetched Organization Types:', response.data.organizationType);
+      console.log('📏 Fetched Organization Size:', response.data.organizationSize);
+    }
 
     // Check if profile is complete and update local storage
     const isComplete = checkProfileCompleteness(response.data, userType);
@@ -604,7 +620,9 @@ const isProfileComplete = (user = null) => {
     return !!(
       currentUser.organizationName &&
       currentUser.bio &&
-      currentUser.location
+      currentUser.location &&
+      // ✅ UPDATED: Check for organizationType or categories
+      (currentUser.organizationType || currentUser.categories)
     );
   }
 

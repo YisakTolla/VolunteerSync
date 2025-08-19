@@ -4,8 +4,9 @@ import Navbar from './components/Navbar';
 import Home from './components/Home';
 import HowItWorks from './components/HowItWorks';
 import Organizations from './components/Organizations';
-import ViewOrganization from './components/ViewOrganization'; // ADD THIS IMPORT
+import ViewOrganization from './components/ViewOrganization';
 import Events from './components/Events';
+import ViewEvent from './components/ViewEvents'; 
 import About from './components/About';
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
@@ -54,7 +55,6 @@ function App() {
             } 
           />
 
-          {/* ADD THIS NEW ROUTE FOR ORGANIZATION DETAILS */}
           <Route 
             path="/find-organizations/:id" 
             element={
@@ -72,6 +72,18 @@ function App() {
               <>
                 <Navbar />
                 <Events />
+                <Footer />
+              </>
+            } 
+          />
+
+          {/* ADD THIS NEW ROUTE FOR EVENT DETAILS */}
+          <Route 
+            path="/find-events/:id" 
+            element={
+              <>
+                <Navbar />
+                <ViewEvent />
                 <Footer />
               </>
             } 

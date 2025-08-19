@@ -409,6 +409,163 @@ public class OrganizationProfileService {
         return new PageImpl<>(dtos, pageable, profiles.getTotalElements());
     }
 
+    /**
+     * Get recently created organizations
+     * 
+     * @param days  Number of days to look back (default 7)
+     * @param limit Maximum number of organizations to return (default 50)
+     * @return List of recently created organization profiles
+     */
+    public List<OrganizationProfileDTO> getRecentlyCreatedOrganizations(int days, int limit) {
+        try {
+            LocalDateTime cutoffDate = LocalDateTime.now().minusDays(days);
+
+            // Try to find organizations created after the cutoff date
+            List<OrganizationProfile> profiles = organizationProfileRepository
+                    .findByCreatedAtAfterOrderByCreatedAtDesc(cutoffDate);
+
+            // Limit the results
+            List<OrganizationProfile> limitedProfiles = profiles.stream()
+                    .limit(limit)
+                    .collect(Collectors.toList());
+
+            System.out.println(
+                    "Found " + limitedProfiles.size() + " organizations created in the last " + days + " days");
+
+            return limitedProfiles.stream()
+                    .map(this::convertToDTO)
+                    .collect(Collectors.toList());
+
+        } catch (Exception e) {
+            System.err.println("Error fetching recently created organizations: " + e.getMessage());
+            e.printStackTrace();
+
+            // Fallback: Return verified organizations if the main query fails
+            try {
+                List<OrganizationProfileDTO> fallback = getVerifiedOrganizations();
+                return fallback.stream()
+                        .limit(limit)
+                        .collect(Collectors.toList());
+            } catch (Exception fallbackError) {
+                System.err.println("Fallback also failed: " + fallbackError.getMessage());
+                return new ArrayList<>();
+            }
+        }
+    }
+
+    /**
+     * Get recently updated organizations (alternative method)
+     * 
+     * @param days  Number of days to look back
+     * @param limit Maximum number of organizations to return
+     * @return List of recently updated organization profiles
+     */
+    public List<OrganizationProfileDTO> getRecentlyUpdatedOrganizations(int days, int limit) {
+        try {
+            LocalDateTime cutoffDate = LocalDateTime.now().minusDays(days);
+
+            // Find organizations updated after the cutoff date
+            List<OrganizationProfile> profiles = organizationProfileRepository
+                    .findByUpdatedAtAfterOrderByUpdatedAtDesc(cutoffDate);
+
+            // Limit the results
+            List<OrganizationProfile> limitedProfiles = profiles.stream()
+                    .limit(limit)
+                    .collect(Collectors.toList());
+
+            System.out.println(
+                    "Found " + limitedProfiles.size() + " organizations updated in the last " + days + " days");
+
+            return limitedProfiles.stream()
+                    .map(this::convertToDTO)
+                    .collect(Collectors.toList());
+
+        } catch (Exception e) {
+            System.err.println("Error fetching recently updated organizations: " + e.getMessage());
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
+    }
+
+    /**
+     * Find organization by name with flexible matching
+     * 
+     * @param organizationName Name to search for
+     * @return Organization profile if found, null otherwise
+     */
+    public OrganizationProfileDTO findOrganizationByName(String organizationName) {
+        try {
+            // Try exact match first
+            Optional<OrganizationProfile> exactMatch = organizationProfileRepository
+                    .findByOrganizationNameIgnoreCase(organizationName);
+
+            if (exactMatch.isPresent()) {
+                System.out.println("Found exact match for organization: " + organizationName);
+                return convertToDTO(exactMatch.get());
+            }
+
+            // Try partial match
+            List<OrganizationProfile> partialMatches = organizationProfileRepository
+                    .findByOrganizationNameContainingIgnoreCase(organizationName);
+
+            if (!partialMatches.isEmpty()) {
+                System.out.println("Found " + partialMatches.size() + " partial matches for: " + organizationName);
+                // Return the most recently created one
+                OrganizationProfile mostRecent = partialMatches.stream()
+                        .max((o1, o2) -> {
+                            LocalDateTime date1 = o1.getCreatedAt() != null ? o1.getCreatedAt() : LocalDateTime.MIN;
+                            LocalDateTime date2 = o2.getCreatedAt() != null ? o2.getCreatedAt() : LocalDateTime.MIN;
+                            return date1.compareTo(date2);
+                        })
+                        .orElse(partialMatches.get(0));
+
+                return convertToDTO(mostRecent);
+            }
+
+            System.out.println("No organization found with name: " + organizationName);
+            return null;
+
+        } catch (Exception e) {
+            System.err.println("Error finding organization by name: " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    /**
+     * Refresh organization data - forces a new query to the database
+     * 
+     * @param maxAgeMinutes Maximum age of data in minutes before considering it
+     *                      stale
+     * @return List of fresh organization data
+     */
+    public List<OrganizationProfileDTO> refreshOrganizationData(int maxAgeMinutes) {
+        try {
+            LocalDateTime cutoffTime = LocalDateTime.now().minusMinutes(maxAgeMinutes);
+
+            // Get all organizations updated since cutoff time
+            List<OrganizationProfile> freshProfiles = organizationProfileRepository
+                    .findByUpdatedAtAfterOrderByUpdatedAtDesc(cutoffTime);
+
+            if (freshProfiles.isEmpty()) {
+                // If no recent updates, get the most recently created/updated organizations
+                freshProfiles = organizationProfileRepository
+                        .findTop50ByOrderByUpdatedAtDesc();
+            }
+
+            System.out.println("Refreshed organization data: " + freshProfiles.size() + " organizations");
+
+            return freshProfiles.stream()
+                    .map(this::convertToDTO)
+                    .collect(Collectors.toList());
+
+        } catch (Exception e) {
+            System.err.println("Error refreshing organization data: " + e.getMessage());
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
+    }
+
     // ==========================================
     // CATEGORY AND TYPE FILTERING METHODS
     // ==========================================

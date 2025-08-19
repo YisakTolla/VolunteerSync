@@ -21,6 +21,8 @@ const ProfileSetup = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [selectedInterests, setSelectedInterests] = useState([]);
+  const [selectedOrgTypes, setSelectedOrgTypes] = useState([]);
+  const [selectedOrgSize, setSelectedOrgSize] = useState("");
   const [hasExistingProfile, setHasExistingProfile] = useState(false);
   const [formData, setFormData] = useState({
     bio: "",
@@ -30,6 +32,7 @@ const ProfileSetup = () => {
     phoneNumber: "",
     organizationName: "",
     organizationType: "",
+    organizationSize: "",
     website: "",
     missionStatement: "",
     categories: "",
@@ -69,11 +72,45 @@ const ProfileSetup = () => {
     { value: "FUNDRAISING", label: "Fundraising", emoji: "💰" },
     { value: "EVENT_PLANNING", label: "Event Planning", emoji: "🎉" },
     { value: "SOCIAL_MEDIA", label: "Social Media", emoji: "📱" },
-    { value: "WRITING", label: "Writing", emoji: "✍️" },
+    { value: "WRITING", label: "Writing", emoji: "✏️" },
     { value: "PHOTOGRAPHY", label: "Photography", emoji: "📸" },
     { value: "LANGUAGES", label: "Languages", emoji: "🌍" },
     { value: "HEALTHCARE", label: "Healthcare", emoji: "⚕️" },
     { value: "LEGAL", label: "Legal", emoji: "⚖️" },
+  ];
+
+  const organizationTypeOptions = [
+    { value: "education", label: "Education", cssClass: "education" },
+    { value: "environment", label: "Environment", cssClass: "environment" },
+    { value: "healthcare", label: "Healthcare", cssClass: "healthcare" },
+    { value: "animal-welfare", label: "Animal Welfare", cssClass: "animal-welfare" },
+    { value: "community-service", label: "Community Service", cssClass: "community-service" },
+    { value: "human-services", label: "Human Services", cssClass: "human-services" },
+    { value: "arts-culture", label: "Arts & Culture", cssClass: "arts-culture" },
+    { value: "youth-development", label: "Youth Development", cssClass: "youth-development" },
+    { value: "senior-services", label: "Senior Services", cssClass: "senior-services" },
+    { value: "hunger-homelessness", label: "Hunger & Homelessness", cssClass: "hunger-homelessness" },
+    { value: "disaster-relief", label: "Disaster Relief", cssClass: "disaster-relief" },
+    { value: "international", label: "International", cssClass: "international" },
+    { value: "sports-recreation", label: "Sports & Recreation", cssClass: "sports-recreation" },
+    { value: "mental-health", label: "Mental Health", cssClass: "mental-health" },
+    { value: "veterans", label: "Veterans", cssClass: "veterans" },
+    { value: "womens-issues", label: "Women's Issues", cssClass: "womens-issues" },
+    { value: "children-families", label: "Children & Families", cssClass: "children-families" },
+    { value: "disability-services", label: "Disability Services", cssClass: "disability-services" },
+    { value: "religious", label: "Religious", cssClass: "religious" },
+    { value: "political", label: "Political", cssClass: "political" },
+    { value: "lgbtq", label: "LGBTQ+", cssClass: "lgbtq" },
+    { value: "technology", label: "Technology", cssClass: "technology" },
+    { value: "research-advocacy", label: "Research & Advocacy", cssClass: "research-advocacy" },
+    { value: "public-safety", label: "Public Safety", cssClass: "public-safety" },
+  ];
+
+  const organizationSizeOptions = [
+    { value: "small", label: "Small (1-50)", cssClass: "size-small" },
+    { value: "medium", label: "Medium (51-200)", cssClass: "size-medium" },
+    { value: "large", label: "Large (201-1000)", cssClass: "size-large" },
+    { value: "enterprise", label: "Enterprise (1000+)", cssClass: "size-enterprise" },
   ];
 
   const [selectedSkills, setSelectedSkills] = useState([]);
@@ -134,8 +171,8 @@ const ProfileSetup = () => {
           skills: existingData.skills || "",
           phoneNumber: existingData.phoneNumber || "",
           organizationType: existingData.organizationType || "",
+          organizationSize: existingData.organizationSize || "",
           website: existingData.website || "",
-          // ✅ FIXED: Ensure services is always a string
           services: Array.isArray(existingData.services)
             ? existingData.services.join(",")
             : existingData.services || "",
@@ -159,6 +196,20 @@ const ProfileSetup = () => {
               : existingData.skills;
           setSelectedSkills(skills);
         }
+
+        // Parse organization types
+        if (existingData.organizationType) {
+          const orgTypes =
+            typeof existingData.organizationType === "string"
+              ? existingData.organizationType.split(",").map((t) => t.trim())
+              : existingData.organizationType;
+          setSelectedOrgTypes(orgTypes);
+        }
+
+        // Set organization size
+        if (existingData.organizationSize) {
+          setSelectedOrgSize(existingData.organizationSize);
+        }
       } else {
         setHasExistingProfile(false);
         setFormData((prev) => ({
@@ -172,28 +223,6 @@ const ProfileSetup = () => {
       console.error("Error loading existing profile:", error);
       setHasExistingProfile(false);
     }
-  };
-
-  // Function to check if profile is complete
-  const isProfileComplete = (user) => {
-    if (!user) return false;
-
-    // Check if profileComplete flag is set
-    if (user.profileComplete === true) {
-      return true;
-    }
-
-    // For volunteer users
-    if (user.userType === "VOLUNTEER") {
-      return !!(user.firstName && user.lastName && user.bio && user.location);
-    }
-
-    // For organization users
-    if (user.userType === "ORGANIZATION") {
-      return !!(user.organizationName && user.bio && user.location);
-    }
-
-    return false;
   };
 
   const handleInputChange = (e) => {
@@ -217,6 +246,20 @@ const ProfileSetup = () => {
         ? prev.filter((s) => s !== skillValue)
         : [...prev, skillValue]
     );
+    if (error) setError("");
+  };
+
+  const handleOrgTypeToggle = (orgTypeValue) => {
+    setSelectedOrgTypes((prev) =>
+      prev.includes(orgTypeValue)
+        ? prev.filter((t) => t !== orgTypeValue)
+        : [...prev, orgTypeValue]
+    );
+    if (error) setError("");
+  };
+
+  const handleOrgSizeSelect = (sizeValue) => {
+    setSelectedOrgSize(prev => prev === sizeValue ? "" : sizeValue);
     if (error) setError("");
   };
 
@@ -251,8 +294,8 @@ const ProfileSetup = () => {
         setError("Please provide your organization name");
         return false;
       }
-      if (!formData.categories.trim()) {
-        setError("Please specify your organization focus areas");
+      if (selectedOrgTypes.length === 0) {
+        setError("Please select at least one organization type");
         return false;
       }
     }
@@ -279,14 +322,17 @@ const ProfileSetup = () => {
         ...formData,
         interests: selectedInterests.join(","),
         skills: selectedSkills.join(","),
+        organizationType: selectedOrgTypes.join(","),
+        organizationSize: selectedOrgSize,
+        // Set categories for backward compatibility
+        categories: selectedOrgTypes.length > 0 ? selectedOrgTypes.join(",") : formData.categories,
         profileComplete: true, // Mark profile as complete
       };
 
       console.log("=== FRONTEND DEBUG: SUBMISSION DATA ===");
       console.log("User type:", user?.userType);
-      console.log("Form data keys:", Object.keys(formData));
-      console.log("Selected interests:", selectedInterests);
-      console.log("Selected skills:", selectedSkills);
+      console.log("Selected organization types:", selectedOrgTypes);
+      console.log("Selected organization size:", selectedOrgSize);
       console.log("Full submission data:");
       console.log(JSON.stringify(submissionData, null, 2));
 
@@ -296,18 +342,17 @@ const ProfileSetup = () => {
         console.log("Organization Name:", submissionData.organizationName);
         console.log("Bio:", submissionData.bio);
         console.log("Location:", submissionData.location);
+        console.log("Organization Types:", submissionData.organizationType);
+        console.log("Organization Size:", submissionData.organizationSize);
         console.log("Categories:", submissionData.categories);
         console.log("Services:", submissionData.services);
         console.log("Website:", submissionData.website);
-        console.log("Organization Type:", submissionData.organizationType);
-        console.log("Mission Statement:", submissionData.missionStatement);
 
         // Check for required fields
         const requiredFields = [
           "organizationName",
           "bio",
           "location",
-          "categories",
         ];
         const missingFields = requiredFields.filter(
           (field) =>
@@ -317,6 +362,12 @@ const ProfileSetup = () => {
         if (missingFields.length > 0) {
           console.error("Missing required fields:", missingFields);
           setError(`Missing required fields: ${missingFields.join(", ")}`);
+          setLoading(false);
+          return;
+        }
+
+        if (selectedOrgTypes.length === 0) {
+          setError("Please select at least one organization type");
           setLoading(false);
           return;
         }
@@ -381,10 +432,11 @@ const ProfileSetup = () => {
           ? {
               organizationName:
                 formData.organizationName || user.organizationName || "",
-              organizationType: formData.organizationType || "",
+              organizationType: selectedOrgTypes.join(","),
+              organizationSize: selectedOrgSize,
               website: formData.website || "",
               missionStatement: formData.missionStatement || "",
-              categories: formData.categories || "",
+              categories: selectedOrgTypes.length > 0 ? selectedOrgTypes.join(",") : "",
               services: formData.services || "",
             }
           : {}),
@@ -612,38 +664,55 @@ const ProfileSetup = () => {
           {user.userType === "ORGANIZATION" && (
             <>
               <div className="profile-setup-field">
-                <label className="profile-setup-label">Organization Type</label>
-                <select
-                  name="organizationType"
-                  value={formData.organizationType}
-                  onChange={handleInputChange}
-                  className="profile-setup-select"
-                >
-                  <option value="">Select organization type</option>
-                  <option value="nonprofit">Non-profit</option>
-                  <option value="charity">Charity</option>
-                  <option value="community">Community Group</option>
-                  <option value="religious">Religious Organization</option>
-                  <option value="educational">Educational Institution</option>
-                  <option value="healthcare">Healthcare Organization</option>
-                  <option value="environmental">
-                    Environmental Organization
-                  </option>
-                  <option value="other">Other</option>
-                </select>
+                <label className="profile-setup-label">Organization Types *</label>
+                <p className="org-types-description">
+                  Select the areas your organization focuses on:
+                </p>
+                <div className="org-types-container">
+                  {organizationTypeOptions.map((orgType) => (
+                    <button
+                      key={orgType.value}
+                      type="button"
+                      onClick={() => handleOrgTypeToggle(orgType.value)}
+                      className={`org-type-tag ${orgType.cssClass} ${
+                        selectedOrgTypes.includes(orgType.value) ? "selected" : ""
+                      }`}
+                    >
+                      {orgType.label}
+                    </button>
+                  ))}
+                </div>
+                {selectedOrgTypes.length > 0 && (
+                  <p className="org-types-count">
+                    Selected: {selectedOrgTypes.length}
+                  </p>
+                )}
               </div>
 
               <div className="profile-setup-field">
-                <label className="profile-setup-label">Focus Areas *</label>
-                <input
-                  type="text"
-                  name="categories"
-                  value={formData.categories}
-                  onChange={handleInputChange}
-                  className="profile-setup-input"
-                  placeholder="e.g., Education, Environment, Community Service"
-                  required
-                />
+                <label className="profile-setup-label">Organization Size</label>
+                <p className="org-size-description">
+                  How many people work in your organization?
+                </p>
+                <div className="org-size-container">
+                  {organizationSizeOptions.map((size) => (
+                    <button
+                      key={size.value}
+                      type="button"
+                      onClick={() => handleOrgSizeSelect(size.value)}
+                      className={`org-size-tag ${size.cssClass} ${
+                        selectedOrgSize === size.value ? "selected" : ""
+                      }`}
+                    >
+                      {size.label}
+                    </button>
+                  ))}
+                </div>
+                {selectedOrgSize && (
+                  <p className="org-size-count">
+                    Selected: {organizationSizeOptions.find(s => s.value === selectedOrgSize)?.label}
+                  </p>
+                )}
               </div>
 
               <div className="profile-setup-field">
