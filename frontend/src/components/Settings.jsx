@@ -39,7 +39,7 @@ import {
   getDefaultNotificationSettings,
   getDefaultPrivacySettings
 } from '../services/settingsService';
-import { uploadProfileImage } from '../services/profileService';
+import { uploadProfileImage } from '../services/profileSetUpService';
 import './Settings.css';
 
 const SettingsPage = () => {

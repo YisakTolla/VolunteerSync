@@ -56,11 +56,18 @@ public class OrganizationProfileService {
     // ==========================================
 
     public OrganizationProfileDTO createOrUpdateProfile(CreateOrganizationProfileRequest request, Long userId) {
+        System.out.println("=== ENHANCED ORGANIZATION PROFILE PROCESSING ===");
         System.out.println("Creating or updating organization profile for user ID: " + userId);
-        System.out.println("Request categories: '" + request.getCategories() + "'");
-        System.out.println("Request services: '" + request.getServices() + "'");
-        System.out.println("Request bio: '" + request.getBio() + "'");
-        System.out.println("Request location: '" + request.getLocation() + "'");
+
+        // Log incoming request data
+        System.out.println("📥 Request data received:");
+        System.out.println("- Organization Name: '" + request.getOrganizationName() + "'");
+        System.out.println("- Categories: '" + request.getCategories() + "'");
+        System.out.println("- Services: '" + request.getServices() + "'");
+        System.out.println("- Causes: '" + request.getCauses() + "'");
+        System.out.println("- Languages: '" + request.getLanguagesSupported() + "'");
+        System.out.println("- Bio: '" + request.getBio() + "'");
+        System.out.println("- Location: '" + request.getLocation() + "'");
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -79,18 +86,20 @@ public class OrganizationProfileService {
             // Update existing profile
             profile = existingProfile.get();
             isUpdate = true;
-            System.out.println("Updating existing organization profile with ID: " + profile.getId());
+            System.out.println("📝 Updating existing organization profile with ID: " + profile.getId());
 
             // Update all fields - use request values or keep existing if null
             if (isValidString(request.getOrganizationName())) {
                 profile.setOrganizationName(request.getOrganizationName());
             }
 
-            // ✅ CRITICAL: Handle bio -> description mapping
-            if (isValidString(request.getBio())) {
-                profile.setDescription(request.getBio());
-            } else if (isValidString(request.getDescription())) {
-                profile.setDescription(request.getDescription());
+            // ✅ ENHANCED: Handle bio -> description mapping with better logic
+            String description = mergeArrayFields(
+                    profile.getDescription(),
+                    request.getDescription(),
+                    request.getBio());
+            if (!description.isEmpty()) {
+                profile.setDescription(description);
             }
 
             if (isValidString(request.getMissionStatement())) {
@@ -103,11 +112,13 @@ public class OrganizationProfileService {
                 profile.setPhoneNumber(request.getPhoneNumber());
             }
 
-            // ✅ CRITICAL: Handle location -> address mapping
-            if (isValidString(request.getLocation())) {
-                profile.setAddress(request.getLocation());
-            } else if (isValidString(request.getAddress())) {
-                profile.setAddress(request.getAddress());
+            // ✅ ENHANCED: Handle location -> address mapping with better logic
+            String address = mergeArrayFields(
+                    profile.getAddress(),
+                    request.getAddress(),
+                    request.getLocation());
+            if (!address.isEmpty()) {
+                profile.setAddress(address);
             }
 
             if (isValidString(request.getCity())) {
@@ -126,14 +137,24 @@ public class OrganizationProfileService {
                 profile.setProfileImageUrl(request.getProfileImageUrl());
             }
 
-            // ✅ CRITICAL: Handle categories and services
-            if (isValidString(request.getCategories())) {
-                System.out.println("Setting categories: '" + request.getCategories() + "'");
-                profile.setCategories(request.getCategories());
+            // ✅ ENHANCED: Handle categories and services with improved cleaning
+            String cleanCategories = cleanCommaSeparatedString(request.getCategories());
+            if (!cleanCategories.isEmpty()) {
+                System.out.println("🔧 Setting cleaned categories: '" + cleanCategories + "'");
+                profile.setCategories(cleanCategories);
             }
-            if (isValidString(request.getServices())) {
-                System.out.println("Setting services: '" + request.getServices() + "'");
-                profile.setServices(request.getServices());
+
+            String cleanServices = cleanCommaSeparatedString(request.getServices());
+            if (!cleanServices.isEmpty()) {
+                System.out.println("🔧 Setting cleaned services: '" + cleanServices + "'");
+                profile.setServices(cleanServices);
+            }
+
+            // ✅ ENHANCED: Handle causes with cleaning
+            String cleanCauses = cleanCommaSeparatedString(request.getCauses());
+            if (!cleanCauses.isEmpty()) {
+                System.out.println("🔧 Setting cleaned causes: '" + cleanCauses + "'");
+                profile.setCauses(cleanCauses);
             }
 
             if (isValidString(request.getPrimaryCategory())) {
@@ -148,9 +169,14 @@ public class OrganizationProfileService {
             if (request.getEmployeeCount() != null) {
                 profile.setEmployeeCount(request.getEmployeeCount());
             }
-            if (isValidString(request.getLanguagesSupported())) {
-                profile.setLanguagesSupported(request.getLanguagesSupported());
+
+            // ✅ ENHANCED: Handle languages with cleaning
+            String cleanLanguages = cleanCommaSeparatedString(request.getLanguagesSupported());
+            if (!cleanLanguages.isEmpty()) {
+                System.out.println("🔧 Setting cleaned languages: '" + cleanLanguages + "'");
+                profile.setLanguagesSupported(cleanLanguages);
             }
+
             if (request.getFoundedYear() != null) {
                 profile.setFoundedYear(request.getFoundedYear());
             }
@@ -162,13 +188,13 @@ public class OrganizationProfileService {
 
         } else {
             // Create new profile
-            System.out.println("Creating new organization profile");
+            System.out.println("✨ Creating new organization profile");
             profile = new OrganizationProfile();
             profile.setUser(user);
             profile.setOrganizationName(
                     isValidString(request.getOrganizationName()) ? request.getOrganizationName() : "");
 
-            // ✅ CRITICAL: Map bio to description for new profiles
+            // ✅ ENHANCED: Map bio to description for new profiles with cleaning
             String description = isValidString(request.getBio()) ? request.getBio()
                     : (isValidString(request.getDescription()) ? request.getDescription() : "");
             profile.setDescription(description);
@@ -178,7 +204,7 @@ public class OrganizationProfileService {
             profile.setWebsite(isValidString(request.getWebsite()) ? request.getWebsite() : "");
             profile.setPhoneNumber(isValidString(request.getPhoneNumber()) ? request.getPhoneNumber() : "");
 
-            // ✅ CRITICAL: Map location to address for new profiles
+            // ✅ ENHANCED: Map location to address for new profiles
             String address = isValidString(request.getLocation()) ? request.getLocation()
                     : (isValidString(request.getAddress()) ? request.getAddress() : "");
             profile.setAddress(address);
@@ -189,11 +215,22 @@ public class OrganizationProfileService {
             profile.setCountry(isValidString(request.getCountry()) ? request.getCountry() : "United States");
             profile.setProfileImageUrl(request.getProfileImageUrl());
 
-            // ✅ CRITICAL: Set categories and services for new profiles
-            System.out.println("Setting new profile categories: '" + request.getCategories() + "'");
-            System.out.println("Setting new profile services: '" + request.getServices() + "'");
-            profile.setCategories(isValidString(request.getCategories()) ? request.getCategories() : "");
-            profile.setServices(isValidString(request.getServices()) ? request.getServices() : "");
+            // ✅ ENHANCED: Set categories and services for new profiles with cleaning
+            String cleanCategories = cleanCommaSeparatedString(request.getCategories());
+            String cleanServices = cleanCommaSeparatedString(request.getServices());
+            String cleanCauses = cleanCommaSeparatedString(request.getCauses());
+            String cleanLanguages = cleanCommaSeparatedString(request.getLanguagesSupported());
+
+            System.out.println("🔧 Setting new profile arrays (cleaned):");
+            System.out.println("- Categories: '" + cleanCategories + "'");
+            System.out.println("- Services: '" + cleanServices + "'");
+            System.out.println("- Causes: '" + cleanCauses + "'");
+            System.out.println("- Languages: '" + cleanLanguages + "'");
+
+            profile.setCategories(cleanCategories);
+            profile.setServices(cleanServices);
+            profile.setCauses(cleanCauses);
+            profile.setLanguagesSupported(cleanLanguages);
 
             profile.setPrimaryCategory(isValidString(request.getPrimaryCategory()) ? request.getPrimaryCategory() : "");
             profile.setOrganizationType(
@@ -201,8 +238,6 @@ public class OrganizationProfileService {
             profile.setOrganizationSize(
                     isValidString(request.getOrganizationSize()) ? request.getOrganizationSize() : "");
             profile.setEmployeeCount(request.getEmployeeCount());
-            profile.setLanguagesSupported(
-                    isValidString(request.getLanguagesSupported()) ? request.getLanguagesSupported() : "");
             profile.setFoundedYear(request.getFoundedYear());
             profile.setTaxExemptStatus(isValidString(request.getTaxExemptStatus()) ? request.getTaxExemptStatus() : "");
             profile.setVerificationLevel("Unverified");
@@ -212,15 +247,18 @@ public class OrganizationProfileService {
 
         OrganizationProfile savedProfile = organizationProfileRepository.save(profile);
 
-        System.out.println("Saved organization profile categories: '" + savedProfile.getCategories() + "'");
-        System.out.println("Saved organization profile services: '" + savedProfile.getServices() + "'");
-        System.out.println("Saved organization profile description: '" + savedProfile.getDescription() + "'");
-        System.out.println("Saved organization profile address: '" + savedProfile.getAddress() + "'");
+        System.out.println("💾 Saved organization profile arrays:");
+        System.out.println("- Categories: '" + savedProfile.getCategories() + "'");
+        System.out.println("- Services: '" + savedProfile.getServices() + "'");
+        System.out.println("- Causes: '" + savedProfile.getCauses() + "'");
+        System.out.println("- Languages: '" + savedProfile.getLanguagesSupported() + "'");
+        System.out.println("- Description: '" + savedProfile.getDescription() + "'");
+        System.out.println("- Address: '" + savedProfile.getAddress() + "'");
 
         if (isUpdate) {
-            System.out.println("Organization profile updated successfully with ID: " + savedProfile.getId());
+            System.out.println("✅ Organization profile updated successfully with ID: " + savedProfile.getId());
         } else {
-            System.out.println("Organization profile created successfully with ID: " + savedProfile.getId());
+            System.out.println("✅ Organization profile created successfully with ID: " + savedProfile.getId());
         }
 
         return convertToDTO(savedProfile);
@@ -322,6 +360,32 @@ public class OrganizationProfileService {
 
         OrganizationProfile savedProfile = organizationProfileRepository.save(profile);
         return convertToDTO(savedProfile);
+    }
+
+    private String cleanCommaSeparatedString(String input) {
+        if (input == null || input.trim().isEmpty()) {
+            return "";
+        }
+
+        // Split by comma, trim each part, filter out empty strings, rejoin
+        return Arrays.stream(input.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .collect(Collectors.joining(","));
+    }
+
+    private String mergeArrayFields(String existingValue, String newValue, String arrayValue) {
+        // Priority: arrayValue > newValue > existingValue
+        if (isValidString(arrayValue)) {
+            return cleanCommaSeparatedString(arrayValue);
+        }
+        if (isValidString(newValue)) {
+            return cleanCommaSeparatedString(newValue);
+        }
+        if (isValidString(existingValue)) {
+            return cleanCommaSeparatedString(existingValue);
+        }
+        return "";
     }
 
     // ==========================================
@@ -994,6 +1058,7 @@ public class OrganizationProfileService {
         private String zipCode;
         private String country;
         private String profileImageUrl;
+        private String causes; // "Education,Environment,Community Service"
 
         // ✅ CRITICAL: These fields were missing - causing data to be ignored
         private String categories; // "Education,Environment,Community Service"
@@ -1190,6 +1255,14 @@ public class OrganizationProfileService {
 
         public void setTaxExemptStatus(String taxExemptStatus) {
             this.taxExemptStatus = taxExemptStatus;
+        }
+
+        public String getCauses() {
+            return causes;
+        }
+
+        public void setCauses(String causes) {
+            this.causes = causes;
         }
     }
 

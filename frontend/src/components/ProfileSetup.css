@@ -1,5 +1,5 @@
 /* ========================================
-   PROFILE SETUP COMPONENT STYLES
+   ENHANCED PROFILE SETUP COMPONENT STYLES
    Uses global.css design system variables
    ======================================== */
 
@@ -20,7 +20,7 @@
   box-shadow: var(--shadow-2xl);
   padding: var(--spacing-12);
   width: 100%;
-  max-width: 800px;
+  max-width: 900px;
   max-height: 90vh;
   overflow-y: auto;
 }
@@ -75,6 +75,27 @@
   display: flex;
   flex-direction: column;
   gap: var(--spacing-6);
+}
+
+/* ========================================
+   SECTION ORGANIZATION
+   ======================================== */
+
+.profile-setup-section {
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-6);
+  margin-bottom: var(--spacing-4);
+  background: var(--gray-50);
+}
+
+.profile-setup-section-title {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-4);
+  padding-bottom: var(--spacing-2);
+  border-bottom: 2px solid var(--accent-green);
 }
 
 .profile-setup-row {
@@ -135,9 +156,16 @@
   border-color: var(--accent-green);
 }
 
-/* Interests and Skills sections */
+/* ========================================
+   TAG CONTAINERS AND DESCRIPTIONS
+   ======================================== */
+
 .interests-description,
 .skills-description,
+.category-description,
+.causes-description,
+.services-description,
+.languages-description,
 .org-types-description,
 .org-size-description {
   font-size: var(--font-size-sm);
@@ -147,6 +175,10 @@
 
 .interests-container,
 .skills-container,
+.category-container,
+.causes-container,
+.services-container,
+.languages-container,
 .org-types-container,
 .org-size-container {
   display: flex;
@@ -154,6 +186,10 @@
   gap: var(--spacing-2);
   margin-bottom: var(--spacing-3);
 }
+
+/* ========================================
+   VOLUNTEER TAGS (Interests & Skills)
+   ======================================== */
 
 .interest-tag,
 .skill-tag {
@@ -185,11 +221,10 @@
 }
 
 /* ========================================
-   ORGANIZATION TYPE TAGS
-   With colors matching Organizations.css
+   ORGANIZATION CATEGORY TAGS (Primary)
    ======================================== */
 
-.org-type-tag {
+.category-tag {
   display: inline-flex;
   align-items: center;
   padding: var(--spacing-2) var(--spacing-3);
@@ -204,154 +239,383 @@
   white-space: nowrap;
 }
 
-.org-type-tag:hover {
+.category-tag:hover {
   background: var(--gray-50);
   transform: translateY(-1px);
 }
 
-/* Organization Type Colors - Following Organizations.css color scheme */
-.org-type-tag.education.selected {
+/* Category Colors - Single Selection */
+.category-tag.education.selected {
   background: rgba(59, 130, 246, 0.15);
   color: #1e40af;
   border-color: #3b82f6;
 }
 
-.org-type-tag.environment.selected {
+.category-tag.environment.selected {
   background: rgba(16, 185, 129, 0.15);
   color: #047857;
   border-color: var(--accent-green);
 }
 
-.org-type-tag.healthcare.selected {
+.category-tag.healthcare.selected {
   background: rgba(239, 68, 68, 0.15);
   color: #dc2626;
   border-color: #ef4444;
 }
 
-.org-type-tag.animal-welfare.selected {
+.category-tag.animal-welfare.selected {
   background: rgba(249, 115, 22, 0.15);
   color: #ea580c;
   border-color: #f97316;
 }
 
-.org-type-tag.community-service.selected {
+.category-tag.community-service.selected {
   background: rgba(139, 92, 246, 0.15);
   color: #7c3aed;
   border-color: var(--accent-purple);
 }
 
-.org-type-tag.human-services.selected {
+.category-tag.human-services.selected {
   background: rgba(20, 184, 166, 0.15);
   color: #0d9488;
   border-color: #14b8a6;
 }
 
-.org-type-tag.arts-culture.selected {
+.category-tag.arts-culture.selected {
   background: rgba(236, 72, 153, 0.15);
   color: #be185d;
   border-color: #ec4899;
 }
 
-.org-type-tag.youth-development.selected {
+.category-tag.youth-development.selected {
   background: rgba(6, 182, 212, 0.15);
   color: #0891b2;
   border-color: #06b6d4;
 }
 
-.org-type-tag.senior-services.selected {
+.category-tag.senior-services.selected {
   background: rgba(99, 102, 241, 0.15);
   color: #4f46e5;
   border-color: #6366f1;
 }
 
-.org-type-tag.hunger-homelessness.selected {
+.category-tag.hunger-homelessness.selected {
   background: rgba(245, 101, 101, 0.15);
   color: #dc2626;
   border-color: #f56565;
 }
 
-.org-type-tag.disaster-relief.selected {
+.category-tag.disaster-relief.selected {
   background: rgba(251, 146, 60, 0.15);
   color: #ea580c;
   border-color: #fb923c;
 }
 
-.org-type-tag.international.selected {
+.category-tag.international.selected {
   background: rgba(34, 197, 94, 0.15);
   color: #16a34a;
   border-color: #22c55e;
 }
 
-.org-type-tag.sports-recreation.selected {
+.category-tag.sports-recreation.selected {
   background: rgba(168, 85, 247, 0.15);
   color: #9333ea;
   border-color: #a855f7;
 }
 
-.org-type-tag.mental-health.selected {
+.category-tag.mental-health.selected {
   background: rgba(52, 211, 153, 0.15);
   color: #059669;
   border-color: #34d399;
 }
 
-.org-type-tag.veterans.selected {
+.category-tag.veterans.selected {
   background: rgba(34, 197, 94, 0.15);
   color: #16a34a;
   border-color: #22c55e;
 }
 
-.org-type-tag.womens-issues.selected {
+.category-tag.womens-issues.selected {
   background: rgba(244, 114, 182, 0.15);
   color: #be185d;
   border-color: #f472b6;
 }
 
-.org-type-tag.children-families.selected {
+.category-tag.children-families.selected {
   background: rgba(251, 191, 36, 0.15);
   color: #d97706;
   border-color: #fbbf24;
 }
 
-.org-type-tag.disability-services.selected {
+.category-tag.disability-services.selected {
   background: rgba(129, 140, 248, 0.15);
   color: #4f46e5;
   border-color: #818cf8;
 }
 
-.org-type-tag.religious.selected {
+.category-tag.religious.selected {
   background: rgba(196, 181, 253, 0.15);
   color: #7c3aed;
   border-color: #c4b5fd;
 }
 
-.org-type-tag.political.selected {
+.category-tag.political.selected {
   background: rgba(107, 114, 128, 0.15);
   color: #374151;
   border-color: #6b7280;
 }
 
-.org-type-tag.lgbtq.selected {
+.category-tag.lgbtq.selected {
   background: rgba(236, 72, 153, 0.15);
   color: #be185d;
   border-color: #ec4899;
 }
 
-.org-type-tag.technology.selected {
+.category-tag.technology.selected {
   background: rgba(59, 130, 246, 0.15);
   color: #1e40af;
   border-color: #3b82f6;
 }
 
-.org-type-tag.research-advocacy.selected {
+.category-tag.research-advocacy.selected {
   background: rgba(139, 92, 246, 0.15);
   color: #7c3aed;
   border-color: var(--accent-purple);
 }
 
-.org-type-tag.public-safety.selected {
+.category-tag.public-safety.selected {
   background: rgba(239, 68, 68, 0.15);
   color: #dc2626;
   border-color: #ef4444;
+}
+
+/* ========================================
+   ORGANIZATION CAUSE TAGS (Multiple)
+   ======================================== */
+
+.cause-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--spacing-2) var(--spacing-3);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-full);
+  background: var(--background-primary);
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--duration-200) var(--ease-out);
+  white-space: nowrap;
+}
+
+.cause-tag:hover {
+  background: var(--gray-50);
+  transform: translateY(-1px);
+}
+
+/* Cause Colors - Same as categories but for multiple selection */
+.cause-tag.education.selected {
+  background: rgba(59, 130, 246, 0.15);
+  color: #1e40af;
+  border-color: #3b82f6;
+}
+
+.cause-tag.environment.selected {
+  background: rgba(16, 185, 129, 0.15);
+  color: #047857;
+  border-color: var(--accent-green);
+}
+
+.cause-tag.healthcare.selected {
+  background: rgba(239, 68, 68, 0.15);
+  color: #dc2626;
+  border-color: #ef4444;
+}
+
+.cause-tag.animal-welfare.selected {
+  background: rgba(249, 115, 22, 0.15);
+  color: #ea580c;
+  border-color: #f97316;
+}
+
+.cause-tag.community-service.selected {
+  background: rgba(139, 92, 246, 0.15);
+  color: #7c3aed;
+  border-color: var(--accent-purple);
+}
+
+.cause-tag.human-services.selected {
+  background: rgba(20, 184, 166, 0.15);
+  color: #0d9488;
+  border-color: #14b8a6;
+}
+
+.cause-tag.arts-culture.selected {
+  background: rgba(236, 72, 153, 0.15);
+  color: #be185d;
+  border-color: #ec4899;
+}
+
+.cause-tag.youth-development.selected {
+  background: rgba(6, 182, 212, 0.15);
+  color: #0891b2;
+  border-color: #06b6d4;
+}
+
+.cause-tag.senior-services.selected {
+  background: rgba(99, 102, 241, 0.15);
+  color: #4f46e5;
+  border-color: #6366f1;
+}
+
+.cause-tag.hunger-homelessness.selected {
+  background: rgba(245, 101, 101, 0.15);
+  color: #dc2626;
+  border-color: #f56565;
+}
+
+.cause-tag.disaster-relief.selected {
+  background: rgba(251, 146, 60, 0.15);
+  color: #ea580c;
+  border-color: #fb923c;
+}
+
+.cause-tag.international.selected {
+  background: rgba(34, 197, 94, 0.15);
+  color: #16a34a;
+  border-color: #22c55e;
+}
+
+.cause-tag.sports-recreation.selected {
+  background: rgba(168, 85, 247, 0.15);
+  color: #9333ea;
+  border-color: #a855f7;
+}
+
+.cause-tag.mental-health.selected {
+  background: rgba(52, 211, 153, 0.15);
+  color: #059669;
+  border-color: #34d399;
+}
+
+.cause-tag.veterans.selected {
+  background: rgba(34, 197, 94, 0.15);
+  color: #16a34a;
+  border-color: #22c55e;
+}
+
+.cause-tag.womens-issues.selected {
+  background: rgba(244, 114, 182, 0.15);
+  color: #be185d;
+  border-color: #f472b6;
+}
+
+.cause-tag.children-families.selected {
+  background: rgba(251, 191, 36, 0.15);
+  color: #d97706;
+  border-color: #fbbf24;
+}
+
+.cause-tag.disability-services.selected {
+  background: rgba(129, 140, 248, 0.15);
+  color: #4f46e5;
+  border-color: #818cf8;
+}
+
+.cause-tag.religious.selected {
+  background: rgba(196, 181, 253, 0.15);
+  color: #7c3aed;
+  border-color: #c4b5fd;
+}
+
+.cause-tag.political.selected {
+  background: rgba(107, 114, 128, 0.15);
+  color: #374151;
+  border-color: #6b7280;
+}
+
+.cause-tag.lgbtq.selected {
+  background: rgba(236, 72, 153, 0.15);
+  color: #be185d;
+  border-color: #ec4899;
+}
+
+.cause-tag.technology.selected {
+  background: rgba(59, 130, 246, 0.15);
+  color: #1e40af;
+  border-color: #3b82f6;
+}
+
+.cause-tag.research-advocacy.selected {
+  background: rgba(139, 92, 246, 0.15);
+  color: #7c3aed;
+  border-color: var(--accent-purple);
+}
+
+.cause-tag.public-safety.selected {
+  background: rgba(239, 68, 68, 0.15);
+  color: #dc2626;
+  border-color: #ef4444;
+}
+
+/* ========================================
+   SERVICE TAGS
+   ======================================== */
+
+.service-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  padding: var(--spacing-2) var(--spacing-3);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-full);
+  background: var(--background-primary);
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition: all var(--duration-200) var(--ease-out);
+  white-space: nowrap;
+}
+
+.service-tag:hover {
+  border-color: var(--accent-green);
+  background: var(--gray-50);
+}
+
+.service-tag.selected {
+  background: var(--accent-green);
+  color: var(--white);
+  border-color: var(--accent-green);
+}
+
+/* ========================================
+   LANGUAGE TAGS
+   ======================================== */
+
+.language-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  padding: var(--spacing-2) var(--spacing-3);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-full);
+  background: var(--background-primary);
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition: all var(--duration-200) var(--ease-out);
+  white-space: nowrap;
+}
+
+.language-tag:hover {
+  border-color: var(--accent-purple);
+  background: var(--gray-50);
+}
+
+.language-tag.selected {
+  background: rgba(139, 92, 246, 0.15);
+  color: #7c3aed;
+  border-color: var(--accent-purple);
 }
 
 /* ========================================
@@ -409,25 +673,31 @@
   border-color: #ef4444;
 }
 
-/* Count displays */
+/* ========================================
+   COUNT DISPLAYS
+   ======================================== */
+
 .interests-count,
-.skills-count,
-.org-types-count,
-.org-size-count {
+.skills-count {
   font-size: var(--font-size-sm);
   color: var(--accent-green);
   font-weight: var(--font-weight-medium);
 }
 
-.org-types-count {
-  color: var(--accent-purple);
-}
-
+.category-count,
+.causes-count,
+.services-count,
+.languages-count,
 .org-size-count {
+  font-size: var(--font-size-sm);
   color: var(--accent-purple);
+  font-weight: var(--font-weight-medium);
 }
 
-/* Buttons */
+/* ========================================
+   BUTTONS
+   ======================================== */
+
 .profile-setup-buttons {
   display: flex;
   gap: var(--spacing-4);
@@ -495,8 +765,13 @@
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* Footer */
@@ -537,7 +812,10 @@
   color: var(--text-secondary);
 }
 
-/* Responsive design */
+/* ========================================
+   RESPONSIVE DESIGN
+   ======================================== */
+
 @media (max-width: 768px) {
   .profile-setup-container {
     padding: var(--spacing-4);
@@ -556,8 +834,20 @@
     grid-template-columns: 1fr;
   }
 
+  .profile-setup-section {
+    padding: var(--spacing-4);
+  }
+
+  .profile-setup-section-title {
+    font-size: var(--font-size-lg);
+  }
+
   .interests-container,
   .skills-container,
+  .category-container,
+  .causes-container,
+  .services-container,
+  .languages-container,
   .org-types-container,
   .org-size-container {
     gap: var(--spacing-1);
@@ -565,7 +855,10 @@
 
   .interest-tag,
   .skill-tag,
-  .org-type-tag,
+  .category-tag,
+  .cause-tag,
+  .service-tag,
+  .language-tag,
   .org-size-tag {
     font-size: var(--font-size-xs);
     padding: var(--spacing-1) var(--spacing-2);
@@ -585,15 +878,26 @@
     font-size: var(--font-size-2xl);
   }
 
+  .profile-setup-section {
+    padding: var(--spacing-3);
+  }
+
   .interests-container,
   .skills-container,
+  .category-container,
+  .causes-container,
+  .services-container,
+  .languages-container,
   .org-types-container,
   .org-size-container {
     justify-content: center;
   }
 }
 
-/* Accessibility improvements */
+/* ========================================
+   ACCESSIBILITY IMPROVEMENTS
+   ======================================== */
+
 .profile-setup-submit-btn:focus,
 .profile-setup-skip-btn:focus {
   outline: 2px solid var(--focus);
@@ -602,14 +906,21 @@
 
 .interest-tag:focus,
 .skill-tag:focus,
-.org-type-tag:focus,
+.category-tag:focus,
+.cause-tag:focus,
+.service-tag:focus,
+.language-tag:focus,
 .org-size-tag:focus {
   outline: 2px solid var(--focus);
   outline-offset: 2px;
 }
 
-/* Reduced motion preferences */
+/* ========================================
+   REDUCED MOTION PREFERENCES
+   ======================================== */
+
 @media (prefers-reduced-motion: reduce) {
+
   .loading-spinner,
   .profile-setup-loading-spinner {
     animation: none;
@@ -618,7 +929,10 @@
   .profile-setup-submit-btn:hover,
   .interest-tag,
   .skill-tag,
-  .org-type-tag,
+  .category-tag,
+  .cause-tag,
+  .service-tag,
+  .language-tag,
   .org-size-tag {
     transform: none;
   }

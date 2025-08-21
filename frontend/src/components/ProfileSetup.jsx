@@ -11,7 +11,7 @@ import {
   createProfile,
   updateProfile,
   fetchMyProfile,
-} from "../services/profileService";
+} from "../services/profileSetUpService";
 import "./ProfileSetup.css";
 
 const ProfileSetup = () => {
@@ -21,25 +21,56 @@ const ProfileSetup = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [selectedInterests, setSelectedInterests] = useState([]);
-  const [selectedOrgTypes, setSelectedOrgTypes] = useState([]);
+  const [selectedSkills, setSelectedSkills] = useState([]);
+  const [selectedCauses, setSelectedCauses] = useState([]);
+  const [selectedServices, setSelectedServices] = useState([]);
+  const [selectedLanguages, setSelectedLanguages] = useState([]);
   const [selectedOrgSize, setSelectedOrgSize] = useState("");
+  const [primaryCategory, setPrimaryCategory] = useState("");
   const [hasExistingProfile, setHasExistingProfile] = useState(false);
   const [formData, setFormData] = useState({
+    // Volunteer fields
+    firstName: "",
+    lastName: "",
     bio: "",
     location: "",
     interests: "",
     skills: "",
     phoneNumber: "",
+    availability: "flexible",
+
+    // Organization fields - Basic Info
     organizationName: "",
+    description: "",
+    missionStatement: "",
+    website: "",
+
+    // Organization fields - Contact & Location
+    address: "",
+    city: "",
+    state: "",
+    country: "",
+    zipCode: "",
+
+    // Organization fields - Classification
     organizationType: "",
     organizationSize: "",
-    website: "",
-    missionStatement: "",
+    primaryCategory: "",
     categories: "",
+    causes: "",
     services: "",
-    firstName: "",
-    lastName: "",
-    availability: "flexible",
+
+    // Organization fields - Details
+    ein: "",
+    employeeCount: "",
+    foundedYear: "",
+    fundingGoal: "",
+    fundingRaised: "",
+    languagesSupported: "",
+    taxExemptStatus: "",
+
+    // System fields
+    profileComplete: false,
   });
 
   const interestOptions = [
@@ -57,7 +88,7 @@ const ProfileSetup = () => {
     { value: "HEALTHCARE_SUPPORT", label: "Healthcare Support", emoji: "🏥" },
     { value: "ARTS_CULTURE", label: "Arts & Culture", emoji: "🎨" },
     { value: "TECHNOLOGY_DIGITAL", label: "Technology & Digital", emoji: "💻" },
-    { value: "DISASTER_RELIEF", label: "Disaster Relief", emoji: "🚑" },
+    { value: "DISASTER_RELIEF", label: "Disaster Relief", emoji: "🚨" },
     { value: "COMMUNITY_BUILDING", label: "Community Building", emoji: "🏘️" },
     { value: "OTHER", label: "Other", emoji: "📋" },
   ];
@@ -79,41 +110,243 @@ const ProfileSetup = () => {
     { value: "LEGAL", label: "Legal", emoji: "⚖️" },
   ];
 
+  // Organization Categories (single selection for primary)
+  const categoryOptions = [
+    { value: "Education", label: "Education", cssClass: "education" },
+    { value: "Environment", label: "Environment", cssClass: "environment" },
+    { value: "Healthcare", label: "Healthcare", cssClass: "healthcare" },
+    {
+      value: "Animal Welfare",
+      label: "Animal Welfare",
+      cssClass: "animal-welfare",
+    },
+    {
+      value: "Community Service",
+      label: "Community Service",
+      cssClass: "community-service",
+    },
+    {
+      value: "Human Services",
+      label: "Human Services",
+      cssClass: "human-services",
+    },
+    {
+      value: "Arts & Culture",
+      label: "Arts & Culture",
+      cssClass: "arts-culture",
+    },
+    {
+      value: "Youth Development",
+      label: "Youth Development",
+      cssClass: "youth-development",
+    },
+    {
+      value: "Senior Services",
+      label: "Senior Services",
+      cssClass: "senior-services",
+    },
+    {
+      value: "Hunger & Homelessness",
+      label: "Hunger & Homelessness",
+      cssClass: "hunger-homelessness",
+    },
+    {
+      value: "Disaster Relief",
+      label: "Disaster Relief",
+      cssClass: "disaster-relief",
+    },
+    {
+      value: "International",
+      label: "International",
+      cssClass: "international",
+    },
+    {
+      value: "Sports & Recreation",
+      label: "Sports & Recreation",
+      cssClass: "sports-recreation",
+    },
+    {
+      value: "Mental Health",
+      label: "Mental Health",
+      cssClass: "mental-health",
+    },
+    { value: "Veterans", label: "Veterans", cssClass: "veterans" },
+    {
+      value: "Women's Issues",
+      label: "Women's Issues",
+      cssClass: "womens-issues",
+    },
+    {
+      value: "Children & Families",
+      label: "Children & Families",
+      cssClass: "children-families",
+    },
+    {
+      value: "Disability Services",
+      label: "Disability Services",
+      cssClass: "disability-services",
+    },
+    { value: "Religious", label: "Religious", cssClass: "religious" },
+    { value: "Political", label: "Political", cssClass: "political" },
+    { value: "LGBTQ+", label: "LGBTQ+", cssClass: "lgbtq" },
+    { value: "Technology", label: "Technology", cssClass: "technology" },
+    {
+      value: "Research & Advocacy",
+      label: "Research & Advocacy",
+      cssClass: "research-advocacy",
+    },
+    {
+      value: "Public Safety",
+      label: "Public Safety",
+      cssClass: "public-safety",
+    },
+  ];
+
+  // Organization Causes (multiple selection - reuse categories)
+  const causeOptions = categoryOptions;
+
+  // Organization Services (multiple selection)
+  const serviceOptions = [
+    { value: "Tutoring", label: "Tutoring", emoji: "📖" },
+    { value: "Cleanup Events", label: "Cleanup Events", emoji: "🧹" },
+    { value: "Food Distribution", label: "Food Distribution", emoji: "🍽️" },
+    { value: "Mentoring", label: "Mentoring", emoji: "👥" },
+    { value: "Fundraising", label: "Fundraising", emoji: "💰" },
+    { value: "Community Outreach", label: "Community Outreach", emoji: "🤝" },
+    { value: "Health Screenings", label: "Health Screenings", emoji: "🏥" },
+    { value: "Emergency Response", label: "Emergency Response", emoji: "🚨" },
+    {
+      value: "Educational Workshops",
+      label: "Educational Workshops",
+      emoji: "🎓",
+    },
+    { value: "Social Services", label: "Social Services", emoji: "👫" },
+    {
+      value: "Environmental Education",
+      label: "Environmental Education",
+      emoji: "🌱",
+    },
+    { value: "Senior Care", label: "Senior Care", emoji: "👴" },
+    { value: "Youth Programs", label: "Youth Programs", emoji: "👦" },
+    { value: "Animal Care", label: "Animal Care", emoji: "🐾" },
+    { value: "Arts Programs", label: "Arts Programs", emoji: "🎨" },
+    { value: "Technology Training", label: "Technology Training", emoji: "💻" },
+  ];
+
+  // Language Options (multiple selection)
+  const languageOptions = [
+    { value: "English", label: "English", emoji: "🇺🇸" },
+    { value: "Spanish", label: "Spanish", emoji: "🇪🇸" },
+    { value: "French", label: "French", emoji: "🇫🇷" },
+    { value: "German", label: "German", emoji: "🇩🇪" },
+    { value: "Italian", label: "Italian", emoji: "🇮🇹" },
+    { value: "Portuguese", label: "Portuguese", emoji: "🇵🇹" },
+    { value: "Chinese", label: "Chinese", emoji: "🇨🇳" },
+    { value: "Japanese", label: "Japanese", emoji: "🇯🇵" },
+    { value: "Korean", label: "Korean", emoji: "🇰🇷" },
+    { value: "Arabic", label: "Arabic", emoji: "🇸🇦" },
+    { value: "Hindi", label: "Hindi", emoji: "🇮🇳" },
+    { value: "Russian", label: "Russian", emoji: "🇷🇺" },
+  ];
+
   const organizationTypeOptions = [
-    { value: "education", label: "Education", cssClass: "education" },
-    { value: "environment", label: "Environment", cssClass: "environment" },
-    { value: "healthcare", label: "Healthcare", cssClass: "healthcare" },
-    { value: "animal-welfare", label: "Animal Welfare", cssClass: "animal-welfare" },
-    { value: "community-service", label: "Community Service", cssClass: "community-service" },
-    { value: "human-services", label: "Human Services", cssClass: "human-services" },
-    { value: "arts-culture", label: "Arts & Culture", cssClass: "arts-culture" },
-    { value: "youth-development", label: "Youth Development", cssClass: "youth-development" },
-    { value: "senior-services", label: "Senior Services", cssClass: "senior-services" },
-    { value: "hunger-homelessness", label: "Hunger & Homelessness", cssClass: "hunger-homelessness" },
-    { value: "disaster-relief", label: "Disaster Relief", cssClass: "disaster-relief" },
-    { value: "international", label: "International", cssClass: "international" },
-    { value: "sports-recreation", label: "Sports & Recreation", cssClass: "sports-recreation" },
-    { value: "mental-health", label: "Mental Health", cssClass: "mental-health" },
-    { value: "veterans", label: "Veterans", cssClass: "veterans" },
-    { value: "womens-issues", label: "Women's Issues", cssClass: "womens-issues" },
-    { value: "children-families", label: "Children & Families", cssClass: "children-families" },
-    { value: "disability-services", label: "Disability Services", cssClass: "disability-services" },
-    { value: "religious", label: "Religious", cssClass: "religious" },
-    { value: "political", label: "Political", cssClass: "political" },
-    { value: "lgbtq", label: "LGBTQ+", cssClass: "lgbtq" },
-    { value: "technology", label: "Technology", cssClass: "technology" },
-    { value: "research-advocacy", label: "Research & Advocacy", cssClass: "research-advocacy" },
-    { value: "public-safety", label: "Public Safety", cssClass: "public-safety" },
+    { value: "Non-Profit", label: "Non-Profit" },
+    { value: "Charity", label: "Charity" },
+    { value: "Foundation", label: "Foundation" },
+    { value: "Community Group", label: "Community Group" },
+    { value: "Religious Organization", label: "Religious Organization" },
+    { value: "Educational Institution", label: "Educational Institution" },
+    { value: "Government Agency", label: "Government Agency" },
+    { value: "Social Enterprise", label: "Social Enterprise" },
+    { value: "Cooperative", label: "Cooperative" },
+    { value: "NGO", label: "NGO" },
   ];
 
   const organizationSizeOptions = [
-    { value: "small", label: "Small (1-50)", cssClass: "size-small" },
-    { value: "medium", label: "Medium (51-200)", cssClass: "size-medium" },
-    { value: "large", label: "Large (201-1000)", cssClass: "size-large" },
-    { value: "enterprise", label: "Enterprise (1000+)", cssClass: "size-enterprise" },
+    { value: "Small (1-50)", label: "Small (1-50)", cssClass: "size-small" },
+    {
+      value: "Medium (51-200)",
+      label: "Medium (51-200)",
+      cssClass: "size-medium",
+    },
+    {
+      value: "Large (201-1000)",
+      label: "Large (201-1000)",
+      cssClass: "size-large",
+    },
+    {
+      value: "Enterprise (1000+)",
+      label: "Enterprise (1000+)",
+      cssClass: "size-enterprise",
+    },
   ];
 
-  const [selectedSkills, setSelectedSkills] = useState([]);
+  const taxExemptOptions = [
+    { value: "501(c)(3)", label: "501(c)(3) - Charitable Organization" },
+    { value: "501(c)(4)", label: "501(c)(4) - Social Welfare" },
+    { value: "501(c)(6)", label: "501(c)(6) - Business League" },
+    { value: "501(c)(7)", label: "501(c)(7) - Social Club" },
+    { value: "Not Applicable", label: "Not Applicable" },
+    { value: "Pending", label: "Pending Application" },
+  ];
+
+  const countryOptions = [
+    "United States",
+    "Canada",
+    "United Kingdom",
+    "Australia",
+    "Germany",
+    "France",
+    "Netherlands",
+    "Sweden",
+    "Denmark",
+    "Ireland",
+    "Switzerland",
+  ];
+
+  const parseCommaSeparatedArray = (value) => {
+    if (!value) return [];
+
+    if (Array.isArray(value)) {
+      return value
+        .filter((item) => item && item.trim() !== "")
+        .map((item) => item.trim());
+    }
+
+    if (typeof value === "string") {
+      return value
+        .split(",")
+        .map((item) => item.trim())
+        .filter((item) => item !== "");
+    }
+
+    return [];
+  };
+
+  /**
+   * Enhanced helper to safely convert arrays to comma-separated strings
+   * Ensures no empty values and proper formatting
+   */
+  const arrayToCommaSeparated = (value) => {
+    if (!value) return "";
+
+    if (Array.isArray(value)) {
+      const cleanArray = value.filter((item) => item && item.trim() !== "");
+      return cleanArray.length > 0
+        ? cleanArray.map((item) => item.trim()).join(",")
+        : "";
+    }
+
+    if (typeof value === "string") {
+      return value
+        .split(",")
+        .map((item) => item.trim())
+        .filter((item) => item !== "")
+        .join(",");
+    }
+
+    return "";
+  };
 
   useEffect(() => {
     if (!isLoggedIn()) {
@@ -160,53 +393,89 @@ const ProfileSetup = () => {
         setHasExistingProfile(true);
         const existingData = profileResult.data;
 
+        console.log("=== PROFILE DATA PARSING ===");
+        console.log("Raw existing data:", existingData);
+
         setFormData((prev) => ({
           ...prev,
+          // Volunteer fields
           firstName: existingData.firstName || currentUser.firstName || "",
           lastName: existingData.lastName || currentUser.lastName || "",
-          organizationName:
-            existingData.organizationName || currentUser.organizationName || "",
           bio: existingData.bio || "",
           location: existingData.location || "",
           skills: existingData.skills || "",
           phoneNumber: existingData.phoneNumber || "",
+          availability: existingData.availability || "flexible",
+
+          // Organization fields - Basic
+          organizationName:
+            existingData.organizationName || currentUser.organizationName || "",
+          description: existingData.description || existingData.bio || "",
+          missionStatement: existingData.missionStatement || "",
+          website: existingData.website || "",
+
+          // Organization fields - Location
+          address: existingData.address || "",
+          city: existingData.city || "",
+          state: existingData.state || "",
+          country: existingData.country || "",
+          zipCode: existingData.zipCode || "",
+
+          // Organization fields - Classification
           organizationType: existingData.organizationType || "",
           organizationSize: existingData.organizationSize || "",
-          website: existingData.website || "",
-          services: Array.isArray(existingData.services)
-            ? existingData.services.join(",")
-            : existingData.services || "",
+          primaryCategory: existingData.primaryCategory || "",
           categories: existingData.categories || "",
-          availability: existingData.availability || "flexible",
+          causes: existingData.causes || "",
+          services: existingData.services || "",
+
+          // Organization fields - Details
+          ein: existingData.ein || "",
+          employeeCount: existingData.employeeCount || "",
+          foundedYear: existingData.foundedYear || "",
+          fundingGoal: existingData.fundingGoal || "",
+          fundingRaised: existingData.fundingRaised || "",
+          languagesSupported: existingData.languagesSupported || "",
+          taxExemptStatus: existingData.taxExemptStatus || "",
         }));
 
-        // Parse interests and skills
+        // ✅ PARSE EXISTING SELECTIONS USING THE HELPER FUNCTIONS
         if (existingData.interests) {
-          const interests =
-            typeof existingData.interests === "string"
-              ? existingData.interests.split(",").map((i) => i.trim())
-              : existingData.interests;
+          const interests = parseCommaSeparatedArray(existingData.interests);
+          console.log("Parsed interests:", interests);
           setSelectedInterests(interests);
         }
 
         if (existingData.skills) {
-          const skills =
-            typeof existingData.skills === "string"
-              ? existingData.skills.split(",").map((s) => s.trim())
-              : existingData.skills;
+          const skills = parseCommaSeparatedArray(existingData.skills);
+          console.log("Parsed skills:", skills);
           setSelectedSkills(skills);
         }
 
-        // Parse organization types
-        if (existingData.organizationType) {
-          const orgTypes =
-            typeof existingData.organizationType === "string"
-              ? existingData.organizationType.split(",").map((t) => t.trim())
-              : existingData.organizationType;
-          setSelectedOrgTypes(orgTypes);
+        if (existingData.primaryCategory) {
+          setPrimaryCategory(existingData.primaryCategory);
         }
 
-        // Set organization size
+        if (existingData.causes) {
+          const causes = parseCommaSeparatedArray(existingData.causes);
+          console.log("Parsed causes:", causes);
+          setSelectedCauses(causes);
+        }
+
+        if (existingData.services) {
+          const services = parseCommaSeparatedArray(existingData.services);
+          console.log("Parsed services:", services);
+          setSelectedServices(services);
+        }
+
+        if (existingData.languagesSupported) {
+          const languages = parseCommaSeparatedArray(
+            existingData.languagesSupported
+          );
+          console.log("Parsed languages:", languages);
+          setSelectedLanguages(languages);
+        }
+
         if (existingData.organizationSize) {
           setSelectedOrgSize(existingData.organizationSize);
         }
@@ -249,28 +518,46 @@ const ProfileSetup = () => {
     if (error) setError("");
   };
 
-  const handleOrgTypeToggle = (orgTypeValue) => {
-    setSelectedOrgTypes((prev) =>
-      prev.includes(orgTypeValue)
-        ? prev.filter((t) => t !== orgTypeValue)
-        : [...prev, orgTypeValue]
+  const handlePrimaryCategorySelect = (categoryValue) => {
+    setPrimaryCategory((prev) => (prev === categoryValue ? "" : categoryValue));
+    if (error) setError("");
+  };
+
+  const handleCauseToggle = (causeValue) => {
+    setSelectedCauses((prev) =>
+      prev.includes(causeValue)
+        ? prev.filter((c) => c !== causeValue)
+        : [...prev, causeValue]
+    );
+    if (error) setError("");
+  };
+
+  const handleServiceToggle = (serviceValue) => {
+    setSelectedServices((prev) =>
+      prev.includes(serviceValue)
+        ? prev.filter((s) => s !== serviceValue)
+        : [...prev, serviceValue]
+    );
+    if (error) setError("");
+  };
+
+  const handleLanguageToggle = (languageValue) => {
+    setSelectedLanguages((prev) =>
+      prev.includes(languageValue)
+        ? prev.filter((l) => l !== languageValue)
+        : [...prev, languageValue]
     );
     if (error) setError("");
   };
 
   const handleOrgSizeSelect = (sizeValue) => {
-    setSelectedOrgSize(prev => prev === sizeValue ? "" : sizeValue);
+    setSelectedOrgSize((prev) => (prev === sizeValue ? "" : sizeValue));
     if (error) setError("");
   };
 
   const validateForm = () => {
-    if (!formData.bio.trim()) {
-      setError("Please tell us about yourself");
-      return false;
-    }
-
-    if (!formData.location.trim()) {
-      setError("Please provide your location");
+    if (!formData.bio && !formData.description) {
+      setError("Please provide a description about yourself/organization");
       return false;
     }
 
@@ -294,8 +581,16 @@ const ProfileSetup = () => {
         setError("Please provide your organization name");
         return false;
       }
-      if (selectedOrgTypes.length === 0) {
-        setError("Please select at least one organization type");
+      if (!primaryCategory) {
+        setError("Please select a primary category");
+        return false;
+      }
+      if (!formData.city.trim()) {
+        setError("Please provide your city");
+        return false;
+      }
+      if (!formData.country.trim()) {
+        setError("Please select your country");
         return false;
       }
     }
@@ -317,79 +612,40 @@ const ProfileSetup = () => {
         return;
       }
 
-      // Prepare submission data
+      // ✅ PREPARE SUBMISSION DATA USING HELPER FUNCTIONS
       const submissionData = {
         ...formData,
-        interests: selectedInterests.join(","),
-        skills: selectedSkills.join(","),
-        organizationType: selectedOrgTypes.join(","),
+        interests: arrayToCommaSeparated(selectedInterests),
+        skills: arrayToCommaSeparated(selectedSkills),
+        primaryCategory: primaryCategory,
+        categories: primaryCategory, // Set categories to primaryCategory for backward compatibility
+        causes: arrayToCommaSeparated(selectedCauses),
+        services: arrayToCommaSeparated(selectedServices),
+        languagesSupported: arrayToCommaSeparated(selectedLanguages),
         organizationSize: selectedOrgSize,
-        // Set categories for backward compatibility
-        categories: selectedOrgTypes.length > 0 ? selectedOrgTypes.join(",") : formData.categories,
-        profileComplete: true, // Mark profile as complete
+        profileComplete: true,
       };
 
-      console.log("=== FRONTEND DEBUG: SUBMISSION DATA ===");
-      console.log("User type:", user?.userType);
-      console.log("Selected organization types:", selectedOrgTypes);
-      console.log("Selected organization size:", selectedOrgSize);
-      console.log("Full submission data:");
-      console.log(JSON.stringify(submissionData, null, 2));
-
-      // Check for organization-specific fields
-      if (user?.userType === "ORGANIZATION") {
-        console.log("=== ORGANIZATION SPECIFIC DEBUG ===");
-        console.log("Organization Name:", submissionData.organizationName);
-        console.log("Bio:", submissionData.bio);
-        console.log("Location:", submissionData.location);
-        console.log("Organization Types:", submissionData.organizationType);
-        console.log("Organization Size:", submissionData.organizationSize);
-        console.log("Categories:", submissionData.categories);
-        console.log("Services:", submissionData.services);
-        console.log("Website:", submissionData.website);
-
-        // Check for required fields
-        const requiredFields = [
-          "organizationName",
-          "bio",
-          "location",
-        ];
-        const missingFields = requiredFields.filter(
-          (field) =>
-            !submissionData[field] || submissionData[field].trim() === ""
-        );
-
-        if (missingFields.length > 0) {
-          console.error("Missing required fields:", missingFields);
-          setError(`Missing required fields: ${missingFields.join(", ")}`);
-          setLoading(false);
-          return;
-        }
-
-        if (selectedOrgTypes.length === 0) {
-          setError("Please select at least one organization type");
-          setLoading(false);
-          return;
-        }
-      }
-
-      console.log("Submitting profile data:", submissionData);
+      console.log("=== ENHANCED ORGANIZATION PROFILE SUBMISSION ===");
+      console.log("Organization Name:", submissionData.organizationName);
+      console.log("Primary Category:", submissionData.primaryCategory);
+      console.log("Causes:", submissionData.causes);
+      console.log("Services:", submissionData.services);
+      console.log("Languages:", submissionData.languagesSupported);
+      console.log(
+        "Full submission data:",
+        JSON.stringify(submissionData, null, 2)
+      );
 
       const result = hasExistingProfile
         ? await updateProfile(submissionData)
         : await createProfile(submissionData);
-
-      console.log("=== PROFILE SUBMISSION RESULT ===");
-      console.log("Success:", result.success);
-      console.log("Message:", result.message);
-      console.log("Data:", result.data);
 
       if (result.success) {
         setSuccess(
           `Profile ${hasExistingProfile ? "updated" : "created"} successfully!`
         );
 
-        // Update local user data to mark profile as complete
         updateCurrentUser({
           ...submissionData,
           profileComplete: true,
@@ -411,53 +667,10 @@ const ProfileSetup = () => {
   const handleSkip = async () => {
     try {
       await ensureValidToken();
-
-      // Create minimal profile data
-      const skipData = {
-        bio: "Profile setup skipped - will complete later",
-        location: "Location not specified",
-        interests:
-          user?.userType === "VOLUNTEER" ? selectedInterests.join(",") : "",
-        skills: selectedSkills.join(","),
-        phoneNumber: formData.phoneNumber || "",
-        profileComplete: false, // Mark as incomplete so they can finish later
-        ...(user?.userType === "VOLUNTEER"
-          ? {
-              firstName: formData.firstName || user.firstName || "",
-              lastName: formData.lastName || user.lastName || "",
-              availability: "flexible",
-            }
-          : {}),
-        ...(user?.userType === "ORGANIZATION"
-          ? {
-              organizationName:
-                formData.organizationName || user.organizationName || "",
-              organizationType: selectedOrgTypes.join(","),
-              organizationSize: selectedOrgSize,
-              website: formData.website || "",
-              missionStatement: formData.missionStatement || "",
-              categories: selectedOrgTypes.length > 0 ? selectedOrgTypes.join(",") : "",
-              services: formData.services || "",
-            }
-          : {}),
-      };
-
-      if (hasExistingProfile) {
-        await updateProfile(skipData);
-      } else {
-        await createProfile(skipData);
-      }
-
-      // Update local user but don't mark as complete
-      updateCurrentUser({
-        ...skipData,
-        profileComplete: false,
-      });
-
       navigate("/dashboard");
     } catch (error) {
       console.error("Skip profile error:", error);
-      navigate("/dashboard"); // Navigate anyway
+      navigate("/dashboard");
     }
   };
 
@@ -485,8 +698,7 @@ const ProfileSetup = () => {
             Welcome, {user.firstName || user.organizationName || user.email}!
           </p>
           <p className="profile-setup-description">
-            Help us personalize your volunteer experience by completing your
-            profile.
+            Help us personalize your experience by completing your profile.
           </p>
         </div>
 
@@ -494,97 +706,76 @@ const ProfileSetup = () => {
         {success && <div className="profile-setup-success">{success}</div>}
 
         <form onSubmit={handleSubmit} className="profile-setup-form">
-          {/* Name fields for volunteers */}
-          {user.userType === "VOLUNTEER" && (
-            <div className="profile-setup-row">
-              <div className="profile-setup-field">
-                <label className="profile-setup-label">First Name *</label>
-                <input
-                  type="text"
-                  name="firstName"
-                  value={formData.firstName}
-                  onChange={handleInputChange}
-                  className="profile-setup-input"
-                  required
-                />
-              </div>
-              <div className="profile-setup-field">
-                <label className="profile-setup-label">Last Name *</label>
-                <input
-                  type="text"
-                  name="lastName"
-                  value={formData.lastName}
-                  onChange={handleInputChange}
-                  className="profile-setup-input"
-                  required
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Organization name for organizations */}
-          {user.userType === "ORGANIZATION" && (
-            <div className="profile-setup-field">
-              <label className="profile-setup-label">Organization Name *</label>
-              <input
-                type="text"
-                name="organizationName"
-                value={formData.organizationName}
-                onChange={handleInputChange}
-                className="profile-setup-input"
-                required
-              />
-            </div>
-          )}
-
-          <div className="profile-setup-field">
-            <label className="profile-setup-label">
-              Tell us about yourself *
-            </label>
-            <textarea
-              name="bio"
-              value={formData.bio}
-              onChange={handleInputChange}
-              className="profile-setup-textarea"
-              rows={4}
-              placeholder={
-                user.userType === "VOLUNTEER"
-                  ? "Share your passion for volunteering, what motivates you, and what you hope to achieve..."
-                  : "Describe your organization's mission, values, and the impact you're making in the community..."
-              }
-              required
-            />
-          </div>
-
-          <div className="profile-setup-field">
-            <label className="profile-setup-label">Location *</label>
-            <input
-              type="text"
-              name="location"
-              value={formData.location}
-              onChange={handleInputChange}
-              className="profile-setup-input"
-              placeholder="City, State"
-              required
-            />
-          </div>
-
-          <div className="profile-setup-field">
-            <label className="profile-setup-label">
-              Phone Number (Optional)
-            </label>
-            <input
-              type="tel"
-              name="phoneNumber"
-              value={formData.phoneNumber}
-              onChange={handleInputChange}
-              className="profile-setup-input"
-              placeholder="(555) 123-4567"
-            />
-          </div>
-
+          {/* VOLUNTEER FIELDS */}
           {user.userType === "VOLUNTEER" && (
             <>
+              <div className="profile-setup-row">
+                <div className="profile-setup-field">
+                  <label className="profile-setup-label">First Name *</label>
+                  <input
+                    type="text"
+                    name="firstName"
+                    value={formData.firstName}
+                    onChange={handleInputChange}
+                    className="profile-setup-input"
+                    required
+                  />
+                </div>
+                <div className="profile-setup-field">
+                  <label className="profile-setup-label">Last Name *</label>
+                  <input
+                    type="text"
+                    name="lastName"
+                    value={formData.lastName}
+                    onChange={handleInputChange}
+                    className="profile-setup-input"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="profile-setup-field">
+                <label className="profile-setup-label">
+                  Tell us about yourself *
+                </label>
+                <textarea
+                  name="bio"
+                  value={formData.bio}
+                  onChange={handleInputChange}
+                  className="profile-setup-textarea"
+                  rows={4}
+                  placeholder="Share your passion for volunteering, what motivates you, and what you hope to achieve..."
+                  required
+                />
+              </div>
+
+              <div className="profile-setup-field">
+                <label className="profile-setup-label">Location *</label>
+                <input
+                  type="text"
+                  name="location"
+                  value={formData.location}
+                  onChange={handleInputChange}
+                  className="profile-setup-input"
+                  placeholder="City, State"
+                  required
+                />
+              </div>
+
+              <div className="profile-setup-field">
+                <label className="profile-setup-label">
+                  Phone Number (Optional)
+                </label>
+                <input
+                  type="tel"
+                  name="phoneNumber"
+                  value={formData.phoneNumber}
+                  onChange={handleInputChange}
+                  className="profile-setup-input"
+                  placeholder="(555) 123-4567"
+                />
+              </div>
+
               <div className="profile-setup-field">
                 <label className="profile-setup-label">
                   Interests & Causes *
@@ -661,72 +852,424 @@ const ProfileSetup = () => {
             </>
           )}
 
+          {/* ORGANIZATION FIELDS */}
           {user.userType === "ORGANIZATION" && (
             <>
-              <div className="profile-setup-field">
-                <label className="profile-setup-label">Organization Types *</label>
-                <p className="org-types-description">
-                  Select the areas your organization focuses on:
-                </p>
-                <div className="org-types-container">
-                  {organizationTypeOptions.map((orgType) => (
-                    <button
-                      key={orgType.value}
-                      type="button"
-                      onClick={() => handleOrgTypeToggle(orgType.value)}
-                      className={`org-type-tag ${orgType.cssClass} ${
-                        selectedOrgTypes.includes(orgType.value) ? "selected" : ""
-                      }`}
-                    >
-                      {orgType.label}
-                    </button>
-                  ))}
+              {/* Basic Information */}
+              <div className="profile-setup-section">
+                <h3 className="profile-setup-section-title">
+                  Basic Information
+                </h3>
+
+                <div className="profile-setup-field">
+                  <label className="profile-setup-label">
+                    Organization Name *
+                  </label>
+                  <input
+                    type="text"
+                    name="organizationName"
+                    value={formData.organizationName}
+                    onChange={handleInputChange}
+                    className="profile-setup-input"
+                    required
+                  />
                 </div>
-                {selectedOrgTypes.length > 0 && (
-                  <p className="org-types-count">
-                    Selected: {selectedOrgTypes.length}
-                  </p>
-                )}
+
+                <div className="profile-setup-field">
+                  <label className="profile-setup-label">Description *</label>
+                  <textarea
+                    name="description"
+                    value={formData.description}
+                    onChange={handleInputChange}
+                    className="profile-setup-textarea"
+                    rows={4}
+                    placeholder="Describe your organization's mission, values, and the impact you're making in the community..."
+                    required
+                  />
+                </div>
+
+                <div className="profile-setup-field">
+                  <label className="profile-setup-label">
+                    Mission Statement
+                  </label>
+                  <textarea
+                    name="missionStatement"
+                    value={formData.missionStatement}
+                    onChange={handleInputChange}
+                    className="profile-setup-textarea"
+                    rows={3}
+                    placeholder="Your organization's formal mission statement..."
+                  />
+                </div>
+
+                <div className="profile-setup-row">
+                  <div className="profile-setup-field">
+                    <label className="profile-setup-label">Website</label>
+                    <input
+                      type="url"
+                      name="website"
+                      value={formData.website}
+                      onChange={handleInputChange}
+                      className="profile-setup-input"
+                      placeholder="https://yourorganization.org"
+                    />
+                  </div>
+                  <div className="profile-setup-field">
+                    <label className="profile-setup-label">Phone Number</label>
+                    <input
+                      type="tel"
+                      name="phoneNumber"
+                      value={formData.phoneNumber}
+                      onChange={handleInputChange}
+                      className="profile-setup-input"
+                      placeholder="(555) 123-4567"
+                    />
+                  </div>
+                </div>
               </div>
 
-              <div className="profile-setup-field">
-                <label className="profile-setup-label">Organization Size</label>
-                <p className="org-size-description">
-                  How many people work in your organization?
-                </p>
-                <div className="org-size-container">
-                  {organizationSizeOptions.map((size) => (
-                    <button
-                      key={size.value}
-                      type="button"
-                      onClick={() => handleOrgSizeSelect(size.value)}
-                      className={`org-size-tag ${size.cssClass} ${
-                        selectedOrgSize === size.value ? "selected" : ""
-                      }`}
-                    >
-                      {size.label}
-                    </button>
-                  ))}
+              {/* Location Information */}
+              <div className="profile-setup-section">
+                <h3 className="profile-setup-section-title">Location</h3>
+
+                <div className="profile-setup-field">
+                  <label className="profile-setup-label">Street Address</label>
+                  <input
+                    type="text"
+                    name="address"
+                    value={formData.address}
+                    onChange={handleInputChange}
+                    className="profile-setup-input"
+                    placeholder="123 Main Street"
+                  />
                 </div>
-                {selectedOrgSize && (
-                  <p className="org-size-count">
-                    Selected: {organizationSizeOptions.find(s => s.value === selectedOrgSize)?.label}
-                  </p>
-                )}
+
+                <div className="profile-setup-row">
+                  <div className="profile-setup-field">
+                    <label className="profile-setup-label">City *</label>
+                    <input
+                      type="text"
+                      name="city"
+                      value={formData.city}
+                      onChange={handleInputChange}
+                      className="profile-setup-input"
+                      required
+                    />
+                  </div>
+                  <div className="profile-setup-field">
+                    <label className="profile-setup-label">
+                      State/Province
+                    </label>
+                    <input
+                      type="text"
+                      name="state"
+                      value={formData.state}
+                      onChange={handleInputChange}
+                      className="profile-setup-input"
+                    />
+                  </div>
+                </div>
+
+                <div className="profile-setup-row">
+                  <div className="profile-setup-field">
+                    <label className="profile-setup-label">Country *</label>
+                    <select
+                      name="country"
+                      value={formData.country}
+                      onChange={handleInputChange}
+                      className="profile-setup-select"
+                      required
+                    >
+                      <option value="">Select Country</option>
+                      {countryOptions.map((country) => (
+                        <option key={country} value={country}>
+                          {country}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="profile-setup-field">
+                    <label className="profile-setup-label">
+                      ZIP/Postal Code
+                    </label>
+                    <input
+                      type="text"
+                      name="zipCode"
+                      value={formData.zipCode}
+                      onChange={handleInputChange}
+                      className="profile-setup-input"
+                    />
+                  </div>
+                </div>
               </div>
 
-              <div className="profile-setup-field">
-                <label className="profile-setup-label">
-                  Website (Optional)
-                </label>
-                <input
-                  type="url"
-                  name="website"
-                  value={formData.website}
-                  onChange={handleInputChange}
-                  className="profile-setup-input"
-                  placeholder="https://yourorganization.org"
-                />
+              {/* Organization Classification */}
+              <div className="profile-setup-section">
+                <h3 className="profile-setup-section-title">Classification</h3>
+
+                <div className="profile-setup-field">
+                  <label className="profile-setup-label">
+                    Primary Category *
+                  </label>
+                  <p className="category-description">
+                    Choose the main area your organization focuses on:
+                  </p>
+                  <div className="category-container">
+                    {categoryOptions.map((category) => (
+                      <button
+                        key={category.value}
+                        type="button"
+                        onClick={() =>
+                          handlePrimaryCategorySelect(category.value)
+                        }
+                        className={`category-tag ${category.cssClass} ${
+                          primaryCategory === category.value ? "selected" : ""
+                        }`}
+                      >
+                        {category.label}
+                      </button>
+                    ))}
+                  </div>
+                  {primaryCategory && (
+                    <p className="category-count">
+                      Selected: {primaryCategory}
+                    </p>
+                  )}
+                </div>
+
+                <div className="profile-setup-field">
+                  <label className="profile-setup-label">
+                    Additional Causes
+                  </label>
+                  <p className="causes-description">
+                    Select other areas your organization works in:
+                  </p>
+                  <div className="causes-container">
+                    {causeOptions.map((cause) => (
+                      <button
+                        key={cause.value}
+                        type="button"
+                        onClick={() => handleCauseToggle(cause.value)}
+                        className={`cause-tag ${cause.cssClass} ${
+                          selectedCauses.includes(cause.value) ? "selected" : ""
+                        }`}
+                      >
+                        {cause.label}
+                      </button>
+                    ))}
+                  </div>
+                  {selectedCauses.length > 0 && (
+                    <p className="causes-count">
+                      Selected: {selectedCauses.length}
+                    </p>
+                  )}
+                </div>
+
+                <div className="profile-setup-field">
+                  <label className="profile-setup-label">
+                    Services Offered
+                  </label>
+                  <p className="services-description">
+                    What services does your organization provide?
+                  </p>
+                  <div className="services-container">
+                    {serviceOptions.map((service) => (
+                      <button
+                        key={service.value}
+                        type="button"
+                        onClick={() => handleServiceToggle(service.value)}
+                        className={`service-tag ${
+                          selectedServices.includes(service.value)
+                            ? "selected"
+                            : ""
+                        }`}
+                      >
+                        <span>{service.emoji}</span>{" "}
+                        <span>{service.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                  {selectedServices.length > 0 && (
+                    <p className="services-count">
+                      Selected: {selectedServices.length}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Organization Details */}
+              <div className="profile-setup-section">
+                <h3 className="profile-setup-section-title">
+                  Organization Details
+                </h3>
+
+                <div className="profile-setup-row">
+                  <div className="profile-setup-field">
+                    <label className="profile-setup-label">
+                      Organization Type
+                    </label>
+                    <select
+                      name="organizationType"
+                      value={formData.organizationType}
+                      onChange={handleInputChange}
+                      className="profile-setup-select"
+                    >
+                      <option value="">Select Type</option>
+                      {organizationTypeOptions.map((type) => (
+                        <option key={type.value} value={type.value}>
+                          {type.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="profile-setup-field">
+                    <label className="profile-setup-label">
+                      Tax-Exempt Status
+                    </label>
+                    <select
+                      name="taxExemptStatus"
+                      value={formData.taxExemptStatus}
+                      onChange={handleInputChange}
+                      className="profile-setup-select"
+                    >
+                      <option value="">Select Status</option>
+                      {taxExemptOptions.map((status) => (
+                        <option key={status.value} value={status.value}>
+                          {status.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="profile-setup-field">
+                  <label className="profile-setup-label">
+                    Organization Size
+                  </label>
+                  <div className="org-size-container">
+                    {organizationSizeOptions.map((size) => (
+                      <button
+                        key={size.value}
+                        type="button"
+                        onClick={() => handleOrgSizeSelect(size.value)}
+                        className={`org-size-tag ${size.cssClass} ${
+                          selectedOrgSize === size.value ? "selected" : ""
+                        }`}
+                      >
+                        {size.label}
+                      </button>
+                    ))}
+                  </div>
+                  {selectedOrgSize && (
+                    <p className="org-size-count">
+                      Selected: {selectedOrgSize}
+                    </p>
+                  )}
+                </div>
+
+                <div className="profile-setup-row">
+                  <div className="profile-setup-field">
+                    <label className="profile-setup-label">
+                      Employee Count
+                    </label>
+                    <input
+                      type="number"
+                      name="employeeCount"
+                      value={formData.employeeCount}
+                      onChange={handleInputChange}
+                      className="profile-setup-input"
+                      min="0"
+                    />
+                  </div>
+                  <div className="profile-setup-field">
+                    <label className="profile-setup-label">Founded Year</label>
+                    <input
+                      type="number"
+                      name="foundedYear"
+                      value={formData.foundedYear}
+                      onChange={handleInputChange}
+                      className="profile-setup-input"
+                      min="1800"
+                      max={new Date().getFullYear()}
+                    />
+                  </div>
+                </div>
+
+                <div className="profile-setup-field">
+                  <label className="profile-setup-label">
+                    EIN (Tax ID Number)
+                  </label>
+                  <input
+                    type="text"
+                    name="ein"
+                    value={formData.ein}
+                    onChange={handleInputChange}
+                    className="profile-setup-input"
+                    placeholder="XX-XXXXXXX"
+                  />
+                </div>
+
+                <div className="profile-setup-field">
+                  <label className="profile-setup-label">
+                    Languages Supported
+                  </label>
+                  <p className="languages-description">
+                    What languages can your organization provide services in?
+                  </p>
+                  <div className="languages-container">
+                    {languageOptions.map((language) => (
+                      <button
+                        key={language.value}
+                        type="button"
+                        onClick={() => handleLanguageToggle(language.value)}
+                        className={`language-tag ${
+                          selectedLanguages.includes(language.value)
+                            ? "selected"
+                            : ""
+                        }`}
+                      >
+                        <span>{language.emoji}</span>{" "}
+                        <span>{language.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                  {selectedLanguages.length > 0 && (
+                    <p className="languages-count">
+                      Selected: {selectedLanguages.length}
+                    </p>
+                  )}
+                </div>
+
+                <div className="profile-setup-row">
+                  <div className="profile-setup-field">
+                    <label className="profile-setup-label">
+                      Funding Goal (Optional)
+                    </label>
+                    <input
+                      type="number"
+                      name="fundingGoal"
+                      value={formData.fundingGoal}
+                      onChange={handleInputChange}
+                      className="profile-setup-input"
+                      min="0"
+                      placeholder="0"
+                    />
+                  </div>
+                  <div className="profile-setup-field">
+                    <label className="profile-setup-label">
+                      Funding Raised (Optional)
+                    </label>
+                    <input
+                      type="number"
+                      name="fundingRaised"
+                      value={formData.fundingRaised}
+                      onChange={handleInputChange}
+                      className="profile-setup-input"
+                      min="0"
+                      placeholder="0"
+                    />
+                  </div>
+                </div>
               </div>
             </>
           )}

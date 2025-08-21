@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Search,
@@ -11,6 +11,7 @@ import {
   Award,
   ChevronLeft,
   ChevronRight,
+  RefreshCw,
 } from "lucide-react";
 import "./Organizations.css";
 import { getCurrentUser, isLoggedIn } from "../services/authService";
@@ -31,13 +32,18 @@ const Organizations = () => {
   const [organizations, setOrganizations] = useState([]);
   const [filteredOrganizations, setFilteredOrganizations] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchLoading, setSearchLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [lastRefresh, setLastRefresh] = useState(new Date());
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(20);
   const [totalPages, setTotalPages] = useState(1);
   const [paginatedOrganizations, setPaginatedOrganizations] = useState([]);
+
+  // Search debounce
+  const [searchDebounceTimer, setSearchDebounceTimer] = useState(null);
 
   // Organization categories
   const categories = [
@@ -98,18 +104,17 @@ const Organizations = () => {
 
   // Helper function to navigate to organization details
   const handleOrganizationClick = (organizationId) => {
-    navigate(`/find-organizations/${organizationId}`); // CHANGED FROM /organizations/ to /find-organizations/
+    navigate(`/find-organizations/${organizationId}`);
   };
+
   // Helper function to get category CSS class
   const getCategoryClass = (category) => {
     if (!category) return "";
-
     const categoryLower = category
       .toLowerCase()
       .replace(/[^\w\s]/g, "")
       .replace(/\s+/g, "-");
 
-    // Map categories to CSS classes
     const categoryMap = {
       education: "education",
       environment: "environment",
@@ -152,7 +157,6 @@ const Organizations = () => {
       ...(categories ? categories.split(",").map((cat) => cat.trim()) : []),
     ];
 
-    // Check for specific categories and return corresponding CSS class
     if (allCategories.some((cat) => cat?.toLowerCase().includes("education")))
       return "education";
     if (
@@ -189,22 +193,337 @@ const Organizations = () => {
     return "default";
   };
 
+  // ✅ ENHANCED: Unified real-time search and filter function
+  const performUnifiedRealtimeSearch = useCallback(
+    async (searchParams = {}, delay = 0) => {
+      if (searchDebounceTimer) {
+        clearTimeout(searchDebounceTimer);
+      }
+
+      const executeSearch = async () => {
+        try {
+          setSearchLoading(true);
+          setError(null);
+
+          const {
+            searchTerm: term = searchTerm,
+            locationTerm = locationSearchTerm,
+            categories = selectedCategories,
+            locations = selectedLocations,
+            sizes = selectedSizes,
+            datePosted = selectedDatePosted,
+            forceRefresh = false,
+          } = searchParams;
+
+          console.log("🚀 Unified real-time search with params:", {
+            term,
+            locationTerm,
+            categories,
+            locations,
+            sizes,
+            datePosted,
+            forceRefresh
+          });
+
+          // ✅ ENHANCED: Build comprehensive search parameters for backend
+          const enhancedSearchParams = {
+            name: term,
+            // Send first category to backend for primary filtering
+            category: categories.length > 0 ? categories[0] : undefined,
+            // Send location info to backend
+            city: locationTerm,
+            state: locationTerm,
+            country: locationTerm,
+            // Force refresh for real-time data
+            forceRefresh: forceRefresh || isDataOld(),
+            limit: 200,
+            // ✅ NEW: Include filter hints for backend optimization
+            filterHints: {
+              hasMultipleCategories: categories.length > 1,
+              hasLocationFilters: locations.length > 0,
+              hasSizeFilters: sizes.length > 0,
+              hasDateFilters: datePosted.length > 0,
+              locationSearchTerm: locationTerm
+            }
+          };
+
+          let searchResult;
+
+          // Determine search strategy based on complexity
+          const hasComplexFilters = 
+            categories.length > 0 ||
+            locations.length > 0 ||
+            sizes.length > 0 ||
+            datePosted.length > 0 ||
+            locationTerm;
+
+          if (!term && !hasComplexFilters) {
+            // Load all with real-time refresh
+            console.log("📋 Loading all organizations with real-time refresh");
+            searchResult = await findOrganizationService.refreshLiveData({
+              force: forceRefresh,
+              maxAgeMinutes: 2, // Shorter cache for better real-time performance
+              includeStats: true,
+              limit: 200,
+            });
+            
+            searchResult = {
+              data: searchResult.organizations,
+              timestamp: searchResult.refreshTimestamp,
+              resultCount: searchResult.totalCount,
+              source: "live_refresh_all"
+            };
+          } else {
+            // Use enhanced real-time search for all filtered queries
+            console.log("🎯 Using enhanced real-time search for filtering");
+            searchResult = await findOrganizationService.performRealtimeSearch(enhancedSearchParams);
+          }
+
+          let searchResults = searchResult.data || [];
+
+          // ✅ ENHANCED: Apply remaining filters with real-time data
+          if (categories.length > 1 && searchResults.length > 0) {
+            console.log("🔍 Applying additional category filters");
+            searchResults = searchResults.filter((org) => {
+              const orgCategories = [
+                org.primaryCategory,
+                ...(org.categories?.split(",").map((cat) => cat.trim()) || [])
+              ].filter(Boolean);
+              
+              return categories.some(category =>
+                orgCategories.some(orgCat => 
+                  orgCat.toLowerCase().includes(category.toLowerCase()) ||
+                  category.toLowerCase().includes(orgCat.toLowerCase())
+                )
+              );
+            });
+          }
+
+          if (locations.length > 0 && searchResults.length > 0) {
+            console.log("🌍 Applying location filters");
+            searchResults = searchResults.filter((org) =>
+              locations.some(location =>
+                org.country?.toLowerCase().includes(location.toLowerCase()) ||
+                org.state?.toLowerCase().includes(location.toLowerCase()) ||
+                org.city?.toLowerCase().includes(location.toLowerCase())
+              )
+            );
+          }
+
+          if (sizes.length > 0 && searchResults.length > 0) {
+            console.log("👥 Applying size filters");
+            searchResults = searchResults.filter((org) => {
+              const employeeCount = org.employeeCount || 0;
+              return sizes.some((size) => {
+                switch (size) {
+                  case "Small (1-50)":
+                    return employeeCount >= 1 && employeeCount <= 50;
+                  case "Medium (51-200)":
+                    return employeeCount >= 51 && employeeCount <= 200;
+                  case "Large (201-1000)":
+                    return employeeCount >= 201 && employeeCount <= 1000;
+                  case "Enterprise (1000+)":
+                    return employeeCount > 1000;
+                  default:
+                    return true;
+                }
+              });
+            });
+          }
+
+          if (datePosted.length > 0 && searchResults.length > 0) {
+            console.log("📅 Applying date filters");
+            const now = new Date();
+            searchResults = searchResults.filter((org) => {
+              const updatedDate = new Date(org.updatedAt || org.createdAt);
+              
+              return datePosted.some((option) => {
+                const diffHours = (now - updatedDate) / (1000 * 60 * 60);
+                const diffDays = diffHours / 24;
+                
+                switch (option) {
+                  case "Last 24 hours":
+                    return diffHours <= 24;
+                  case "Last 3 days":
+                    return diffDays <= 3;
+                  case "Last 7 days":
+                    return diffDays <= 7;
+                  case "Last 14 days":
+                    return diffDays <= 14;
+                  case "Last 30 days":
+                    return diffDays <= 30;
+                  default:
+                    return true;
+                }
+              });
+            });
+          }
+
+          // ✅ ENHANCED: Additional location term filtering if specified
+          if (locationTerm && searchResults.length > 0) {
+            console.log("🗺️ Applying location search term filter");
+            searchResults = searchResults.filter((org) =>
+              org.city?.toLowerCase().includes(locationTerm.toLowerCase()) ||
+              org.state?.toLowerCase().includes(locationTerm.toLowerCase()) ||
+              org.country?.toLowerCase().includes(locationTerm.toLowerCase()) ||
+              org.zipCode?.includes(locationTerm) ||
+              org.address?.toLowerCase().includes(locationTerm.toLowerCase())
+            );
+          }
+
+          console.log(`✅ Enhanced unified search completed: ${searchResults.length} organizations found`);
+          console.log(`📊 Search details:`, {
+            source: searchResult.source,
+            originalCount: searchResult.resultCount,
+            filteredCount: searchResults.length,
+            appliedFilters: {
+              categories: categories.length,
+              locations: locations.length,
+              sizes: sizes.length,
+              datePosted: datePosted.length,
+              hasLocationTerm: !!locationTerm
+            }
+          });
+
+          setOrganizations(searchResults);
+          setFilteredOrganizations(searchResults);
+          setCurrentPage(1);
+
+          // Update last refresh time
+          if (searchResult.timestamp) {
+            setLastRefresh(new Date(searchResult.timestamp));
+          }
+
+        } catch (err) {
+          console.error("❌ Enhanced unified search failed:", err);
+          setError("Search failed. Please try again.");
+
+          // Enhanced fallback strategy
+          try {
+            console.log("🔄 Attempting enhanced fallback...");
+            const fallbackResult = await findOrganizationService.refreshLiveData({
+              force: false,
+              maxAgeMinutes: 10,
+              limit: 100,
+            });
+
+            if (fallbackResult.success && fallbackResult.organizations.length > 0) {
+              // Apply client-side filters to fallback data
+              let fallbackFiltered = fallbackResult.organizations;
+              
+              if (searchParams.searchTerm || searchParams.categories?.length > 0) {
+                fallbackFiltered = applyClientSideFilters(fallbackFiltered, searchParams);
+              }
+              
+              setOrganizations(fallbackFiltered);
+              setFilteredOrganizations(fallbackFiltered);
+              setCurrentPage(1);
+              console.log("✅ Enhanced fallback successful");
+            }
+          } catch (fallbackErr) {
+            console.error("❌ Enhanced fallback also failed:", fallbackErr);
+          }
+        } finally {
+          setSearchLoading(false);
+        }
+      };
+
+      if (delay > 0) {
+        const timer = setTimeout(executeSearch, delay);
+        setSearchDebounceTimer(timer);
+      } else {
+        await executeSearch();
+      }
+    },
+    [searchTerm, locationSearchTerm, selectedCategories, selectedLocations, selectedSizes, selectedDatePosted, searchDebounceTimer]
+  );
+
+  // ✅ ENHANCED: Client-side fallback filters with better matching
+  const applyClientSideFilters = (orgs, params) => {
+    let filtered = [...orgs];
+
+    if (params.searchTerm) {
+      filtered = filtered.filter(org =>
+        org.organizationName?.toLowerCase().includes(params.searchTerm.toLowerCase()) ||
+        org.description?.toLowerCase().includes(params.searchTerm.toLowerCase()) ||
+        org.primaryCategory?.toLowerCase().includes(params.searchTerm.toLowerCase()) ||
+        org.categories?.toLowerCase().includes(params.searchTerm.toLowerCase())
+      );
+    }
+
+    if (params.categories?.length > 0) {
+      filtered = filtered.filter(org => {
+        const orgCategories = [
+          org.primaryCategory,
+          ...(org.categories?.split(",").map(cat => cat.trim()) || [])
+        ].filter(Boolean);
+        
+        return params.categories.some(category =>
+          orgCategories.some(orgCat => 
+            orgCat.toLowerCase().includes(category.toLowerCase()) ||
+            category.toLowerCase().includes(orgCat.toLowerCase())
+          )
+        );
+      });
+    }
+
+    return filtered;
+  };
+
+  // ✅ ENHANCED: Manual refresh function
+  const handleRefresh = async () => {
+    console.log("🔄 Manual refresh triggered");
+    setLastRefresh(new Date());
+    
+    await performUnifiedRealtimeSearch({
+      searchTerm,
+      locationTerm: locationSearchTerm,
+      categories: selectedCategories,
+      locations: selectedLocations,
+      sizes: selectedSizes,
+      datePosted: selectedDatePosted,
+      forceRefresh: true
+    });
+  };
+
+  // ✅ ENHANCED: Check if data is old
+  const isDataOld = () => {
+    const now = new Date();
+    const timeSinceRefresh = now - lastRefresh;
+    return timeSinceRefresh > 60000; // 1 minute
+  };
+
   // Load organizations on component mount
   useEffect(() => {
     loadOrganizations();
   }, []);
 
-  // Apply filters when filter criteria change
+  // ✅ ENHANCED: React to filter changes with unified search
   useEffect(() => {
-    applyFilters();
+    const searchParams = {
+      searchTerm,
+      locationTerm: locationSearchTerm,
+      categories: selectedCategories,
+      locations: selectedLocations,
+      sizes: selectedSizes,
+      datePosted: selectedDatePosted,
+    };
+
+    // Use immediate search for filter changes (no delay)
+    // Use debounced search for text inputs only
+    if (searchTerm || locationSearchTerm) {
+      performUnifiedRealtimeSearch(searchParams, 500); // 500ms delay for text
+    } else {
+      performUnifiedRealtimeSearch(searchParams, 0); // Immediate for filters
+    }
   }, [
-    organizations,
     searchTerm,
     locationSearchTerm,
     selectedCategories,
     selectedLocations,
     selectedDatePosted,
     selectedSizes,
+    performUnifiedRealtimeSearch
   ]);
 
   // Update pagination when filtered results change
@@ -216,119 +535,29 @@ const Organizations = () => {
     try {
       setLoading(true);
       setError(null);
-      const organizationsData =
-        await findOrganizationService.findAllOrganizations();
-      setOrganizations(organizationsData);
+      console.log("📋 Initial load of organizations");
+      
+      // Use real-time refresh for initial load
+      const refreshResult = await findOrganizationService.refreshLiveData({
+        force: false,
+        maxAgeMinutes: 5,
+        includeStats: true,
+        limit: 200,
+      });
+      
+      if (refreshResult.success) {
+        setOrganizations(refreshResult.organizations);
+        setFilteredOrganizations(refreshResult.organizations);
+        setLastRefresh(new Date(refreshResult.refreshTimestamp));
+      } else {
+        throw new Error("Failed to load organizations");
+      }
     } catch (err) {
       console.error("Failed to load organizations:", err);
       setError("Failed to load organizations. Please try again later.");
     } finally {
       setLoading(false);
     }
-  };
-
-  const applyFilters = () => {
-    let filtered = [...organizations];
-
-    // Search term filter
-    if (searchTerm) {
-      filtered = filtered.filter(
-        (org) =>
-          org.organizationName
-            ?.toLowerCase()
-            .includes(searchTerm.toLowerCase()) ||
-          org.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          org.primaryCategory
-            ?.toLowerCase()
-            .includes(searchTerm.toLowerCase()) ||
-          org.categories?.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-
-    // Location search filter
-    if (locationSearchTerm) {
-      filtered = filtered.filter(
-        (org) =>
-          org.city?.toLowerCase().includes(locationSearchTerm.toLowerCase()) ||
-          org.state?.toLowerCase().includes(locationSearchTerm.toLowerCase()) ||
-          org.country
-            ?.toLowerCase()
-            .includes(locationSearchTerm.toLowerCase()) ||
-          org.zipCode?.includes(locationSearchTerm)
-      );
-    }
-
-    // Category filter
-    if (selectedCategories.length > 0) {
-      filtered = filtered.filter((org) => {
-        const orgCategories =
-          org.categories?.split(",").map((cat) => cat.trim()) || [];
-        return selectedCategories.some(
-          (category) =>
-            orgCategories.includes(category) || org.primaryCategory === category
-        );
-      });
-    }
-
-    // Location filter
-    if (selectedLocations.length > 0) {
-      filtered = filtered.filter((org) =>
-        selectedLocations.some(
-          (location) =>
-            org.country === location ||
-            org.country?.toLowerCase().includes(location.toLowerCase())
-        )
-      );
-    }
-
-    // Date posted filter (based on updatedAt)
-    if (selectedDatePosted.length > 0) {
-      filtered = filtered.filter((org) => {
-        const updatedDate = new Date(org.updatedAt);
-        const now = new Date();
-
-        return selectedDatePosted.some((option) => {
-          switch (option) {
-            case "Last 24 hours":
-              return (now - updatedDate) / (1000 * 60 * 60) <= 24;
-            case "Last 3 days":
-              return (now - updatedDate) / (1000 * 60 * 60 * 24) <= 3;
-            case "Last 7 days":
-              return (now - updatedDate) / (1000 * 60 * 60 * 24) <= 7;
-            case "Last 14 days":
-              return (now - updatedDate) / (1000 * 60 * 60 * 24) <= 14;
-            case "Last 30 days":
-              return (now - updatedDate) / (1000 * 60 * 60 * 24) <= 30;
-            default:
-              return true;
-          }
-        });
-      });
-    }
-
-    // Size filter
-    if (selectedSizes.length > 0) {
-      filtered = filtered.filter((org) => {
-        const employeeCount = org.employeeCount || 0;
-        return selectedSizes.some((size) => {
-          switch (size) {
-            case "Small (1-50)":
-              return employeeCount >= 1 && employeeCount <= 50;
-            case "Medium (51-200)":
-              return employeeCount >= 51 && employeeCount <= 200;
-            case "Large (201-1000)":
-              return employeeCount >= 201 && employeeCount <= 1000;
-            case "Enterprise (1000+)":
-              return employeeCount > 1000;
-            default:
-              return true;
-          }
-        });
-      });
-    }
-
-    setFilteredOrganizations(filtered);
-    setCurrentPage(1); // Reset to first page when filters change
   };
 
   const updatePagination = () => {
@@ -344,7 +573,6 @@ const Organizations = () => {
   const handlePageChange = (page) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
-      // Scroll to top of results
       document
         .querySelector(".organizations-main")
         ?.scrollIntoView({ behavior: "smooth" });
@@ -381,34 +609,37 @@ const Organizations = () => {
     return rangeWithDots;
   };
 
+  // ✅ ENHANCED: Filter toggle functions trigger immediate real-time search
   const handleCategoryToggle = (category) => {
-    setSelectedCategories((prev) =>
-      prev.includes(category)
-        ? prev.filter((c) => c !== category)
-        : [...prev, category]
-    );
+    const newCategories = selectedCategories.includes(category)
+      ? selectedCategories.filter((c) => c !== category)
+      : [...selectedCategories, category];
+    
+    setSelectedCategories(newCategories);
   };
 
   const handleLocationToggle = (location) => {
-    setSelectedLocations((prev) =>
-      prev.includes(location)
-        ? prev.filter((l) => l !== location)
-        : [...prev, location]
-    );
+    const newLocations = selectedLocations.includes(location)
+      ? selectedLocations.filter((l) => l !== location)
+      : [...selectedLocations, location];
+      
+    setSelectedLocations(newLocations);
   };
 
   const handleDatePostedToggle = (option) => {
-    setSelectedDatePosted((prev) =>
-      prev.includes(option)
-        ? prev.filter((d) => d !== option)
-        : [...prev, option]
-    );
+    const newDatePosted = selectedDatePosted.includes(option)
+      ? selectedDatePosted.filter((d) => d !== option)
+      : [...selectedDatePosted, option];
+      
+    setSelectedDatePosted(newDatePosted);
   };
 
   const handleSizeToggle = (size) => {
-    setSelectedSizes((prev) =>
-      prev.includes(size) ? prev.filter((s) => s !== size) : [...prev, size]
-    );
+    const newSizes = selectedSizes.includes(size)
+      ? selectedSizes.filter((s) => s !== size)
+      : [...selectedSizes, size];
+      
+    setSelectedSizes(newSizes);
   };
 
   const clearAllFilters = () => {
@@ -420,13 +651,23 @@ const Organizations = () => {
     setLocationSearchTerm("");
   };
 
-  const hasActiveFilters =
-    selectedCategories.length > 0 ||
-    selectedLocations.length > 0 ||
-    selectedDatePosted.length > 0 ||
-    selectedSizes.length > 0 ||
-    searchTerm ||
-    locationSearchTerm;
+  const hasActiveFilters = useMemo(
+    () =>
+      selectedCategories.length > 0 ||
+      selectedLocations.length > 0 ||
+      selectedDatePosted.length > 0 ||
+      selectedSizes.length > 0 ||
+      searchTerm ||
+      locationSearchTerm,
+    [
+      selectedCategories,
+      selectedLocations,
+      selectedDatePosted,
+      selectedSizes,
+      searchTerm,
+      locationSearchTerm,
+    ]
+  );
 
   const formatFoundedYear = (year) => {
     if (!year) return "Founded: N/A";
@@ -452,7 +693,6 @@ const Organizations = () => {
       const additionalCategories = categories
         .split(",")
         .map((cat) => cat.trim());
-      // Add categories that aren't already included (avoid duplicates)
       additionalCategories.forEach((cat) => {
         if (cat && !categoryArray.includes(cat)) {
           categoryArray.push(cat);
@@ -460,7 +700,6 @@ const Organizations = () => {
       });
     }
 
-    // Return first 3 categories max to avoid cluttering
     return categoryArray.slice(0, 3);
   };
 
@@ -607,9 +846,25 @@ const Organizations = () => {
                   </>
                 )}
                 Last Updated:{" "}
-                <span className="organizations-highlight">Today</span>
+                <span className="organizations-highlight">
+                  {lastRefresh.toLocaleTimeString()}
+                </span>
               </p>
             </div>
+            {/* Manual refresh button */}
+            <button
+              onClick={handleRefresh}
+              disabled={loading || searchLoading}
+              className="organizations-refresh-btn"
+              title="Refresh organizations"
+            >
+              <RefreshCw
+                className={`organizations-refresh-icon ${
+                  loading || searchLoading ? "spinning" : ""
+                }`}
+              />
+              Refresh
+            </button>
           </div>
 
           {/* Search Bar */}
@@ -623,6 +878,7 @@ const Organizations = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="organizations-search-input"
               />
+              {searchLoading && <div className="search-loading-spinner"></div>}
             </div>
 
             {/* Location Search */}
@@ -707,10 +963,10 @@ const Organizations = () => {
           )}
 
           {/* Loading State */}
-          {loading && (
+          {(loading || searchLoading) && (
             <div className="organizations-loading">
               <div className="organizations-loading-spinner"></div>
-              <p>Loading organizations...</p>
+              <p>{loading ? "Loading organizations..." : "Searching..."}</p>
             </div>
           )}
 
@@ -878,7 +1134,7 @@ const Organizations = () => {
             </>
           )}
 
-          {/* Empty State - Show when no organizations after filtering or no organizations loaded */}
+          {/* Empty State */}
           {!loading && !error && filteredOrganizations.length === 0 && (
             <div className="organizations-empty-state">
               <div className="organizations-empty-state-icon">

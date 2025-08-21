@@ -84,11 +84,13 @@ const ViewEvent = () => {
       EDUCATION: "education",
       ENVIRONMENT: "environment",
       HEALTHCARE: "healthcare",
+      HEALTHCARE_SUPPORT: "healthcare",
       ANIMAL_WELFARE: "animal-welfare",
       DISASTER_RELIEF: "disaster-relief",
       ARTS_CULTURE: "arts-culture",
       SPORTS_RECREATION: "sports-recreation",
       SENIOR_SERVICES: "senior-services",
+      SENIOR_SUPPORT: "senior-services",  
       YOUTH_DEVELOPMENT: "youth-development",
     };
 

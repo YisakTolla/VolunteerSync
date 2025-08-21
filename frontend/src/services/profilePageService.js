@@ -8,8 +8,12 @@ import {
   fetchPublicProfile, 
   updateProfile, 
   uploadProfileImage as uploadImage,
-  getCurrentUser 
-} from './profileService';
+  getCurrentUser,
+  // ✅ FIXED: Import the missing utility functions
+  stringToArray,
+  arrayToString,
+  parseArrayField
+} from './profileSetUpService';
 
 // ==========================================
 // PROFILE DATA FUNCTIONS
@@ -134,9 +138,9 @@ export async function addInterest(interest) {
       };
     }
 
-    // Get current interests
+    // Get current interests using the utility function
     const currentInterests = currentUser.interests || '';
-    const interestsArray = currentInterests.split(',').map(i => i.trim()).filter(i => i);
+    const interestsArray = stringToArray(currentInterests);
     
     // Add new interest if not already present
     if (!interestsArray.includes(interest)) {
@@ -145,7 +149,7 @@ export async function addInterest(interest) {
 
     // Update profile with new interests
     const updatedData = {
-      interests: interestsArray.join(', ')
+      interests: arrayToString(interestsArray)
     };
 
     return await updateProfile(updatedData);
@@ -177,9 +181,9 @@ export async function addSkill(skill) {
       };
     }
 
-    // Get current skills
+    // Get current skills using the utility function
     const currentSkills = currentUser.skills || '';
-    const skillsArray = currentSkills.split(',').map(s => s.trim()).filter(s => s);
+    const skillsArray = stringToArray(currentSkills);
     
     // Add new skill if not already present
     if (!skillsArray.includes(skill)) {
@@ -188,7 +192,7 @@ export async function addSkill(skill) {
 
     // Update profile with new skills
     const updatedData = {
-      skills: skillsArray.join(', ')
+      skills: arrayToString(skillsArray)
     };
 
     return await updateProfile(updatedData);
@@ -207,6 +211,7 @@ export async function addSkill(skill) {
 // ==========================================
 
 /**
+ * ✅ FIXED: Complete formatProfileDataForDisplay function
  * Format profile data for display in Profile component
  * @param {Object} rawData - Raw profile data from API
  * @param {string} userType - User type ('volunteer' or 'organization')
@@ -220,48 +225,65 @@ function formatProfileDataForDisplay(rawData, userType) {
   // Base data that all profiles have
   const baseData = {
     id: rawData.id,
-    name: rawData.name || 
-          `${rawData.firstName || ''} ${rawData.lastName || ''}`.trim() || 
-          rawData.organizationName || 'Unknown User',
-    email: rawData.email || '',
-    phone: rawData.phone || rawData.phoneNumber || '',
-    bio: rawData.bio || rawData.description || '',
-    location: rawData.location || rawData.address ||
-              `${rawData.city || ''}, ${rawData.state || ''}`.replace(/, $/, '') || '',
+    userId: rawData.userId,
+    profileImageUrl: rawData.profileImageUrl || null,
+    coverImageUrl: rawData.coverImageUrl || null,
+    bio: rawData.bio || '',
+    location: rawData.location || '',
+    phoneNumber: rawData.phoneNumber || rawData.phone || '',
     website: rawData.website || '',
-    profileImage: rawData.profileImageUrl || rawData.profileImage || '/api/placeholder/150/150',
-    coverImage: rawData.coverImageUrl || rawData.coverImage || '/api/placeholder/800/200',
     joinDate: formatJoinDate(rawData.createdAt || rawData.joinDate),
+    // ✅ FIXED: Use the imported stringToArray function
+    interests: stringToArray(rawData.interests || ''),
+    skills: stringToArray(rawData.skills || ''),
+    profileComplete: rawData.profileComplete || false,
+    isVerified: rawData.isVerified || false,
+    type: userType // Add type field for component logic
   };
 
   if (userType === 'volunteer') {
-    return {
+    const volunteerData = {
       ...baseData,
-      type: 'volunteer',
-      interests: parseArrayField(rawData.interests),
-      skills: parseArrayField(rawData.skills),
+      firstName: rawData.firstName || '',
+      lastName: rawData.lastName || '',
+      displayName: rawData.displayName || `${rawData.firstName || ''} ${rawData.lastName || ''}`.trim(),
+      availability: rawData.availability || 'flexible',
+      totalHours: rawData.totalHours || 0,
+      eventsAttended: rawData.eventsAttended || 0,
       stats: {
-        hoursVolunteered: rawData.totalHours || 0,
-        eventsAttended: rawData.eventsAttended || 0,
-        organizations: rawData.organizationsCount || 0,
+        volunteered: rawData.eventsAttended || 0,
+        hours: rawData.totalHours || 0,
+        skills: stringToArray(rawData.skills || '').length,
+        causes: stringToArray(rawData.interests || '').length,
       },
-      badges: rawData.badges || [],
-      organizations: rawData.organizations || [],
+      achievements: rawData.achievements || [],
+      recentActivity: rawData.recentActivity || []
     };
-  } else {
-    // Organization profile data
+
+    console.log('🙋 Formatted volunteer data:', volunteerData);
+    return volunteerData;
+
+  } else if (userType === 'organization') {
     const organizationData = {
       ...baseData,
-      type: 'organization',
-      organizationType: rawData.organizationType || 'Non-Profit',
-      founded: formatFoundedDate(rawData.foundedYear || rawData.founded),
-      foundedYear: rawData.foundedYear || null,
-      employeeCount: rawData.employeeCount || null,
-      isVerified: rawData.verificationLevel === 'Verified' || false,
-      ein: rawData.ein || rawData.taxId || 'Not provided',
-      causes: parseArrayField(rawData.categories || rawData.causes),
-      services: parseArrayField(rawData.services),
-      categories: parseArrayField(rawData.categories),
+      organizationName: rawData.organizationName || '',
+      displayName: rawData.displayName || rawData.organizationName || '',
+      organizationType: stringToArray(rawData.organizationType || ''),
+      organizationSize: rawData.organizationSize || '',
+      missionStatement: rawData.missionStatement || rawData.bio || '',
+      categories: stringToArray(rawData.categories || ''),
+      services: stringToArray(rawData.services || ''),
+      primaryCategory: rawData.primaryCategory || '',
+      foundedYear: formatFoundedDate(rawData.foundedYear),
+      address: rawData.address || rawData.location || '',
+      city: rawData.city || '',
+      state: rawData.state || '',
+      zipCode: rawData.zipCode || '',
+      country: rawData.country || '',
+      languagesSupported: rawData.languagesSupported || '',
+      taxExemptStatus: rawData.taxExemptStatus || '',
+      employeeCount: rawData.employeeCount || 0,
+      volunteersCount: rawData.volunteersCount || rawData.totalVolunteersServed || 0,
       totalVolunteersServed: rawData.totalVolunteersServed || 0,
       totalEventsHosted: rawData.totalEventsHosted || 0,
       fundingRaised: rawData.fundingRaised || 0,
@@ -281,21 +303,19 @@ function formatProfileDataForDisplay(rawData, userType) {
     console.log('🏢 Formatted organization data:', organizationData);
     return organizationData;
   }
+
+  // Fallback for unknown user types
+  console.log('📄 Formatted base data (unknown user type):', baseData);
+  return baseData;
 }
 
 /**
- * Parse comma-separated string into array
+ * ✅ ENHANCED: Parse comma-separated string into array (now uses imported function)
  * @param {string|array} field - Field to parse
  * @returns {array} - Parsed array
  */
 function parseArrayField(field) {
-  if (Array.isArray(field)) {
-    return field;
-  }
-  if (typeof field === 'string' && field.trim()) {
-    return field.split(',').map(item => item.trim()).filter(item => item);
-  }
-  return [];
+  return stringToArray(field);
 }
 
 /**

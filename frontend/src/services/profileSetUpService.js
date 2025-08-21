@@ -89,27 +89,52 @@ const updateLocalUser = (updatedData) => {
   }
 };
 
+
+
 const formatProfileData = (profileData, userType) => {
   console.log('🔄 Formatting profile data for type:', userType);
   console.log('Raw profile data:', profileData);
 
-  // Helper function to safely convert arrays to strings
+  // ✅ FIXED: Define helper functions within the formatProfileData function
   const arrayToString = (value) => {
+    if (!value) return '';
+
     if (Array.isArray(value)) {
-      return value.length > 0 ? value.join(',') : '';
+      // Filter out empty values and trim whitespace
+      const cleanArray = value
+        .filter(item => item && typeof item === 'string' && item.trim() !== '')
+        .map(item => item.trim());
+      return cleanArray.length > 0 ? cleanArray.join(',') : '';
     }
-    return value || '';
+
+    if (typeof value === 'string') {
+      // Already a string, clean it up by splitting and rejoining
+      const cleanArray = value
+        .split(',')
+        .map(item => item.trim())
+        .filter(item => item !== '');
+      return cleanArray.join(',');
+    }
+
+    return String(value || '');
   };
 
-  // Helper function to ensure string values
   const ensureString = (value) => {
     if (value === null || value === undefined) {
       return '';
     }
     if (Array.isArray(value)) {
-      return value.join(',');
+      return arrayToString(value);
     }
     return String(value);
+  };
+
+  const ensureNumber = (value) => {
+    if (value === null || value === undefined || value === '') {
+      return null;
+    }
+    const num = Number(value);
+    return isNaN(num) ? null : num;
   };
 
   const baseData = {
@@ -136,40 +161,116 @@ const formatProfileData = (profileData, userType) => {
   } else if (userType === 'ORGANIZATION') {
     const formattedData = {
       ...baseData,
+      // ✅ BASIC INFORMATION
       organizationName: ensureString(profileData.organizationName),
-      // ✅ NEW: Handle organization type tags (comma-separated string)
-      organizationType: ensureString(profileData.organizationType),
-      // ✅ NEW: Handle organization size
-      organizationSize: ensureString(profileData.organizationSize),
-      website: ensureString(profileData.website),
-      missionStatement: ensureString(profileData.missionStatement || profileData.bio),
-      // ✅ UPDATED: Categories can be derived from organizationType for backward compatibility
-      categories: ensureString(profileData.categories || profileData.organizationType),
-      // ✅ FIXED: Convert services array to string
-      services: arrayToString(profileData.services),
-      profileImageUrl: profileData.profileImageUrl || null,
-      coverImageUrl: profileData.coverImageUrl || null,
-      // Additional fields that might be sent
       description: ensureString(profileData.description || profileData.bio),
-      address: ensureString(profileData.address || profileData.location),
+      missionStatement: ensureString(profileData.missionStatement),
+      website: ensureString(profileData.website),
+
+      // ✅ CONTACT & LOCATION (matching database schema)
+      address: ensureString(profileData.address),
       city: ensureString(profileData.city),
       state: ensureString(profileData.state),
-      zipCode: ensureString(profileData.zipCode),
       country: ensureString(profileData.country),
+      zipCode: ensureString(profileData.zipCode),
+
+      // ✅ CLASSIFICATION & CATEGORIES
+      organizationType: ensureString(profileData.organizationType),
+      organizationSize: ensureString(profileData.organizationSize),
       primaryCategory: ensureString(profileData.primaryCategory),
-      languagesSupported: ensureString(profileData.languagesSupported),
+      categories: ensureString(profileData.categories || profileData.primaryCategory), // Backward compatibility
+
+      // ✅ FIXED: Proper array to string conversion using arrayToString function
+      causes: arrayToString(profileData.causes),
+      services: arrayToString(profileData.services),
+
+      // ✅ ORGANIZATION DETAILS
+      ein: ensureString(profileData.ein),
+      employeeCount: ensureNumber(profileData.employeeCount),
+      foundedYear: ensureNumber(profileData.foundedYear),
+      fundingGoal: ensureNumber(profileData.fundingGoal),
+      fundingRaised: ensureNumber(profileData.fundingRaised),
+
+      // ✅ FIXED: Language array handling using arrayToString function
+      languagesSupported: arrayToString(profileData.languagesSupported),
       taxExemptStatus: ensureString(profileData.taxExemptStatus),
-      // Handle numeric fields properly
-      employeeCount: profileData.employeeCount ? Number(profileData.employeeCount) : null,
-      foundedYear: profileData.foundedYear ? Number(profileData.foundedYear) : null,
+
+      // ✅ VERIFICATION & STATUS
+      verificationLevel: profileData.verificationLevel || 'Unverified',
+      isVerified: profileData.isVerified || false,
+
+      // ✅ IMAGES
+      profileImageUrl: profileData.profileImageUrl || null,
+      coverImageUrl: profileData.coverImageUrl || null,
+
+      // ✅ STATS (these will be auto-generated by backend, but we include them for completeness)
+      totalEventsHosted: ensureNumber(profileData.totalEventsHosted) || 0,
+      totalVolunteersServed: ensureNumber(profileData.totalVolunteersServed) || 0,
     };
 
-    console.log('🏢 Formatted organization data:', formattedData);
+    console.log('🏢 Formatted organization data:');
+    console.log('- Organization Name:', formattedData.organizationName);
+    console.log('- Primary Category:', formattedData.primaryCategory);
+    console.log('- Causes (processed):', formattedData.causes);
+    console.log('- Services (processed):', formattedData.services);
+    console.log('- Languages (processed):', formattedData.languagesSupported);
+    console.log('- Full formatted data:', formattedData);
+
     return formattedData;
   }
 
-  console.log('📄 Formatted base data:', baseData);
+  console.log('🔄 Formatted base data:', baseData);
   return baseData;
+};
+
+const parseProfileDataFromBackend = (backendData, userType) => {
+  if (!backendData) return null;
+
+  console.log('📥 Parsing backend data for frontend:', backendData);
+
+  const parsedData = { ...backendData };
+
+  if (userType === 'ORGANIZATION') {
+    // Convert comma-separated strings back to arrays for frontend components
+    if (parsedData.causes && typeof parsedData.causes === 'string') {
+      parsedData.causesArray = stringToArray(parsedData.causes);
+    }
+
+    if (parsedData.services && typeof parsedData.services === 'string') {
+      parsedData.servicesArray = stringToArray(parsedData.services);
+    }
+
+    if (parsedData.languagesSupported && typeof parsedData.languagesSupported === 'string') {
+      parsedData.languagesArray = stringToArray(parsedData.languagesSupported);
+    }
+
+    if (parsedData.categories && typeof parsedData.categories === 'string') {
+      parsedData.categoriesArray = stringToArray(parsedData.categories);
+    }
+
+    console.log('🔄 Parsed organization arrays:');
+    console.log('- Causes array:', parsedData.causesArray);
+    console.log('- Services array:', parsedData.servicesArray);
+    console.log('- Languages array:', parsedData.languagesArray);
+    console.log('- Categories array:', parsedData.categoriesArray);
+  }
+
+  if (userType === 'VOLUNTEER') {
+    // Convert comma-separated strings back to arrays for volunteers
+    if (parsedData.interests && typeof parsedData.interests === 'string') {
+      parsedData.interestsArray = stringToArray(parsedData.interests);
+    }
+
+    if (parsedData.skills && typeof parsedData.skills === 'string') {
+      parsedData.skillsArray = stringToArray(parsedData.skills);
+    }
+
+    console.log('🔄 Parsed volunteer arrays:');
+    console.log('- Interests array:', parsedData.interestsArray);
+    console.log('- Skills array:', parsedData.skillsArray);
+  }
+
+  return parsedData;
 };
 
 /**
@@ -198,10 +299,10 @@ const checkProfileCompleteness = (profileData, userType) => {
   } else if (userType === 'ORGANIZATION') {
     return !!(
       profileData.organizationName &&
-      profileData.bio &&
-      profileData.location &&
-      // ✅ UPDATED: Check for organizationType instead of just categories
-      (profileData.organizationType || profileData.categories)
+      (profileData.description || profileData.bio) &&
+      profileData.city &&
+      profileData.country &&
+      (profileData.primaryCategory || profileData.categories)
     );
   }
 
@@ -240,12 +341,26 @@ const createOrUpdateProfile = async (profileData) => {
     } else if (userType === 'ORGANIZATION') {
       endpoint = '/organization-profiles/me';
       console.log('🏢 Creating/updating organization profile...');
-      
+
       // ✅ NEW: Log organization-specific data for debugging
-      console.log('🏷️ Organization Types:', formattedData.organizationType);
+      console.log('=== ORGANIZATION PROFILE DEBUG ===');
+      console.log('🏢 Organization Name:', formattedData.organizationName);
+      console.log('📝 Description:', formattedData.description);
+      console.log('🎯 Primary Category:', formattedData.primaryCategory);
+      console.log('📂 Categories:', formattedData.categories);
+      console.log('💡 Causes:', formattedData.causes);
+      console.log('🛠️ Services:', formattedData.services);
+      console.log('🗣️ Languages:', formattedData.languagesSupported);
+      console.log('📍 Location:', `${formattedData.city}, ${formattedData.state}, ${formattedData.country}`);
+      console.log('🏗️ Organization Type:', formattedData.organizationType);
       console.log('📏 Organization Size:', formattedData.organizationSize);
-      console.log('📂 Categories (backward compatibility):', formattedData.categories);
-      
+      console.log('🆔 EIN:', formattedData.ein);
+      console.log('👥 Employee Count:', formattedData.employeeCount);
+      console.log('📅 Founded Year:', formattedData.foundedYear);
+      console.log('💰 Funding Goal:', formattedData.fundingGoal);
+      console.log('💵 Funding Raised:', formattedData.fundingRaised);
+      console.log('📋 Tax Exempt Status:', formattedData.taxExemptStatus);
+
       response = await profileApi.put(endpoint, formattedData);
     } else {
       throw new Error(`Invalid user type: ${userType}`);
@@ -375,7 +490,7 @@ const checkProfileExists = async () => {
 
 const fetchMyProfile = async () => {
   try {
-    console.log('=== FETCHING PROFILE ===');
+    console.log('=== ENHANCED FETCHING PROFILE ===');
 
     const user = getCurrentUser();
     if (!user) {
@@ -393,18 +508,31 @@ const fetchMyProfile = async () => {
       throw new Error('Invalid user type');
     }
 
-    console.log('Profile fetch response:', response.data);
+    console.log('Raw profile fetch response:', response.data);
+
+    // ✅ ENHANCED: Parse the backend data for frontend use
+    const parsedData = parseProfileDataFromBackend(response.data, userType);
 
     // ✅ NEW: Log organization-specific data when fetching
     if (userType === 'ORGANIZATION') {
-      console.log('🏷️ Fetched Organization Types:', response.data.organizationType);
-      console.log('📏 Fetched Organization Size:', response.data.organizationSize);
+      console.log('=== ENHANCED FETCHED ORGANIZATION DATA ===');
+      console.log('🏢 Organization Name:', parsedData.organizationName);
+      console.log('🎯 Primary Category:', parsedData.primaryCategory);
+      console.log('📂 Categories (string):', parsedData.categories);
+      console.log('📂 Categories (array):', parsedData.categoriesArray);
+      console.log('💡 Causes (string):', parsedData.causes);
+      console.log('💡 Causes (array):', parsedData.causesArray);
+      console.log('🛠️ Services (string):', parsedData.services);
+      console.log('🛠️ Services (array):', parsedData.servicesArray);
+      console.log('🗣️ Languages (string):', parsedData.languagesSupported);
+      console.log('🗣️ Languages (array):', parsedData.languagesArray);
+      console.log('📏 Organization Size:', parsedData.organizationSize);
     }
 
     // Check if profile is complete and update local storage
-    const isComplete = checkProfileCompleteness(response.data, userType);
+    const isComplete = checkProfileCompleteness(parsedData, userType);
     const updatedProfileData = {
-      ...response.data,
+      ...parsedData,
       profileComplete: isComplete
     };
 
@@ -418,7 +546,7 @@ const fetchMyProfile = async () => {
     };
 
   } catch (error) {
-    console.error('=== PROFILE FETCH ERROR ===');
+    console.error('=== ENHANCED PROFILE FETCH ERROR ===');
     console.error('Error:', error.response?.data || error.message);
 
     return {
@@ -619,10 +747,10 @@ const isProfileComplete = (user = null) => {
   } else if (currentUser.userType === 'ORGANIZATION') {
     return !!(
       currentUser.organizationName &&
-      currentUser.bio &&
-      currentUser.location &&
-      // ✅ UPDATED: Check for organizationType or categories
-      (currentUser.organizationType || currentUser.categories)
+      (currentUser.description || currentUser.bio) &&
+      currentUser.city &&
+      currentUser.country &&
+      (currentUser.primaryCategory || currentUser.categories)
     );
   }
 
@@ -638,6 +766,77 @@ const setProfileComplete = (isComplete = true) => {
   if (user) {
     updateLocalUser({ profileComplete: isComplete });
   }
+};
+
+// ==========================================
+// ENHANCED ORGANIZATION UTILITIES
+// ==========================================
+
+/**
+ * Get organization categories list for form dropdowns
+ * @returns {Array} - Array of category options
+ */
+const getOrganizationCategories = () => {
+  return [
+    { value: "Education", label: "Education" },
+    { value: "Environment", label: "Environment" },
+    { value: "Healthcare", label: "Healthcare" },
+    { value: "Animal Welfare", label: "Animal Welfare" },
+    { value: "Community Service", label: "Community Service" },
+    { value: "Human Services", label: "Human Services" },
+    { value: "Arts & Culture", label: "Arts & Culture" },
+    { value: "Youth Development", label: "Youth Development" },
+    { value: "Senior Services", label: "Senior Services" },
+    { value: "Hunger & Homelessness", label: "Hunger & Homelessness" },
+    { value: "Disaster Relief", label: "Disaster Relief" },
+    { value: "International", label: "International" },
+    { value: "Sports & Recreation", label: "Sports & Recreation" },
+    { value: "Mental Health", label: "Mental Health" },
+    { value: "Veterans", label: "Veterans" },
+    { value: "Women's Issues", label: "Women's Issues" },
+    { value: "Children & Families", label: "Children & Families" },
+    { value: "Disability Services", label: "Disability Services" },
+    { value: "Religious", label: "Religious" },
+    { value: "Political", label: "Political" },
+    { value: "LGBTQ+", label: "LGBTQ+" },
+    { value: "Technology", label: "Technology" },
+    { value: "Research & Advocacy", label: "Research & Advocacy" },
+    { value: "Public Safety", label: "Public Safety" },
+  ];
+};
+
+/**
+ * Get organization sizes list for form dropdowns
+ * @returns {Array} - Array of size options
+ */
+const getOrganizationSizes = () => {
+  return [
+    { value: "Small (1-50)", label: "Small (1-50)" },
+    { value: "Medium (51-200)", label: "Medium (51-200)" },
+    { value: "Large (201-1000)", label: "Large (201-1000)" },
+    { value: "Enterprise (1000+)", label: "Enterprise (1000+)" },
+  ];
+};
+
+/**
+ * Get supported languages list for form dropdowns
+ * @returns {Array} - Array of language options
+ */
+const getSupportedLanguages = () => {
+  return [
+    { value: "English", label: "English" },
+    { value: "Spanish", label: "Spanish" },
+    { value: "French", label: "French" },
+    { value: "German", label: "German" },
+    { value: "Italian", label: "Italian" },
+    { value: "Portuguese", label: "Portuguese" },
+    { value: "Chinese", label: "Chinese" },
+    { value: "Japanese", label: "Japanese" },
+    { value: "Korean", label: "Korean" },
+    { value: "Arabic", label: "Arabic" },
+    { value: "Hindi", label: "Hindi" },
+    { value: "Russian", label: "Russian" },
+  ];
 };
 
 // ==========================================
@@ -659,7 +858,10 @@ export {
   formatProfileData,
   isProfileComplete,
   setProfileComplete,
-  checkProfileCompleteness
+  checkProfileCompleteness,
+  getOrganizationCategories,
+  getOrganizationSizes,
+  getSupportedLanguages
 };
 
 export default {
@@ -675,5 +877,8 @@ export default {
   getCurrentUser,
   updateLocalUser,
   isProfileComplete,
-  setProfileComplete
+  setProfileComplete,
+  getOrganizationCategories,
+  getOrganizationSizes,
+  getSupportedLanguages
 };

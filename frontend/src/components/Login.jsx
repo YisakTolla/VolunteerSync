@@ -568,12 +568,12 @@ const Login = ({ onBackToHome }) => {
 
               <div className="floating-stats">
                 <div className="stat-bubble">
-                  <div className="stat-number">2,500+</div>
-                  <div className="stat-label">Active Volunteers</div>
+                  <div className="login-stat-number">2,500+</div>
+                  <div className="login-stat-label">Active Volunteers</div>
                 </div>
                 <div className="stat-bubble">
-                  <div className="stat-number">500+</div>
-                  <div className="stat-label">Organizations</div>
+                  <div className="login-stat-number">500+</div>
+                  <div className="login-stat-label">Organizations</div>
                 </div>
               </div>
             </div>

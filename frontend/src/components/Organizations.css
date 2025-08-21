@@ -41,6 +41,67 @@
   gap: var(--spacing-2);
 }
 
+.organizations-header {
+  margin-bottom: var(--spacing-6);
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--spacing-4);
+}
+
+.organizations-header>div {
+  flex: 1;
+}
+
+/* Refresh Button */
+.organizations-refresh-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-3) var(--spacing-4);
+  background: var(--background-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-lg);
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--duration-200) var(--ease-out);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.organizations-refresh-btn:hover:not(:disabled) {
+  background: var(--accent-purple);
+  color: var(--white);
+  border-color: var(--accent-purple);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.organizations-refresh-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.organizations-refresh-btn:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
+}
+
+.organizations-refresh-icon {
+  width: 1rem;
+  height: 1rem;
+  transition: transform var(--duration-200) var(--ease-out);
+}
+
+.organizations-refresh-icon.spinning {
+  animation: spin 1s linear infinite;
+} 
+
 .organizations-filter-title svg {
   width: 1.25rem;
   height: 1.25rem;
@@ -1029,8 +1090,13 @@
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .organizations-loading p {
@@ -1251,15 +1317,15 @@
   .organization-card:hover {
     transform: none;
   }
-  
+
   .organization-card:hover::before {
     opacity: 0;
   }
-  
+
   .organization-card:hover .organization-card-title {
     color: var(--text-primary);
   }
-  
+
   .organization-card:active {
     background: var(--background-muted);
     transform: scale(0.98);
@@ -1275,16 +1341,16 @@
     grid-template-columns: 1fr;
     gap: var(--spacing-6);
   }
-  
+
   .organizations-sidebar {
     position: static;
     order: 2;
   }
-  
+
   .organizations-main {
     order: 1;
   }
-  
+
   .organizations-filter-options {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -1301,38 +1367,38 @@
   .organizations-page {
     padding: calc(var(--spacing-16) + 72px) var(--spacing-3) var(--spacing-4) var(--spacing-3);
   }
-  
+
   .organizations-container {
     padding: 0 var(--spacing-3);
     gap: var(--spacing-4);
   }
-  
+
   .organizations-filter-card {
     padding: var(--spacing-4);
   }
-  
+
   .organizations-title {
     font-size: var(--font-size-2xl);
   }
-  
+
   .organizations-search-input {
     padding: var(--spacing-3) var(--spacing-4) var(--spacing-3) var(--spacing-10);
   }
-  
+
   .organizations-empty-state {
     padding: var(--spacing-12) var(--spacing-4);
   }
-  
+
   .organizations-empty-state-icon {
     width: 100px;
     height: 100px;
   }
-  
+
   .organizations-empty-state-icon svg {
     width: 50px;
     height: 50px;
   }
-  
+
   .organizations-empty-state-title {
     font-size: var(--font-size-xl);
   }
@@ -1373,63 +1439,63 @@
   .organizations-page {
     padding: calc(var(--spacing-12) + 72px) var(--spacing-2) var(--spacing-3) var(--spacing-2);
   }
-  
+
   .organizations-container {
     padding: 0 var(--spacing-2);
     gap: var(--spacing-3);
   }
-  
+
   .organizations-filter-card {
     padding: var(--spacing-3);
   }
-  
+
   .organizations-filter-options {
     grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
     gap: var(--spacing-1);
   }
-  
+
   .organizations-filter-option {
     padding: var(--spacing-1) var(--spacing-2);
     font-size: var(--font-size-xs);
   }
-  
+
   .organizations-search-input {
     padding: var(--spacing-2) var(--spacing-3) var(--spacing-2) var(--spacing-8);
     font-size: var(--font-size-sm);
   }
-  
+
   .organizations-search-icon {
     left: var(--spacing-2);
     width: var(--spacing-4);
     height: var(--spacing-4);
   }
-  
+
   .organizations-title {
     font-size: var(--font-size-xl);
   }
-  
+
   .organizations-empty-state {
     padding: var(--spacing-8) var(--spacing-2);
   }
-  
+
   .organizations-empty-state-icon {
     width: 80px;
     height: 80px;
   }
-  
+
   .organizations-empty-state-icon svg {
     width: 40px;
     height: 40px;
   }
-  
+
   .organizations-empty-state-title {
     font-size: var(--font-size-lg);
   }
-  
+
   .organizations-empty-state-description {
     font-size: var(--font-size-sm);
   }
-  
+
   .organizations-empty-state-cta {
     padding: var(--spacing-4);
   }
@@ -1498,6 +1564,7 @@
 
 /* Reduced motion for users who prefer it */
 @media (prefers-reduced-motion: reduce) {
+
   .organization-card,
   .organization-card-btn,
   .organizations-filter-option,
@@ -1505,24 +1572,24 @@
   .organizations-pagination-number {
     transition: none;
   }
-  
+
   .organization-card:hover {
     transform: none;
   }
-  
+
   .organization-card-btn:hover {
     transform: none;
   }
-  
+
   .organizations-clear-filters-btn:hover,
   .organizations-retry-btn:hover {
     transform: none;
   }
-  
+
   .organization-card:active {
     transform: none;
   }
-  
+
   .organization-card::before {
     transition: none;
   }
@@ -1533,15 +1600,15 @@
   .organization-card {
     border-width: 2px;
   }
-  
+
   .organization-card-btn {
     border-width: 2px;
   }
-  
+
   .organizations-filter-option.active {
     border-width: 2px;
   }
-  
+
   .organization-card:focus {
     outline-width: 3px;
   }
@@ -1556,7 +1623,7 @@
     background: white !important;
     color: black !important;
   }
-  
+
   .organizations-filter-card,
   .organizations-active-filters,
   .organizations-empty-state-cta,
@@ -1565,7 +1632,7 @@
     background: white !important;
     box-shadow: none !important;
   }
-  
+
   .organizations-clear-filters-btn,
   .organizations-empty-state-cta-button,
   .organization-card-btn,
@@ -1579,15 +1646,15 @@
   .organizations-sidebar {
     display: none;
   }
-  
+
   .organizations-container {
     grid-template-columns: 1fr;
   }
-  
+
   .organization-card::before {
     display: none;
   }
-  
+
   .organization-card:hover {
     transform: none;
     box-shadow: none !important;

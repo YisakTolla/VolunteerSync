@@ -494,14 +494,14 @@
   flex: 1;
 }
 
-.stat-number {
+.login-stat-number {
   font-size: var(--font-size-xl);
   font-weight: var(--font-weight-bold);
   margin-bottom: var(--spacing-1);
   color: white;
 }
 
-.stat-label {
+.login-stat-label {
   font-size: var(--font-size-xs);
   opacity: 0.9;
   color:white;
