@@ -94,7 +94,7 @@ public class DataLoader implements CommandLineRunner {
             "Youth Development Center", "Community Action Network", "Social Justice Initiative"
     };
 
-    // Event titles covering ALL event types (200+ events)
+    // Event titles covering ALL 25 event types (300+ events)
     private final String[] eventTitles = {
             // Community Cleanup Events
             "Beach Cleanup Drive", "Park Restoration Day", "River Cleanup Initiative", "Street Beautification Project",
@@ -146,29 +146,92 @@ public class DataLoader implements CommandLineRunner {
             "Theater Production Support", "Cultural Heritage Preservation", "Community Mural Painting", "Art Gallery Support",
             "Creative Writing Workshop", "Dance Instruction Volunteer",
 
-            // Technology & Digital Events
+            // Sports & Recreation Events
+            "Youth Soccer Coaching", "Community Basketball League", "Senior Fitness Classes", "Swimming Lessons",
+            "Marathon Event Support", "Sports Equipment Drive", "Disability Sports Program", "Summer Camp Activities",
+            "Outdoor Adventure Club", "Community Sports Tournament",
+
+            // Fundraising Events
+            "Charity Auction Setup", "Fundraising Gala Planning", "Crowdfunding Campaign", "Donation Drive Coordination",
+            "Benefit Concert Organization", "Silent Auction Support", "Corporate Sponsorship Outreach", "Grant Writing Workshop",
+            "Fundraising Strategy Session", "Donor Appreciation Event",
+
+            // Administrative Support Events
+            "Data Entry Volunteer", "Office Administration Help", "Reception Desk Coverage", "Document Filing",
+            "Mail Processing Support", "Database Management", "Volunteer Coordination", "Event Registration",
+            "Phone Call Support", "Record Keeping Assistance",
+
+            // Construction & Building Events
+            "Habitat for Humanity Build", "Playground Construction", "Community Center Renovation", "Wheelchair Ramp Building",
+            "Garden Shed Assembly", "Fence Installation", "Roof Repair Project", "Accessibility Improvements",
+            "Community Infrastructure", "Building Maintenance",
+
+            // Technology Support Events
             "Computer Repair Workshop", "Digital Literacy Training", "Website Development", "Tech Support for Seniors",
             "Equipment Setup", "Software Training", "IT Support Volunteer", "Digital Divide Bridge",
             "Online Safety Education", "Tech Equipment Drive",
 
-            // Community Building Events
-            "Community Festival Planning", "Fundraising Event Coordination", "Wedding Planning for Low-Income",
-            "Birthday Party Organization", "Holiday Celebration Planning", "Awards Ceremony Setup",
-            "Conference Organization", "Workshop Coordination", "Volunteer Recognition Event", "Graduation Ceremony Support",
+            // Event Planning Events
+            "Community Festival Planning", "Wedding Planning for Low-Income", "Birthday Party Organization", 
+            "Holiday Celebration Planning", "Awards Ceremony Setup", "Conference Organization", 
+            "Workshop Coordination", "Volunteer Recognition Event", "Graduation Ceremony Support", "Networking Event Setup",
 
-            // Other Events
+            // Advocacy & Awareness Events
             "Community Forum Facilitation", "Awareness Campaign", "Policy Research", "Community Surveying",
             "Public Speaking Training", "Grassroots Organizing", "Petition Drive", "Educational Workshop",
-            "Community Meeting Support", "Advocacy Training", "Skills Training Workshop", "Professional Development"
+            "Community Meeting Support", "Advocacy Training",
+
+            // Research & Data Events
+            "Survey Data Collection", "Research Study Support", "Data Analysis Volunteer", "Community Needs Assessment",
+            "Academic Research Assistance", "Grant Research", "Statistical Analysis", "Report Writing",
+            "Field Research Support", "Database Development",
+
+            // Transportation Events
+            "Senior Transportation Service", "Medical Appointment Rides", "Grocery Shopping Assistance", 
+            "Community Event Shuttle", "Wheelchair Accessible Transport", "Emergency Transportation",
+            "Student Transportation", "Job Interview Rides", "Volunteer Driver Program", "Public Transit Assistance",
+
+            // Gardening Events
+            "Community Garden Maintenance", "School Garden Project", "Urban Farming Initiative", "Composting Program",
+            "Herb Garden Workshop", "Vegetable Harvest Event", "Garden Design Project", "Plant Distribution",
+            "Greenhouse Volunteer", "Landscaping Project",
+
+            // Crisis Support Events
+            "Crisis Hotline Training", "Emergency Response Support", "Disaster Relief Coordination", "Mental Health First Aid",
+            "Homeless Shelter Volunteer", "Domestic Violence Support", "Suicide Prevention Training", "Crisis Intervention",
+            "Emergency Shelter Setup", "Trauma Support Training",
+
+            // Festival & Fair Events
+            "County Fair Volunteer", "Music Festival Support", "Cultural Festival Booth", "Arts & Crafts Fair",
+            "Food Festival Helper", "Holiday Market Setup", "Farmers Market Support", "Community Carnival",
+            "Street Festival Coordination", "Craft Fair Organization",
+
+            // Workshop & Training Events
+            "Skills Training Workshop", "Professional Development", "Leadership Training", "Communication Workshop",
+            "Financial Literacy Training", "Job Skills Development", "Personal Development Session", "Team Building Workshop",
+            "Conflict Resolution Training", "Public Speaking Workshop",
+
+            // Blood Drive Events
+            "Red Cross Blood Drive", "Hospital Blood Drive", "Community Blood Donation", "Emergency Blood Drive",
+            "Blood Donor Registration", "Blood Drive Coordination", "Mobile Blood Unit Support", "Donor Recruitment",
+            "Blood Drive Setup", "Post-Donation Care",
+
+            // Other Events
+            "Special Project Support", "Community Initiative", "Volunteer Orientation", "Skills Assessment",
+            "Community Outreach", "Public Service Project", "Social Impact Initiative", "Civic Engagement",
+            "Community Development", "Volunteer Recognition"
     };
 
-    // Complete filter coverage arrays - CORRECTED TO MATCH YOUR ACTUAL ENUMS
+    // UPDATED: Complete filter coverage arrays - ALL 25 EVENT TYPES
     private final EventType[] allEventTypes = {
             EventType.COMMUNITY_CLEANUP, EventType.FOOD_SERVICE, EventType.TUTORING_EDUCATION, 
             EventType.ANIMAL_CARE, EventType.ENVIRONMENTAL_CONSERVATION, EventType.SENIOR_SUPPORT, 
-            EventType.YOUTH_MENTORING, EventType.HEALTHCARE_SUPPORT, EventType.ARTS_CULTURE,
-            EventType.TECHNOLOGY_DIGITAL, EventType.DISASTER_RELIEF, EventType.COMMUNITY_BUILDING, 
-            EventType.OTHER
+            EventType.YOUTH_MENTORING, EventType.HEALTHCARE_SUPPORT, EventType.DISASTER_RELIEF,
+            EventType.ARTS_CULTURE, EventType.SPORTS_RECREATION, EventType.FUNDRAISING, 
+            EventType.ADMINISTRATIVE_SUPPORT, EventType.CONSTRUCTION_BUILDING, EventType.TECHNOLOGY_SUPPORT,
+            EventType.EVENT_PLANNING, EventType.ADVOCACY_AWARENESS, EventType.RESEARCH_DATA,
+            EventType.TRANSPORTATION, EventType.GARDENING, EventType.CRISIS_SUPPORT,
+            EventType.FESTIVAL_FAIR, EventType.WORKSHOP_TRAINING, EventType.BLOOD_DRIVE, EventType.OTHER
     };
 
     private final String[] allSkillLevels = {
@@ -232,7 +295,7 @@ public class DataLoader implements CommandLineRunner {
             System.out.println("🚀 Loading comprehensive mock data...");
             loadMockData();
             System.out.println("✅ Mock data loaded successfully!");
-            System.out.println("📊 Created: 200 organizations and 500 events covering all filter options");
+            System.out.println("📊 Created: 200 organizations and 500 events covering ALL 25 event types");
         } else {
             System.out.println("📋 Data already exists, skipping mock data load");
         }
@@ -331,11 +394,11 @@ public class DataLoader implements CommandLineRunner {
     }
 
     private void createComprehensiveEvents(List<OrganizationProfile> organizations) {
-        // Create 500 events to ensure comprehensive coverage
-        for (int i = 0; i < 500; i++) {
+        // Create 750 events to ensure comprehensive coverage (30 events per event type)
+        for (int i = 0; i < 750; i++) {
             Event event = new Event();
             
-            // Ensure coverage of all event types
+            // Ensure coverage of all 25 event types
             EventType eventType = allEventTypes[i % allEventTypes.length];
             event.setEventType(eventType);
             
@@ -531,59 +594,161 @@ public class DataLoader implements CommandLineRunner {
         return createdAt.plusDays(random.nextInt((int) daysBetween + 1));
     }
 
+    // UPDATED: Complete getEventTitleForType method covering ALL 25 event types
     private String getEventTitleForType(EventType eventType, int index) {
-        // Return appropriate title based on event type
         switch (eventType) {
             case COMMUNITY_CLEANUP:
                 String[] cleanupTitles = {"Beach Cleanup Drive", "Park Restoration Day", "River Cleanup Initiative", 
-                                        "Street Beautification Project", "Neighborhood Cleanup Campaign"};
+                                        "Street Beautification Project", "Neighborhood Cleanup Campaign", "Community Garden Cleanup",
+                                        "Highway Cleanup Drive", "School Grounds Cleanup", "Historic Site Cleanup", "Downtown Cleanup Day"};
                 return cleanupTitles[index % cleanupTitles.length];
+                
             case FOOD_SERVICE:
                 String[] foodTitles = {"Community Kitchen Service", "Food Bank Sorting", "Meal Preparation for Homeless",
-                                     "Food Drive Collection", "Senior Meal Delivery"};
+                                     "Food Drive Collection", "Senior Meal Delivery", "School Lunch Program", 
+                                     "Holiday Meal Service", "Soup Kitchen Volunteer", "Emergency Food Distribution", "Community Pantry Stocking"};
                 return foodTitles[index % foodTitles.length];
+                
             case TUTORING_EDUCATION:
                 String[] tutorTitles = {"After School Tutoring", "Reading to Children", "Math Help Session",
-                                      "ESL Classes", "Computer Literacy Training"};
+                                      "ESL Classes", "Computer Literacy Training", "Study Skills Workshop", 
+                                      "Homework Help Program", "College Prep Session", "Adult Education Classes", "Special Needs Tutoring"};
                 return tutorTitles[index % tutorTitles.length];
+                
             case ANIMAL_CARE:
                 String[] animalTitles = {"Animal Shelter Volunteering", "Pet Adoption Event", "Dog Walking Program",
-                                       "Cat Socialization", "Wildlife Rehabilitation"};
+                                       "Cat Socialization", "Wildlife Rehabilitation", "Pet Food Drive", 
+                                       "Animal Rescue Transport", "Pet Therapy Sessions", "Veterinary Clinic Support", "Animal Education Program"};
                 return animalTitles[index % animalTitles.length];
+                
             case ENVIRONMENTAL_CONSERVATION:
                 String[] envTitles = {"Tree Planting Drive", "Nature Trail Maintenance", "Wildlife Habitat Restoration",
-                                    "Recycling Education", "Water Quality Testing"};
+                                    "Recycling Education", "Water Quality Testing", "Solar Panel Installation", 
+                                    "Composting Workshop", "Green Energy Fair", "Conservation Photography", "Environmental Film Screening"};
                 return envTitles[index % envTitles.length];
+                
             case SENIOR_SUPPORT:
                 String[] seniorTitles = {"Senior Center Activities", "Elder Care Visits", "Technology Training for Seniors",
-                                       "Senior Meal Delivery", "Companion Services"};
+                                       "Senior Meal Delivery", "Companion Services", "Senior Transportation", 
+                                       "Health Screening for Elderly", "Senior Exercise Classes", "Intergenerational Programs", "Senior Holiday Celebration"};
                 return seniorTitles[index % seniorTitles.length];
+                
             case YOUTH_MENTORING:
                 String[] youthTitles = {"Youth Leadership Program", "Teen Mentorship Sessions", "Career Exploration Workshop",
-                                      "Life Skills Training", "Youth Sports Coaching"};
+                                      "Life Skills Training", "Youth Sports Coaching", "Creative Arts Mentoring", 
+                                      "STEM Mentorship", "Youth Entrepreneurship", "College Guidance Sessions", "Youth Community Service"};
                 return youthTitles[index % youthTitles.length];
+                
             case HEALTHCARE_SUPPORT:
                 String[] healthTitles = {"Health Screening Clinic", "Blood Drive Campaign", "First Aid Training",
-                                       "Health Education Seminar", "Vaccination Clinic Support"};
+                                       "Health Education Seminar", "Vaccination Clinic Support", "Medical Equipment Drive", 
+                                       "Health Fair Volunteering", "Wellness Workshop", "Chronic Disease Support", "Health Insurance Education"};
                 return healthTitles[index % healthTitles.length];
-            case ARTS_CULTURE:
-                String[] artsTitles = {"Community Art Project", "Cultural Festival Planning", "Art Therapy Sessions",
-                                     "Music Education Program", "Theater Production Support"};
-                return artsTitles[index % artsTitles.length];
-            case TECHNOLOGY_DIGITAL:
-                String[] techTitles = {"Computer Repair Workshop", "Digital Literacy Training", "Website Development",
-                                     "Tech Support for Seniors", "Equipment Setup"};
-                return techTitles[index % techTitles.length];
+                
             case DISASTER_RELIEF:
                 String[] disasterTitles = {"Emergency Response Training", "Disaster Preparedness Workshop", "Relief Supply Packing",
-                                         "Evacuation Support", "Emergency Shelter Setup"};
+                                         "Evacuation Support", "Emergency Shelter Setup", "Disaster Recovery Cleanup", 
+                                         "Emergency Communications", "Relief Fund Drive", "Community Emergency Planning", "Post-Disaster Counseling"};
                 return disasterTitles[index % disasterTitles.length];
-            case COMMUNITY_BUILDING:
-                String[] communityTitles = {"Community Festival Planning", "Fundraising Event Coordination", "Wedding Planning for Low-Income",
-                                          "Birthday Party Organization", "Holiday Celebration Planning"};
-                return communityTitles[index % communityTitles.length];
-            default:
+                
+            case ARTS_CULTURE:
+                String[] artsTitles = {"Community Art Project", "Cultural Festival Planning", "Art Therapy Sessions",
+                                     "Music Education Program", "Theater Production Support", "Cultural Heritage Preservation", 
+                                     "Community Mural Painting", "Art Gallery Support", "Creative Writing Workshop", "Dance Instruction Volunteer"};
+                return artsTitles[index % artsTitles.length];
+                
+            case SPORTS_RECREATION:
+                String[] sportsTitles = {"Youth Soccer Coaching", "Community Basketball League", "Senior Fitness Classes",
+                                       "Swimming Lessons", "Marathon Event Support", "Sports Equipment Drive", 
+                                       "Disability Sports Program", "Summer Camp Activities", "Outdoor Adventure Club", "Community Sports Tournament"};
+                return sportsTitles[index % sportsTitles.length];
+                
+            case FUNDRAISING:
+                String[] fundraisingTitles = {"Charity Auction Setup", "Fundraising Gala Planning", "Crowdfunding Campaign",
+                                            "Donation Drive Coordination", "Benefit Concert Organization", "Silent Auction Support", 
+                                            "Corporate Sponsorship Outreach", "Grant Writing Workshop", "Fundraising Strategy Session", "Donor Appreciation Event"};
+                return fundraisingTitles[index % fundraisingTitles.length];
+                
+            case ADMINISTRATIVE_SUPPORT:
+                String[] adminTitles = {"Data Entry Volunteer", "Office Administration Help", "Reception Desk Coverage",
+                                      "Document Filing", "Mail Processing Support", "Database Management", 
+                                      "Volunteer Coordination", "Event Registration", "Phone Call Support", "Record Keeping Assistance"};
+                return adminTitles[index % adminTitles.length];
+                
+            case CONSTRUCTION_BUILDING:
+                String[] constructionTitles = {"Habitat for Humanity Build", "Playground Construction", "Community Center Renovation",
+                                             "Wheelchair Ramp Building", "Garden Shed Assembly", "Fence Installation", 
+                                             "Roof Repair Project", "Accessibility Improvements", "Community Infrastructure", "Building Maintenance"};
+                return constructionTitles[index % constructionTitles.length];
+                
+            case TECHNOLOGY_SUPPORT:
+                String[] techTitles = {"Computer Repair Workshop", "Digital Literacy Training", "Website Development",
+                                     "Tech Support for Seniors", "Equipment Setup", "Software Training", 
+                                     "IT Support Volunteer", "Digital Divide Bridge", "Online Safety Education", "Tech Equipment Drive"};
+                return techTitles[index % techTitles.length];
+                
+            case EVENT_PLANNING:
+                String[] eventTitles = {"Community Festival Planning", "Wedding Planning for Low-Income", "Birthday Party Organization",
+                                      "Holiday Celebration Planning", "Awards Ceremony Setup", "Conference Organization", 
+                                      "Workshop Coordination", "Volunteer Recognition Event", "Graduation Ceremony Support", "Networking Event Setup"};
                 return eventTitles[index % eventTitles.length];
+                
+            case ADVOCACY_AWARENESS:
+                String[] advocacyTitles = {"Community Forum Facilitation", "Awareness Campaign", "Policy Research",
+                                         "Community Surveying", "Public Speaking Training", "Grassroots Organizing", 
+                                         "Petition Drive", "Educational Workshop", "Community Meeting Support", "Advocacy Training"};
+                return advocacyTitles[index % advocacyTitles.length];
+                
+            case RESEARCH_DATA:
+                String[] researchTitles = {"Survey Data Collection", "Research Study Support", "Data Analysis Volunteer",
+                                         "Community Needs Assessment", "Academic Research Assistance", "Grant Research", 
+                                         "Statistical Analysis", "Report Writing", "Field Research Support", "Database Development"};
+                return researchTitles[index % researchTitles.length];
+                
+            case TRANSPORTATION:
+                String[] transportTitles = {"Senior Transportation Service", "Medical Appointment Rides", "Grocery Shopping Assistance",
+                                          "Community Event Shuttle", "Wheelchair Accessible Transport", "Emergency Transportation", 
+                                          "Student Transportation", "Job Interview Rides", "Volunteer Driver Program", "Public Transit Assistance"};
+                return transportTitles[index % transportTitles.length];
+                
+            case GARDENING:
+                String[] gardenTitles = {"Community Garden Maintenance", "School Garden Project", "Urban Farming Initiative",
+                                       "Composting Program", "Herb Garden Workshop", "Vegetable Harvest Event", 
+                                       "Garden Design Project", "Plant Distribution", "Greenhouse Volunteer", "Landscaping Project"};
+                return gardenTitles[index % gardenTitles.length];
+                
+            case CRISIS_SUPPORT:
+                String[] crisisTitles = {"Crisis Hotline Training", "Emergency Response Support", "Disaster Relief Coordination",
+                                       "Mental Health First Aid", "Homeless Shelter Volunteer", "Domestic Violence Support", 
+                                       "Suicide Prevention Training", "Crisis Intervention", "Emergency Shelter Setup", "Trauma Support Training"};
+                return crisisTitles[index % crisisTitles.length];
+                
+            case FESTIVAL_FAIR:
+                String[] festivalTitles = {"County Fair Volunteer", "Music Festival Support", "Cultural Festival Booth",
+                                         "Arts & Crafts Fair", "Food Festival Helper", "Holiday Market Setup", 
+                                         "Farmers Market Support", "Community Carnival", "Street Festival Coordination", "Craft Fair Organization"};
+                return festivalTitles[index % festivalTitles.length];
+                
+            case WORKSHOP_TRAINING:
+                String[] workshopTitles = {"Skills Training Workshop", "Professional Development", "Leadership Training",
+                                         "Communication Workshop", "Financial Literacy Training", "Job Skills Development", 
+                                         "Personal Development Session", "Team Building Workshop", "Conflict Resolution Training", "Public Speaking Workshop"};
+                return workshopTitles[index % workshopTitles.length];
+                
+            case BLOOD_DRIVE:
+                String[] bloodTitles = {"Red Cross Blood Drive", "Hospital Blood Drive", "Community Blood Donation",
+                                      "Emergency Blood Drive", "Blood Donor Registration", "Blood Drive Coordination", 
+                                      "Mobile Blood Unit Support", "Donor Recruitment", "Blood Drive Setup", "Post-Donation Care"};
+                return bloodTitles[index % bloodTitles.length];
+                
+            case OTHER:
+                String[] otherTitles = {"Special Project Support", "Community Initiative", "Volunteer Orientation",
+                                      "Skills Assessment", "Community Outreach", "Public Service Project", 
+                                      "Social Impact Initiative", "Civic Engagement", "Community Development", "Volunteer Recognition"};
+                return otherTitles[index % otherTitles.length];
+                
+            default:
+                return "Community Volunteer Event";
         }
     }
 

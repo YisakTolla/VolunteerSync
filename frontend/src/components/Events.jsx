@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom"; // ADD THIS IMPORT
+import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Search,
   MapPin,
@@ -11,12 +11,13 @@ import {
   Star,
   ChevronLeft,
   ChevronRight,
+  RefreshCw,
 } from "lucide-react";
 import "./Events.css";
 import findEventsService from "../services/findEventsService";
 
 const Events = () => {
-  const navigate = useNavigate(); // ADD THIS LINE
+  const navigate = useNavigate();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [locationSearchTerm, setLocationSearchTerm] = useState("");
@@ -33,13 +34,18 @@ const Events = () => {
   const [events, setEvents] = useState([]);
   const [filteredEvents, setFilteredEvents] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchLoading, setSearchLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [lastRefresh, setLastRefresh] = useState(new Date());
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(20);
   const [totalPages, setTotalPages] = useState(1);
   const [paginatedEvents, setPaginatedEvents] = useState([]);
+
+  // Search debounce
+  const [searchDebounceTimer, setSearchDebounceTimer] = useState(null);
 
   // ADD THIS FUNCTION FOR HANDLING CARD CLICKS
   const handleEventCardClick = (eventId) => {
@@ -63,7 +69,8 @@ const Events = () => {
       FUNDRAISING: "Fundraising",
       ADMINISTRATIVE_SUPPORT: "Administrative Support",
       CONSTRUCTION_BUILDING: "Construction & Building",
-      TECHNOLOGY_DIGITAL: "Technology Digital",
+      TECHNOLOGY_SUPPORT: "Technology Support",
+      TECHNOLOGY_DIGITAL: "Technology & Digital",
       EVENT_PLANNING: "Event Planning",
       ADVOCACY_AWARENESS: "Advocacy & Awareness",
       RESEARCH_DATA: "Research & Data",
@@ -73,7 +80,8 @@ const Events = () => {
       FESTIVAL_FAIR: "Festival & Fair",
       WORKSHOP_TRAINING: "Workshop & Training",
       BLOOD_DRIVE: "Blood Drive",
-      COMMUNITY_BUILDING: "Construction & Building"
+      COMMUNITY_BUILDING: "Community Building",
+      OTHER: "Other"
     };
 
     return eventTypeMap[enumValue] || enumValue;
@@ -105,6 +113,7 @@ const Events = () => {
     "Festival & Fair",
     "Workshop & Training",
     "Blood Drive",
+    "Other",
   ];
 
   const locations = [
@@ -205,7 +214,8 @@ const Events = () => {
       Fundraising: "fundraising",
       "Administrative Support": "administrative-support",
       "Construction & Building": "construction-building",
-      "Technology Digital": "technology-digital",
+      "Technology Support": "technology-digital",
+      "Technology & Digital": "technology-digital",
       "Event Planning": "event-planning",
       "Advocacy & Awareness": "advocacy-awareness",
       "Research & Data": "research-data",
@@ -215,6 +225,8 @@ const Events = () => {
       "Festival & Fair": "festival-fair",
       "Workshop & Training": "workshop-training",
       "Blood Drive": "blood-drive",
+      "Community Building": "community-building",
+      Other: "other",
     };
 
     return typeMap[eventType] || "";
@@ -237,115 +249,159 @@ const Events = () => {
     return dateClassMap[dateOption] || "";
   };
 
-  // Load events on component mount
-  useEffect(() => {
-    loadEvents();
-  }, []);
+  const performSearch = useCallback(
+    async (searchParams = {}, delay = 0) => {
+      if (searchDebounceTimer) {
+        clearTimeout(searchDebounceTimer);
+      }
 
-  // Apply filters when filter criteria change
-  useEffect(() => {
-    applyFilters();
-  }, [
-    events,
-    searchTerm,
-    locationSearchTerm,
-    selectedEventTypes,
-    selectedLocations,
-    selectedDates,
-    selectedTimes,
-    selectedDurations,
-    selectedSkillLevels,
-  ]);
+      const executeSearch = async () => {
+        try {
+          setSearchLoading(true);
+          setError(null);
 
-  // Update pagination when filtered results change
-  useEffect(() => {
-    updatePagination();
-  }, [filteredEvents, currentPage]);
+          const {
+            searchTerm: term = searchTerm,
+            locationTerm = locationSearchTerm,
+            eventTypes = selectedEventTypes,
+            locations = selectedLocations,
+            dates = selectedDates,
+            times = selectedTimes,
+            durations = selectedDurations,
+            skillLevels = selectedSkillLevels,
+            forceRefresh = false,
+          } = searchParams;
 
-  const loadEvents = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const eventsData = await findEventsService.findAllEvents();
-      setEvents(eventsData);
-    } catch (err) {
-      console.error("Failed to load events:", err);
-      setError("Failed to load events. Please try again later.");
-    } finally {
-      setLoading(false);
-    }
-  };
+          console.log("🔍 Performing real-time search with params:", {
+            term,
+            locationTerm,
+            eventTypes: eventTypes.length,
+            locations: locations.length,
+            hasFilters: dates.length > 0 || times.length > 0 || durations.length > 0 || skillLevels.length > 0,
+            forceRefresh
+          });
 
-  const applyFilters = () => {
+          let searchResult;
+
+          // Check if we have search terms or need real-time data
+          if (term || locationTerm || eventTypes.length > 0 || forceRefresh) {
+            const realTimeSearchParams = {
+              searchTerm: term,
+              location: locationTerm,
+              eventType: eventTypes.length > 0 ? eventTypes[0] : '',
+              forceRefresh: forceRefresh,
+              limit: 200 // Get more results for better filtering
+            };
+
+            console.log("🚀 Using real-time search with params:", realTimeSearchParams);
+            searchResult = await findEventsService.performRealtimeSearch(realTimeSearchParams);
+          } else {
+            // No search terms, get all events with real-time data
+            console.log("📋 Getting all events with real-time refresh");
+            const allEventsData = await findEventsService.findAllEvents();
+            searchResult = {
+              data: allEventsData || [],
+              timestamp: new Date().toISOString(),
+              resultCount: allEventsData.length,
+              source: "all_events"
+            };
+          }
+
+          let filteredResults = searchResult.data || [];
+
+          filteredResults = applyClientSideFilters(filteredResults, {
+            eventTypes,
+            locations,
+            dates,
+            times,
+            durations,
+            skillLevels,
+            locationTerm
+          });
+
+          console.log(`Real-time search completed: ${searchResult.resultCount} -> ${filteredResults.length} events`);
+
+          setEvents(filteredResults);
+          setFilteredEvents(filteredResults);
+          setCurrentPage(1);
+
+          // Update last refresh time
+          if (searchResult.timestamp) {
+            setLastRefresh(new Date(searchResult.timestamp));
+          }
+
+        } catch (err) {
+          console.error("❌ Real-time search failed:", err);
+          setError("Search failed. Please try again.");
+
+          // Fallback: try to get all events
+          try {
+            console.log("🔄 Attempting fallback to all events...");
+            const fallbackEvents = await findEventsService.findAllEvents();
+            const fallbackFiltered = applyClientSideFilters(fallbackEvents, searchParams);
+            
+            setEvents(fallbackFiltered);
+            setFilteredEvents(fallbackFiltered);
+            setCurrentPage(1);
+            console.log("Fallback successful");
+          } catch (fallbackErr) {
+            console.error("Fallback also failed:", fallbackErr);
+            setEvents([]);
+            setFilteredEvents([]);
+          }
+        } finally {
+          setSearchLoading(false);
+        }
+      };
+
+      if (delay > 0) {
+        const timer = setTimeout(executeSearch, delay);
+        setSearchDebounceTimer(timer);
+      } else {
+        await executeSearch();
+      }
+    },
+    [searchTerm, locationSearchTerm, selectedEventTypes, selectedLocations, selectedDates, selectedTimes, selectedDurations, selectedSkillLevels, searchDebounceTimer]
+  );
+
+  const applyClientSideFilters = (events, params) => {
     let filtered = [...events];
 
-    // Search term filter (search both enum and display name)
-    if (searchTerm) {
+    // Apply event type filters (multiple types)
+    if (params.eventTypes && params.eventTypes.length > 0) {
       filtered = filtered.filter((event) => {
         const eventTypeDisplayName = getEventTypeDisplayName(event.eventType);
-        return (
-          event.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          event.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          event.eventType?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          eventTypeDisplayName
-            ?.toLowerCase()
-            .includes(searchTerm.toLowerCase()) ||
-          event.organizationName
-            ?.toLowerCase()
-            .includes(searchTerm.toLowerCase())
+        return params.eventTypes.some(type =>
+          eventTypeDisplayName?.toLowerCase().includes(type.toLowerCase()) ||
+          event.eventType?.toLowerCase().includes(type.toLowerCase()) ||
+          event.title?.toLowerCase().includes(type.toLowerCase())
         );
       });
     }
 
-    // Location search filter
-    if (locationSearchTerm) {
-      filtered = filtered.filter(
-        (event) =>
-          event.location
-            ?.toLowerCase()
-            .includes(locationSearchTerm.toLowerCase()) ||
-          event.city
-            ?.toLowerCase()
-            .includes(locationSearchTerm.toLowerCase()) ||
-          event.state
-            ?.toLowerCase()
-            .includes(locationSearchTerm.toLowerCase()) ||
-          event.zipCode?.includes(locationSearchTerm)
-      );
-    }
-
-    // Event type filter (compare with display names)
-    if (selectedEventTypes.length > 0) {
-      filtered = filtered.filter((event) => {
-        const eventTypeDisplayName = getEventTypeDisplayName(event.eventType);
-        return selectedEventTypes.some(
-          (type) =>
-            eventTypeDisplayName?.includes(type) ||
-            event.title?.includes(type) ||
-            event.categories?.includes(type)
-        );
-      });
-    }
-
-    // Location filter
-    if (selectedLocations.length > 0) {
+    // Apply location filters
+    if (params.locations && params.locations.length > 0) {
       filtered = filtered.filter((event) =>
-        selectedLocations.some(
-          (location) =>
-            event.location?.includes(location) ||
-            event.city?.includes(location) ||
-            (location === "Virtual/Remote" && event.isVirtual)
-        )
+        params.locations.some(location => {
+          if (location === "Virtual/Remote") {
+            return event.isVirtual;
+          }
+          return event.location?.includes(location) ||
+                 event.city?.includes(location) ||
+                 event.state?.includes(location);
+        })
       );
     }
 
-    // Date filter
-    if (selectedDates.length > 0) {
+    // Apply date filters
+    if (params.dates && params.dates.length > 0) {
       filtered = filtered.filter((event) => {
+        if (!event.startDate) return false;
+        
         const eventDate = new Date(event.startDate);
         const now = new Date();
 
-        return selectedDates.some((option) => {
+        return params.dates.some((option) => {
           switch (option) {
             case "Today":
               return eventDate.toDateString() === now.toDateString();
@@ -363,6 +419,23 @@ const Events = () => {
               const nextWeekEnd = new Date(now);
               nextWeekEnd.setDate(nextWeekEnd.getDate() + 14);
               return eventDate >= nextWeekStart && eventDate <= nextWeekEnd;
+            case "This Weekend":
+              const dayOfWeek = eventDate.getDay();
+              const daysUntilWeekend = 6 - now.getDay(); // Days until Saturday
+              const weekendStart = new Date(now);
+              weekendStart.setDate(now.getDate() + daysUntilWeekend);
+              const weekendEnd = new Date(weekendStart);
+              weekendEnd.setDate(weekendStart.getDate() + 1); // Sunday
+              return (dayOfWeek === 0 || dayOfWeek === 6) && 
+                     eventDate >= weekendStart && eventDate <= weekendEnd;
+            case "Next Weekend":
+              const nextWeekendStart = new Date(now);
+              nextWeekendStart.setDate(now.getDate() + 7 + (6 - now.getDay()));
+              const nextWeekendEnd = new Date(nextWeekendStart);
+              nextWeekendEnd.setDate(nextWeekendStart.getDate() + 1);
+              const nextDayOfWeek = eventDate.getDay();
+              return (nextDayOfWeek === 0 || nextDayOfWeek === 6) && 
+                     eventDate >= nextWeekendStart && eventDate <= nextWeekendEnd;
             case "This Month":
               return (
                 eventDate.getMonth() === now.getMonth() &&
@@ -375,6 +448,10 @@ const Events = () => {
                 eventDate.getMonth() === nextMonth.getMonth() &&
                 eventDate.getFullYear() === nextMonth.getFullYear()
               );
+            case "Next 3 Months":
+              const threeMonthsLater = new Date(now);
+              threeMonthsLater.setMonth(now.getMonth() + 3);
+              return eventDate >= now && eventDate <= threeMonthsLater;
             default:
               return true;
           }
@@ -382,12 +459,15 @@ const Events = () => {
       });
     }
 
-    // Time filter
-    if (selectedTimes.length > 0) {
+    // Apply time filters
+    if (params.times && params.times.length > 0) {
       filtered = filtered.filter((event) => {
+        if (!event.startDate) return false;
+        
         const eventTime = new Date(event.startDate).getHours();
+        const eventDay = new Date(event.startDate).getDay();
 
-        return selectedTimes.some((timeOption) => {
+        return params.times.some((timeOption) => {
           switch (timeOption) {
             case "Morning (6AM-12PM)":
               return eventTime >= 6 && eventTime < 12;
@@ -396,11 +476,11 @@ const Events = () => {
             case "Evening (6PM-10PM)":
               return eventTime >= 18 && eventTime < 22;
             case "Weekdays Only":
-              const dayOfWeek = new Date(event.startDate).getDay();
-              return dayOfWeek >= 1 && dayOfWeek <= 5;
+              return eventDay >= 1 && eventDay <= 5;
             case "Weekends Only":
-              const weekendDay = new Date(event.startDate).getDay();
-              return weekendDay === 0 || weekendDay === 6;
+              return eventDay === 0 || eventDay === 6;
+            case "Flexible Timing":
+              return event.hasFlexibleTiming || event.isFlexible;
             default:
               return true;
           }
@@ -408,12 +488,12 @@ const Events = () => {
       });
     }
 
-    // Duration filter
-    if (selectedDurations.length > 0) {
+    // Apply duration filters
+    if (params.durations && params.durations.length > 0) {
       filtered = filtered.filter((event) => {
-        const duration = event.duration || 0;
+        const duration = event.estimatedHours || event.duration || 0;
 
-        return selectedDurations.some((durationOption) => {
+        return params.durations.some((durationOption) => {
           switch (durationOption) {
             case "1-2 Hours":
               return duration >= 1 && duration <= 2;
@@ -422,7 +502,13 @@ const Events = () => {
             case "5-8 Hours (Full Day)":
               return duration >= 5 && duration <= 8;
             case "Multi-Day Event":
-              return duration > 8;
+              return duration > 8 || event.durationCategory === "MULTI_DAY";
+            case "Weekly Commitment":
+              return event.durationCategory === "WEEKLY_COMMITMENT";
+            case "Monthly Commitment":
+              return event.durationCategory === "MONTHLY_COMMITMENT";
+            case "Ongoing/Long-term":
+              return event.durationCategory === "ONGOING_LONG_TERM";
             default:
               return true;
           }
@@ -430,19 +516,160 @@ const Events = () => {
       });
     }
 
-    // Skill level filter
-    if (selectedSkillLevels.length > 0) {
+    // Apply skill level filters
+    if (params.skillLevels && params.skillLevels.length > 0) {
       filtered = filtered.filter((event) =>
-        selectedSkillLevels.some(
-          (skill) =>
-            event.skillLevel?.includes(skill) ||
-            event.requirements?.includes(skill)
-        )
+        params.skillLevels.some((skill) => {
+          const skillLower = skill.toLowerCase();
+          const eventSkill = (event.skillLevelRequired || event.skillLevel || '').toLowerCase();
+          const requirements = (event.requirements || '').toLowerCase();
+          
+          return eventSkill.includes(skillLower) || 
+                 requirements.includes(skillLower) ||
+                 (skillLower.includes('no experience') && (eventSkill.includes('beginner') || eventSkill.includes('no experience')));
+        })
       );
     }
 
-    setFilteredEvents(filtered);
-    setCurrentPage(1); // Reset to first page when filters change
+    // Apply additional location term filter
+    if (params.locationTerm) {
+      const locationLower = params.locationTerm.toLowerCase();
+      filtered = filtered.filter((event) =>
+        event.location?.toLowerCase().includes(locationLower) ||
+        event.city?.toLowerCase().includes(locationLower) ||
+        event.state?.toLowerCase().includes(locationLower) ||
+        event.zipCode?.includes(params.locationTerm) ||
+        event.address?.toLowerCase().includes(locationLower)
+      );
+    }
+
+    return filtered;
+  };
+
+  const handleRefresh = async () => {
+    console.log("🔄 Manual real-time refresh triggered");
+    setLastRefresh(new Date());
+    
+    try {
+      setSearchLoading(true);
+      setError(null);
+
+      // Use the live data refresh method from the service
+      const refreshResult = await findEventsService.refreshLiveData({
+        force: true,
+        maxAgeMinutes: 0, // Force fresh data
+        includeStats: true,
+        limit: 200
+      });
+
+      console.log("Live refresh completed:", refreshResult);
+
+      if (refreshResult.success) {
+        let allEvents = refreshResult.events || [];
+        
+        // Apply current filters to the refreshed data
+        const filteredResults = applyClientSideFilters(allEvents, {
+          eventTypes: selectedEventTypes,
+          locations: selectedLocations,
+          dates: selectedDates,
+          times: selectedTimes,
+          durations: selectedDurations,
+          skillLevels: selectedSkillLevels,
+          locationTerm: locationSearchTerm
+        });
+
+        setEvents(filteredResults);
+        setFilteredEvents(filteredResults);
+        setCurrentPage(1);
+        
+        if (refreshResult.refreshTimestamp) {
+          setLastRefresh(new Date(refreshResult.refreshTimestamp));
+        }
+      } else {
+        throw new Error(refreshResult.error || "Refresh failed");
+      }
+    } catch (err) {
+      console.error("❌ Manual refresh failed:", err);
+      setError("Refresh failed. Please try again.");
+      
+      // Fallback to regular search
+      await performSearch({
+        searchTerm,
+        locationTerm: locationSearchTerm,
+        eventTypes: selectedEventTypes,
+        locations: selectedLocations,
+        dates: selectedDates,
+        times: selectedTimes,
+        durations: selectedDurations,
+        skillLevels: selectedSkillLevels,
+        forceRefresh: true
+      });
+    } finally {
+      setSearchLoading(false);
+    }
+  };
+
+  // Load events on component mount
+  useEffect(() => {
+    loadEvents();
+  }, []);
+
+  useEffect(() => {
+    const searchParams = {
+      searchTerm,
+      locationTerm: locationSearchTerm,
+      eventTypes: selectedEventTypes,
+      locations: selectedLocations,
+      dates: selectedDates,
+      times: selectedTimes,
+      durations: selectedDurations,
+      skillLevels: selectedSkillLevels,
+    };
+
+    // Use debounced search for text inputs, immediate for filters
+    if (searchTerm || locationSearchTerm) {
+      performSearch(searchParams, 500); // 500ms delay for text
+    } else {
+      performSearch(searchParams, 0); // Immediate for filters
+    }
+  }, [
+    searchTerm,
+    locationSearchTerm,
+    selectedEventTypes,
+    selectedLocations,
+    selectedDates,
+    selectedTimes,
+    selectedDurations,
+    selectedSkillLevels,
+    performSearch
+  ]);
+
+  // Update pagination when filtered results change
+  useEffect(() => {
+    updatePagination();
+  }, [filteredEvents, currentPage]);
+
+  const loadEvents = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      console.log("📋 Initial load with real-time events");
+      
+      // Use smart search for initial load to get fresh data
+      const searchResult = await findEventsService.smartSearch({});
+      const eventsData = searchResult.data || [];
+      
+      setEvents(eventsData);
+      setFilteredEvents(eventsData);
+      if (searchResult.timestamp) {
+        setLastRefresh(new Date(searchResult.timestamp));
+      }
+    } catch (err) {
+      console.error("Failed to load events:", err);
+      setError("Failed to load events. Please try again later.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const updatePagination = () => {
@@ -496,43 +723,51 @@ const Events = () => {
   };
 
   const handleEventTypeToggle = (type) => {
-    setSelectedEventTypes((prev) =>
-      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]
-    );
+    const newEventTypes = selectedEventTypes.includes(type)
+      ? selectedEventTypes.filter((t) => t !== type)
+      : [...selectedEventTypes, type];
+    
+    setSelectedEventTypes(newEventTypes);
   };
 
   const handleLocationToggle = (location) => {
-    setSelectedLocations((prev) =>
-      prev.includes(location)
-        ? prev.filter((l) => l !== location)
-        : [...prev, location]
-    );
+    const newLocations = selectedLocations.includes(location)
+      ? selectedLocations.filter((l) => l !== location)
+      : [...selectedLocations, location];
+      
+    setSelectedLocations(newLocations);
   };
 
   const handleDateToggle = (date) => {
-    setSelectedDates((prev) =>
-      prev.includes(date) ? prev.filter((d) => d !== date) : [...prev, date]
-    );
+    const newDates = selectedDates.includes(date)
+      ? selectedDates.filter((d) => d !== date)
+      : [...selectedDates, date];
+      
+    setSelectedDates(newDates);
   };
 
   const handleTimeToggle = (time) => {
-    setSelectedTimes((prev) =>
-      prev.includes(time) ? prev.filter((t) => t !== time) : [...prev, time]
-    );
+    const newTimes = selectedTimes.includes(time)
+      ? selectedTimes.filter((t) => t !== time)
+      : [...selectedTimes, time];
+      
+    setSelectedTimes(newTimes);
   };
 
   const handleDurationToggle = (duration) => {
-    setSelectedDurations((prev) =>
-      prev.includes(duration)
-        ? prev.filter((d) => d !== duration)
-        : [...prev, duration]
-    );
+    const newDurations = selectedDurations.includes(duration)
+      ? selectedDurations.filter((d) => d !== duration)
+      : [...selectedDurations, duration];
+      
+    setSelectedDurations(newDurations);
   };
 
   const handleSkillLevelToggle = (skill) => {
-    setSelectedSkillLevels((prev) =>
-      prev.includes(skill) ? prev.filter((s) => s !== skill) : [...prev, skill]
-    );
+    const newSkillLevels = selectedSkillLevels.includes(skill)
+      ? selectedSkillLevels.filter((s) => s !== skill)
+      : [...selectedSkillLevels, skill];
+      
+    setSelectedSkillLevels(newSkillLevels);
   };
 
   const clearAllFilters = () => {
@@ -546,18 +781,32 @@ const Events = () => {
     setLocationSearchTerm("");
   };
 
-  const hasActiveFilters =
-    selectedEventTypes.length > 0 ||
-    selectedLocations.length > 0 ||
-    selectedDates.length > 0 ||
-    selectedTimes.length > 0 ||
-    selectedDurations.length > 0 ||
-    selectedSkillLevels.length > 0 ||
-    searchTerm ||
-    locationSearchTerm;
+  const hasActiveFilters = useMemo(
+    () =>
+      selectedEventTypes.length > 0 ||
+      selectedLocations.length > 0 ||
+      selectedDates.length > 0 ||
+      selectedTimes.length > 0 ||
+      selectedDurations.length > 0 ||
+      selectedSkillLevels.length > 0 ||
+      searchTerm ||
+      locationSearchTerm,
+    [
+      selectedEventTypes,
+      selectedLocations,
+      selectedDates,
+      selectedTimes,
+      selectedDurations,
+      selectedSkillLevels,
+      searchTerm,
+      locationSearchTerm,
+    ]
+  );
 
   // Enhanced helper functions for tags
   const getDateBadge = (dateStr) => {
+    if (!dateStr) return { text: "TBD", class: "default" };
+    
     const eventDate = new Date(dateStr);
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -655,39 +904,15 @@ const Events = () => {
     }
   };
 
-  const formatEventDate = (dateStr) => {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString("en-US", {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-  };
-
   const formatEventTime = (dateStr) => {
+    if (!dateStr) return "TBD";
+    
     const date = new Date(dateStr);
     return date.toLocaleTimeString("en-US", {
       hour: "numeric",
       minute: "2-digit",
       hour12: true,
     });
-  };
-
-  const getEventStatus = (event) => {
-    const now = new Date();
-    const startDate = new Date(event.startDate);
-    const endDate = new Date(event.endDate);
-
-    if (endDate < now) return "Completed";
-    if (startDate > now) return "Upcoming";
-    return "In Progress";
-  };
-
-  const getSpotsRemaining = (event) => {
-    const maxVolunteers = event.maxVolunteers || 0;
-    const currentVolunteers = event.currentVolunteers || 0;
-    return Math.max(0, maxVolunteers - currentVolunteers);
   };
 
   return (
@@ -852,21 +1077,40 @@ const Events = () => {
         <div className="events-main">
           {/* Header */}
           <div className="events-header">
-            <h1 className="events-title">Volunteer Events</h1>
-            <p className="events-subtitle">
-              {loading
-                ? "Loading..."
-                : `${filteredEvents.length} events available`}{" "}
-              •
-              {!loading && totalPages > 0 && (
-                <>
-                  Showing {(currentPage - 1) * itemsPerPage + 1}-
-                  {Math.min(currentPage * itemsPerPage, filteredEvents.length)}{" "}
-                  of {filteredEvents.length} •{" "}
-                </>
-              )}
-              Last Updated: <span className="events-highlight">Today</span>
-            </p>
+            <div>
+              <h1 className="events-title">Volunteer Events</h1>
+              <p className="events-subtitle">
+                {loading
+                  ? "Loading..."
+                  : `${filteredEvents.length} events available`}{" "}
+                •
+                {!loading && totalPages > 0 && (
+                  <>
+                    Showing {(currentPage - 1) * itemsPerPage + 1}-
+                    {Math.min(currentPage * itemsPerPage, filteredEvents.length)}{" "}
+                    of {filteredEvents.length} •{" "}
+                  </>
+                )}
+                Last Updated:{" "}
+                <span className="events-highlight">
+                  {lastRefresh.toLocaleTimeString()}
+                </span>
+              </p>
+            </div>
+            {/* Manual refresh button */}
+            <button
+              onClick={handleRefresh}
+              disabled={loading || searchLoading}
+              className="events-refresh-btn"
+              title="Refresh events from database"
+            >
+              <RefreshCw
+                className={`events-refresh-icon ${
+                  loading || searchLoading ? "spinning" : ""
+                }`}
+              />
+              Refresh
+            </button>
           </div>
 
           {/* Search Bar */}
@@ -880,6 +1124,7 @@ const Events = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="events-search-input"
               />
+              {searchLoading && <div className="search-loading-spinner"></div>}
             </div>
 
             {/* Location Search */}
@@ -985,10 +1230,10 @@ const Events = () => {
           )}
 
           {/* Loading State */}
-          {loading && (
+          {(loading || searchLoading) && (
             <div className="events-loading">
               <div className="events-loading-spinner"></div>
-              <p>Loading events...</p>
+              <p>{loading ? "Loading events..." : "Searching real-time database..."}</p>
             </div>
           )}
 
@@ -1017,9 +1262,9 @@ const Events = () => {
                       key={event.id}
                       className={`event-card ${
                         event.isVirtual ? "virtual" : ""
-                      } ${event.featured ? "featured" : ""} clickable`} // ADD 'clickable' CLASS
-                      onClick={() => handleEventCardClick(event.id)} // ADD CLICK HANDLER
-                      style={{ cursor: "pointer" }} // ADD CURSOR STYLE
+                      } ${event.featured ? "featured" : ""} clickable`}
+                      onClick={() => handleEventCardClick(event.id)}
+                      style={{ cursor: "pointer" }}
                     >
                       {/* Event Card Header with Primary Tags Only */}
                       <div className="event-card-header">

@@ -87,7 +87,7 @@ public class VolunteerProfileController extends BaseController {
             Authentication authentication) {
         try {
             Long userId = getCurrentUserId(authentication);
-            
+
             // Convert UpdateVolunteerProfileRequest to CreateVolunteerProfileRequest
             CreateVolunteerProfileRequest createRequest = new CreateVolunteerProfileRequest();
             createRequest.setFirstName(request.getFirstName());
@@ -97,7 +97,7 @@ public class VolunteerProfileController extends BaseController {
             createRequest.setPhoneNumber(request.getPhoneNumber());
             createRequest.setProfileImageUrl(request.getProfileImageUrl());
             createRequest.setIsAvailable(request.getIsAvailable());
-            
+
             VolunteerProfileDTO profile = volunteerProfileService.createOrUpdateProfile(createRequest, userId);
             return ResponseEntity.ok(profile);
         } catch (Exception e) {
@@ -509,6 +509,192 @@ public class VolunteerProfileController extends BaseController {
 
         public void setMessage(String message) {
             this.message = message;
+        }
+
+        public long getTimestamp() {
+            return timestamp;
+        }
+
+        public void setTimestamp(long timestamp) {
+            this.timestamp = timestamp;
+        }
+    }
+
+    // ==========================================
+    // RESPONSE CLASSES FOR FOLLOW FUNCTIONALITY
+    // Add these classes to your existing VolunteerProfileController.java
+    // ==========================================
+
+    public static class FollowResponse {
+        private boolean isFollowing;
+        private String message;
+        private Integer totalFollowedOrganizations;
+        private long timestamp;
+
+        public FollowResponse() {
+            this.timestamp = System.currentTimeMillis();
+        }
+
+        public FollowResponse(boolean isFollowing, String message, Integer totalFollowedOrganizations) {
+            this.isFollowing = isFollowing;
+            this.message = message;
+            this.totalFollowedOrganizations = totalFollowedOrganizations;
+            this.timestamp = System.currentTimeMillis();
+        }
+
+        public boolean isFollowing() {
+            return isFollowing;
+        }
+
+        public void setFollowing(boolean following) {
+            isFollowing = following;
+        }
+
+        public String getMessage() {
+            return message;
+        }
+
+        public void setMessage(String message) {
+            this.message = message;
+        }
+
+        public Integer getTotalFollowedOrganizations() {
+            return totalFollowedOrganizations;
+        }
+
+        public void setTotalFollowedOrganizations(Integer totalFollowedOrganizations) {
+            this.totalFollowedOrganizations = totalFollowedOrganizations;
+        }
+
+        public long getTimestamp() {
+            return timestamp;
+        }
+
+        public void setTimestamp(long timestamp) {
+            this.timestamp = timestamp;
+        }
+    }
+
+    public static class FollowStatusCheckResponse {
+        private Long organizationId;
+        private boolean isFollowing;
+        private long timestamp;
+
+        public FollowStatusCheckResponse() {
+            this.timestamp = System.currentTimeMillis();
+        }
+
+        public FollowStatusCheckResponse(Long organizationId, boolean isFollowing) {
+            this.organizationId = organizationId;
+            this.isFollowing = isFollowing;
+            this.timestamp = System.currentTimeMillis();
+        }
+
+        public Long getOrganizationId() {
+            return organizationId;
+        }
+
+        public void setOrganizationId(Long organizationId) {
+            this.organizationId = organizationId;
+        }
+
+        public boolean isFollowing() {
+            return isFollowing;
+        }
+
+        public void setFollowing(boolean following) {
+            isFollowing = following;
+        }
+
+        public long getTimestamp() {
+            return timestamp;
+        }
+
+        public void setTimestamp(long timestamp) {
+            this.timestamp = timestamp;
+        }
+    }
+
+    public static class OrganizationFollowersResponse {
+        private Long organizationId;
+        private Long followerCount;
+        private List<VolunteerProfileDTO> followers;
+        private long timestamp;
+
+        public OrganizationFollowersResponse() {
+            this.timestamp = System.currentTimeMillis();
+        }
+
+        public OrganizationFollowersResponse(Long organizationId, Long followerCount,
+                List<VolunteerProfileDTO> followers) {
+            this.organizationId = organizationId;
+            this.followerCount = followerCount;
+            this.followers = followers;
+            this.timestamp = System.currentTimeMillis();
+        }
+
+        public Long getOrganizationId() {
+            return organizationId;
+        }
+
+        public void setOrganizationId(Long organizationId) {
+            this.organizationId = organizationId;
+        }
+
+        public Long getFollowerCount() {
+            return followerCount;
+        }
+
+        public void setFollowerCount(Long followerCount) {
+            this.followerCount = followerCount;
+        }
+
+        public List<VolunteerProfileDTO> getFollowers() {
+            return followers;
+        }
+
+        public void setFollowers(List<VolunteerProfileDTO> followers) {
+            this.followers = followers;
+        }
+
+        public long getTimestamp() {
+            return timestamp;
+        }
+
+        public void setTimestamp(long timestamp) {
+            this.timestamp = timestamp;
+        }
+    }
+
+    public static class FollowerCountResponse {
+        private Long organizationId;
+        private Long followerCount;
+        private long timestamp;
+
+        public FollowerCountResponse() {
+            this.timestamp = System.currentTimeMillis();
+        }
+
+        public FollowerCountResponse(Long organizationId, Long followerCount) {
+            this.organizationId = organizationId;
+            this.followerCount = followerCount;
+            this.timestamp = System.currentTimeMillis();
+        }
+
+        public Long getOrganizationId() {
+            return organizationId;
+        }
+
+        public void setOrganizationId(Long organizationId) {
+            this.organizationId = organizationId;
+        }
+
+        public Long getFollowerCount() {
+            return followerCount;
+        }
+
+        public void setFollowerCount(Long followerCount) {
+            this.followerCount = followerCount;
         }
 
         public long getTimestamp() {

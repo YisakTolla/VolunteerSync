@@ -17,9 +17,13 @@ import {
   CheckCircle,
   DollarSign,
   Languages,
+  X,
+  HeartOff,
 } from "lucide-react";
 import "./ViewOrganization.css";
 import findOrganizationService from "../services/findOrganizationService";
+import ViewOrganizationService from "../services/ViewOrganizationService";
+import { isLoggedIn, getCurrentUser } from "../services/authService";
 
 const ViewOrganization = () => {
   const { id } = useParams();
@@ -27,33 +31,81 @@ const ViewOrganization = () => {
   const [organization, setOrganization] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showAuthPopup, setShowAuthPopup] = useState(false);
+  
+  // Follow functionality state
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
+  const [followerCount, setFollowerCount] = useState(0);
+  const [followCheckLoading, setFollowCheckLoading] = useState(false);
 
   console.log("ViewOrganization component mounted with ID:", id);
 
   useEffect(() => {
     if (id) {
-      loadOrganization();
+      loadOrganizationData();
     } else {
       setError("No organization ID provided");
       setLoading(false);
     }
   }, [id]);
 
-  const loadOrganization = async () => {
+  const loadOrganizationData = async () => {
     try {
-      console.log("Loading organization with ID:", id);
+      console.log("Loading organization data for ID:", id);
       setLoading(true);
       setError(null);
 
+      // Load organization details
       const orgData = await findOrganizationService.findOrganizationById(id);
       console.log("Organization data received:", orgData);
-
       setOrganization(orgData);
+
+      // Load follow status and follower count in parallel
+      await Promise.all([
+        loadFollowStatus(),
+        loadFollowerCount()
+      ]);
+
     } catch (err) {
       console.error("Failed to load organization:", err);
       setError(`Failed to load organization: ${err.message}`);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadFollowStatus = async () => {
+    if (!isLoggedIn()) {
+      setIsFollowing(false);
+      return;
+    }
+
+    try {
+      setFollowCheckLoading(true);
+      const result = await ViewOrganizationService.checkFollowStatus(id);
+      if (result.success) {
+        setIsFollowing(result.isFollowing);
+        console.log("Follow status loaded:", result.isFollowing);
+      }
+    } catch (err) {
+      console.error("Failed to load follow status:", err);
+      setIsFollowing(false);
+    } finally {
+      setFollowCheckLoading(false);
+    }
+  };
+
+  const loadFollowerCount = async () => {
+    try {
+      const result = await ViewOrganizationService.getOrganizationFollowerCount(id);
+      if (result.success) {
+        setFollowerCount(result.followerCount);
+        console.log("Follower count loaded:", result.followerCount);
+      }
+    } catch (err) {
+      console.error("Failed to load follower count:", err);
+      setFollowerCount(0);
     }
   };
 
@@ -65,6 +117,115 @@ const ViewOrganization = () => {
     if (organization?.website) {
       window.open(organization.website, "_blank", "noopener,noreferrer");
     }
+  };
+
+  const handleFollowOrganization = async () => {
+    const loggedIn = isLoggedIn();
+    const currentUser = getCurrentUser();
+
+    // Check authentication and user type
+    if (!loggedIn || currentUser?.userType !== 'VOLUNTEER') {
+      setShowAuthPopup(true);
+      return;
+    }
+
+    try {
+      setFollowLoading(true);
+      
+      const result = await ViewOrganizationService.toggleFollowOrganization(id);
+      
+      if (result.success) {
+        setIsFollowing(result.isFollowing);
+        
+        // Update follower count based on follow status
+        setFollowerCount(prev => result.isFollowing ? prev + 1 : Math.max(0, prev - 1));
+        
+        console.log(result.message);
+        
+        // You could show a toast notification here
+        // showToast(result.message, 'success');
+        
+      } else {
+        console.error("Failed to toggle follow status:", result.message);
+        // showToast(result.message, 'error');
+      }
+      
+    } catch (err) {
+      console.error("Error toggling follow status:", err);
+      // showToast("Something went wrong. Please try again.", 'error');
+    } finally {
+      setFollowLoading(false);
+    }
+  };
+
+  const handleAuthPopupClose = () => {
+    setShowAuthPopup(false);
+  };
+
+  const handleLoginRedirect = () => {
+    setShowAuthPopup(false);
+    navigate('/login', { state: { userType: 'volunteer', mode: 'login' } });
+  };
+
+  const handleSignupRedirect = () => {
+    setShowAuthPopup(false);
+    navigate('/login', { state: { userType: 'volunteer', mode: 'signup' } });
+  };
+
+  // Auth Popup Component
+  const AuthPopup = () => {
+    const loggedIn = isLoggedIn();
+    const currentUser = getCurrentUser();
+    const isOrganization = currentUser?.userType === 'ORGANIZATION';
+
+    return (
+      <div className="auth-popup-overlay" onClick={handleAuthPopupClose}>
+        <div className="auth-popup-content" onClick={(e) => e.stopPropagation()}>
+          <button className="auth-popup-close" onClick={handleAuthPopupClose}>
+            <X size={20} />
+          </button>
+          
+          <div className="auth-popup-header">
+            <Heart size={48} style={{ color: '#ef4444' }} />
+            <h3>Follow Organization</h3>
+          </div>
+          
+          <div className="auth-popup-body">
+            {!loggedIn ? (
+              <>
+                <p>You need to be signed in as a volunteer to follow organizations.</p>
+                <div className="auth-popup-actions">
+                  <button className="auth-popup-btn primary" onClick={handleLoginRedirect}>
+                    Sign In
+                  </button>
+                  <button className="auth-popup-btn secondary" onClick={handleSignupRedirect}>
+                    Sign Up as Volunteer
+                  </button>
+                </div>
+              </>
+            ) : isOrganization ? (
+              <>
+                <p>Only volunteers can follow organizations. Organizations cannot follow other organizations.</p>
+                <div className="auth-popup-actions">
+                  <button className="auth-popup-btn secondary" onClick={handleAuthPopupClose}>
+                    Close
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <p>You must be signed in as a volunteer to follow organizations.</p>
+                <div className="auth-popup-actions">
+                  <button className="auth-popup-btn secondary" onClick={handleAuthPopupClose}>
+                    Close
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    );
   };
 
   const getCategoryClass = (category) => {
@@ -190,7 +351,7 @@ const ViewOrganization = () => {
         <div className="view-organization-error">
           <p>{error}</p>
           <button
-            onClick={loadOrganization}
+            onClick={loadOrganizationData}
             className="view-organization-retry-btn"
           >
             Try Again
@@ -327,9 +488,27 @@ const ViewOrganization = () => {
                 </div>
 
                 <div className="view-organization-actions">
-                  <button className="view-organization-btn primary">
-                    <Heart />
-                    Follow Organization
+                  <button 
+                    className={`view-organization-btn ${isFollowing ? 'following' : 'primary'}`}
+                    onClick={handleFollowOrganization}
+                    disabled={followLoading || followCheckLoading}
+                  >
+                    {followLoading ? (
+                      <>
+                        <div className="loading-spinner"></div>
+                        {isFollowing ? 'Unfollowing...' : 'Following...'}
+                      </>
+                    ) : isFollowing ? (
+                      <>
+                        <HeartOff />
+                        Unfollow Organization
+                      </>
+                    ) : (
+                      <>
+                        <Heart />
+                        Follow Organization
+                      </>
+                    )}
                   </button>
                   {organization.website && (
                     <button
@@ -532,6 +711,16 @@ const ViewOrganization = () => {
                 </h3>
                 <div className="view-organization-stats">
                   <div className="view-organization-stat">
+                    <Heart />
+                    <div>
+                      <span className="view-organization-stat-number">
+                        {followerCount}
+                      </span>
+                      <span className="view-organization-stat-label">Followers</span>
+                    </div>
+                  </div>
+                  
+                  <div className="view-organization-stat">
                     <Award />
                     <div>
                       <span className="view-organization-stat-number">
@@ -616,6 +805,9 @@ const ViewOrganization = () => {
             </div>
           </div>
         </div>
+
+        {/* Auth Popup */}
+        {showAuthPopup && <AuthPopup />}
       </div>
     );
   } catch (renderError) {

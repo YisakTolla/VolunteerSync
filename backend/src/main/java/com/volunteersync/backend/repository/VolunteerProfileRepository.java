@@ -13,125 +13,164 @@ import java.util.Optional;
 @Repository
 public interface VolunteerProfileRepository extends JpaRepository<VolunteerProfile, Long> {
 
-    // =====================================================
-    // CORE PROFILE QUERIES
-    // =====================================================
+        // =====================================================
+        // CORE PROFILE QUERIES
+        // =====================================================
 
-    /**
-     * Find volunteer profile by user
-     */
-    Optional<VolunteerProfile> findByUser(User user);
+        /**
+         * Find volunteer profile by user
+         */
+        Optional<VolunteerProfile> findByUser(User user);
 
-    /**
-     * Find volunteer profile by user ID
-     */
-    Optional<VolunteerProfile> findByUserId(Long userId);
+        /**
+         * Find volunteer profile by user ID
+         */
+        Optional<VolunteerProfile> findByUserId(Long userId);
 
-    /**
-     * Check if volunteer profile exists for user
-     */
-    boolean existsByUser(User user);
+        /**
+         * Check if volunteer profile exists for user
+         */
+        boolean existsByUser(User user);
 
-    boolean existsByUserId(Long userId);
+        boolean existsByUserId(Long userId);
 
-    // =====================================================
-    // SEARCH AND DISCOVERY
-    // =====================================================
+        // =====================================================
+        // SEARCH AND DISCOVERY
+        // =====================================================
 
-    /**
-     * Search volunteers by name
-     */
-    List<VolunteerProfile> findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCase(
-            String firstName, String lastName);
+        /**
+         * Search volunteers by name
+         */
+        List<VolunteerProfile> findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCase(
+                        String firstName, String lastName);
 
-    /**
-     * Search by location
-     */
-    List<VolunteerProfile> findByLocationContainingIgnoreCase(String location);
+        /**
+         * Search by location
+         */
+        List<VolunteerProfile> findByLocationContainingIgnoreCase(String location);
 
-    /**
-     * Find available volunteers
-     */
-    List<VolunteerProfile> findByIsAvailableTrue();
+        /**
+         * Find available volunteers
+         */
+        List<VolunteerProfile> findByIsAvailableTrue();
 
-    /**
-     * Find available volunteers in specific location
-     */
-    List<VolunteerProfile> findByIsAvailableTrueAndLocationContainingIgnoreCase(String location);
+        /**
+         * Find available volunteers in specific location
+         */
+        List<VolunteerProfile> findByIsAvailableTrueAndLocationContainingIgnoreCase(String location);
 
-    /**
-     * Search volunteers by bio keywords
-     */
-    @Query("SELECT vp FROM VolunteerProfile vp WHERE LOWER(vp.bio) LIKE LOWER(CONCAT('%', :keyword, '%'))")
-    List<VolunteerProfile> findByBioContaining(@Param("keyword") String keyword);
+        /**
+         * Search volunteers by bio keywords
+         */
+        @Query("SELECT vp FROM VolunteerProfile vp WHERE LOWER(vp.bio) LIKE LOWER(CONCAT('%', :keyword, '%'))")
+        List<VolunteerProfile> findByBioContaining(@Param("keyword") String keyword);
 
-    // =====================================================
-    // VOLUNTEER RANKINGS AND STATISTICS
-    // =====================================================
+        // =====================================================
+        // VOLUNTEER RANKINGS AND STATISTICS
+        // =====================================================
 
-    /**
-     * Find top volunteers by hours
-     */
-    @Query("SELECT vp FROM VolunteerProfile vp ORDER BY vp.totalVolunteerHours DESC")
-    List<VolunteerProfile> findTopVolunteersByHours();
+        /**
+         * Find top volunteers by hours
+         */
+        @Query("SELECT vp FROM VolunteerProfile vp ORDER BY vp.totalVolunteerHours DESC")
+        List<VolunteerProfile> findTopVolunteersByHours();
 
-    /**
-     * Find most active volunteers by events participated
-     */
-    @Query("SELECT vp FROM VolunteerProfile vp ORDER BY vp.eventsParticipated DESC")
-    List<VolunteerProfile> findMostActiveVolunteers();
+        /**
+         * Find most active volunteers by events participated
+         */
+        @Query("SELECT vp FROM VolunteerProfile vp ORDER BY vp.eventsParticipated DESC")
+        List<VolunteerProfile> findMostActiveVolunteers();
 
-    /**
-     * Find volunteers with minimum hours
-     */
-    @Query("SELECT vp FROM VolunteerProfile vp WHERE vp.totalVolunteerHours >= :minHours ORDER BY vp.totalVolunteerHours DESC")
-    List<VolunteerProfile> findVolunteersWithMinimumHours(@Param("minHours") Integer minHours);
+        /**
+         * Find volunteers with minimum hours
+         */
+        @Query("SELECT vp FROM VolunteerProfile vp WHERE vp.totalVolunteerHours >= :minHours ORDER BY vp.totalVolunteerHours DESC")
+        List<VolunteerProfile> findVolunteersWithMinimumHours(@Param("minHours") Integer minHours);
 
-    /**
-     * Find new volunteers (with 0 events)
-     */
-    List<VolunteerProfile> findByEventsParticipated(Integer eventsCount);
+        /**
+         * Find new volunteers (with 0 events)
+         */
+        List<VolunteerProfile> findByEventsParticipated(Integer eventsCount);
 
-    /**
-     * Find experienced volunteers
-     */
-    @Query("SELECT vp FROM VolunteerProfile vp WHERE vp.eventsParticipated >= :minEvents")
-    List<VolunteerProfile> findExperiencedVolunteers(@Param("minEvents") Integer minEvents);
+        /**
+         * Find experienced volunteers
+         */
+        @Query("SELECT vp FROM VolunteerProfile vp WHERE vp.eventsParticipated >= :minEvents")
+        List<VolunteerProfile> findExperiencedVolunteers(@Param("minEvents") Integer minEvents);
 
-    // =====================================================
-    // STATISTICS QUERIES
-    // =====================================================
+        // =====================================================
+        // STATISTICS QUERIES
+        // =====================================================
 
-    /**
-     * Get average volunteer hours
-     */
-    @Query("SELECT AVG(vp.totalVolunteerHours) FROM VolunteerProfile vp WHERE vp.totalVolunteerHours > 0")
-    Double getAverageVolunteerHours();
+        /**
+         * Get average volunteer hours
+         */
+        @Query("SELECT AVG(vp.totalVolunteerHours) FROM VolunteerProfile vp WHERE vp.totalVolunteerHours > 0")
+        Double getAverageVolunteerHours();
 
-    /**
-     * Get total volunteer hours across platform
-     */
-    @Query("SELECT SUM(vp.totalVolunteerHours) FROM VolunteerProfile vp")
-    Long getTotalVolunteerHours();
+        /**
+         * Get total volunteer hours across platform
+         */
+        @Query("SELECT SUM(vp.totalVolunteerHours) FROM VolunteerProfile vp")
+        Long getTotalVolunteerHours();
 
-    /**
-     * Count active volunteers
-     */
-    long countByIsAvailableTrue();
+        /**
+         * Count active volunteers
+         */
+        long countByIsAvailableTrue();
 
-    /**
-     * Count volunteers by location
-     */
-    long countByLocationContainingIgnoreCase(String location);
+        /**
+         * Count volunteers by location
+         */
+        long countByLocationContainingIgnoreCase(String location);
 
-    /**
-     * Get volunteer distribution by hours
-     */
-    @Query("SELECT " +
-            "SUM(CASE WHEN vp.totalVolunteerHours = 0 THEN 1 ELSE 0 END) as newVolunteers, " +
-            "SUM(CASE WHEN vp.totalVolunteerHours BETWEEN 1 AND 10 THEN 1 ELSE 0 END) as beginners, " +
-            "SUM(CASE WHEN vp.totalVolunteerHours BETWEEN 11 AND 50 THEN 1 ELSE 0 END) as intermediate, " +
-            "SUM(CASE WHEN vp.totalVolunteerHours > 50 THEN 1 ELSE 0 END) as experienced " +
-            "FROM VolunteerProfile vp")
-    Object[] getVolunteerDistributionByHours();
+        /**
+         * Get volunteer distribution by hours
+         */
+        @Query("SELECT " +
+                        "SUM(CASE WHEN vp.totalVolunteerHours = 0 THEN 1 ELSE 0 END) as newVolunteers, " +
+                        "SUM(CASE WHEN vp.totalVolunteerHours BETWEEN 1 AND 10 THEN 1 ELSE 0 END) as beginners, " +
+                        "SUM(CASE WHEN vp.totalVolunteerHours BETWEEN 11 AND 50 THEN 1 ELSE 0 END) as intermediate, " +
+                        "SUM(CASE WHEN vp.totalVolunteerHours > 50 THEN 1 ELSE 0 END) as experienced " +
+                        "FROM VolunteerProfile vp")
+        Object[] getVolunteerDistributionByHours();
+
+        /**
+         * Find volunteers who follow a specific organization
+         */
+        @Query("SELECT vp FROM VolunteerProfile vp WHERE vp.followedOrganizations LIKE CONCAT('%', :organizationId, '%')")
+        List<VolunteerProfile> findVolunteersFollowingOrganization(@Param("organizationId") Long organizationId);
+
+        /**
+         * Count volunteers following a specific organization
+         */
+        @Query("SELECT COUNT(vp) FROM VolunteerProfile vp WHERE vp.followedOrganizations LIKE CONCAT('%', :organizationId, '%')")
+        Long countVolunteersFollowingOrganization(@Param("organizationId") Long organizationId);
+
+        /**
+         * Find volunteers who follow any organization (have non-null
+         * followedOrganizations)
+         */
+        @Query("SELECT vp FROM VolunteerProfile vp WHERE vp.followedOrganizations IS NOT NULL AND vp.followedOrganizations != ''")
+        List<VolunteerProfile> findVolunteersWithFollowedOrganizations();
+
+        /**
+         * Find top organizations by follower count
+         */
+        @Query(value = "SELECT " +
+                        "SUBSTRING_INDEX(SUBSTRING_INDEX(vp.followed_organizations, ',', numbers.n), ',', -1) as org_id, "
+                        +
+                        "COUNT(*) as follower_count " +
+                        "FROM volunteer_profiles vp " +
+                        "CROSS JOIN (" +
+                        "SELECT 1 n UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5 " +
+                        "UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL SELECT 9 UNION ALL SELECT 10"
+                        +
+                        ") numbers " +
+                        "WHERE vp.followed_organizations IS NOT NULL " +
+                        "AND CHAR_LENGTH(vp.followed_organizations) - CHAR_LENGTH(REPLACE(vp.followed_organizations, ',', '')) >= numbers.n - 1 "
+                        +
+                        "GROUP BY org_id " +
+                        "ORDER BY follower_count DESC", nativeQuery = true)
+        List<Object[]> findMostFollowedOrganizations();
 }

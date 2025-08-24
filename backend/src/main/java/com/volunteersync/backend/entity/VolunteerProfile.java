@@ -54,13 +54,84 @@ public class VolunteerProfile {
     @Column(name = "skills")
     private String skills; // "JavaScript,React,Leadership,Communication"
 
-    @Column(name = "interests") 
+    @Column(name = "interests")
     private String interests; // "Environment,Education,Healthcare,Technology"
 
     @Column(name = "availability_preference")
     private String availabilityPreference; // "weekends", "weekdays", "flexible"
 
-    // Add these getter/setter methods:
+    // NEW FIELD: Store followed organization IDs as comma-separated string
+    @Column(name = "followed_organizations")
+    private String followedOrganizations; // "1,5,10,25"
+
+    // =====================================================
+    // FOLLOWED ORGANIZATIONS METHODS
+    // =====================================================
+
+    public String getFollowedOrganizations() {
+        return followedOrganizations;
+    }
+
+    public void setFollowedOrganizations(String followedOrganizations) {
+        this.followedOrganizations = followedOrganizations;
+    }
+
+    public List<Long> getFollowedOrganizationsList() {
+        if (followedOrganizations == null || followedOrganizations.trim().isEmpty()) {
+            return new ArrayList<>();
+        }
+        return Arrays.asList(followedOrganizations.split(","))
+                .stream()
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .map(Long::parseLong)
+                .collect(Collectors.toList());
+    }
+
+    public void setFollowedOrganizationsList(List<Long> organizationIds) {
+        if (organizationIds == null || organizationIds.isEmpty()) {
+            this.followedOrganizations = null;
+        } else {
+            this.followedOrganizations = organizationIds.stream()
+                    .map(String::valueOf)
+                    .collect(Collectors.joining(","));
+        }
+    }
+
+    public boolean isFollowingOrganization(Long organizationId) {
+        if (organizationId == null)
+            return false;
+        List<Long> followedIds = getFollowedOrganizationsList();
+        return followedIds.contains(organizationId);
+    }
+
+    public void followOrganization(Long organizationId) {
+        if (organizationId == null)
+            return;
+
+        List<Long> followedIds = getFollowedOrganizationsList();
+        if (!followedIds.contains(organizationId)) {
+            followedIds.add(organizationId);
+            setFollowedOrganizationsList(followedIds);
+        }
+    }
+
+    public void unfollowOrganization(Long organizationId) {
+        if (organizationId == null)
+            return;
+
+        List<Long> followedIds = getFollowedOrganizationsList();
+        followedIds.remove(organizationId);
+        setFollowedOrganizationsList(followedIds);
+    }
+
+    public int getFollowedOrganizationsCount() {
+        return getFollowedOrganizationsList().size();
+    }
+
+    // =====================================================
+    // EXISTING SKILLS AND INTERESTS METHODS
+    // =====================================================
 
     public String getSkills() {
         return skills;
@@ -75,10 +146,10 @@ public class VolunteerProfile {
             return new ArrayList<>();
         }
         return Arrays.asList(skills.split(","))
-                    .stream()
-                    .map(String::trim)
-                    .filter(s -> !s.isEmpty())
-                    .collect(Collectors.toList());
+                .stream()
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .collect(Collectors.toList());
     }
 
     public void setSkillsList(List<String> skillsList) {
@@ -102,10 +173,10 @@ public class VolunteerProfile {
             return new ArrayList<>();
         }
         return Arrays.asList(interests.split(","))
-                    .stream()
-                    .map(String::trim)
-                    .filter(s -> !s.isEmpty())
-                    .collect(Collectors.toList());
+                .stream()
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .collect(Collectors.toList());
     }
 
     public void setInterestsList(List<String> interestsList) {
@@ -123,7 +194,11 @@ public class VolunteerProfile {
     public void setAvailabilityPreference(String availabilityPreference) {
         this.availabilityPreference = availabilityPreference;
     }
-    // Constructors
+
+    // =====================================================
+    // CONSTRUCTORS
+    // =====================================================
+
     public VolunteerProfile() {
     }
 
@@ -133,7 +208,10 @@ public class VolunteerProfile {
         this.lastName = lastName;
     }
 
-    // Getters and Setters
+    // =====================================================
+    // BASIC GETTERS AND SETTERS
+    // =====================================================
+
     public Long getId() {
         return id;
     }

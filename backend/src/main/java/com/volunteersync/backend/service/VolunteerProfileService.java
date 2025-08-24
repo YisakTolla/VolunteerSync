@@ -795,9 +795,6 @@ public class VolunteerProfileService {
         return (completeness * 100) / totalFields;
     }
 
-    /**
-     * Enhanced convertToDTO method with proper skills and interests handling
-     */
     private VolunteerProfileDTO convertToDTO(VolunteerProfile profile) {
         VolunteerProfileDTO dto = new VolunteerProfileDTO();
 
@@ -816,21 +813,221 @@ public class VolunteerProfileService {
         dto.setCreatedAt(profile.getCreatedAt());
         dto.setUpdatedAt(profile.getUpdatedAt());
 
-        // ✅ FIXED: Properly convert skills and interests to Lists
+        // Skills and interests as Lists
         dto.setSkills(profile.getSkillsList());
         dto.setInterests(profile.getInterestsList());
         dto.setAvailabilityPreference(profile.getAvailabilityPreference());
+
+        // NEW: Followed organizations
+        dto.setFollowedOrganizations(profile.getFollowedOrganizationsList());
+        dto.setFollowedOrganizationsCount(profile.getFollowedOrganizationsCount());
 
         System.out.println("=== DTO CONVERSION DEBUG ===");
         System.out.println("Profile skills string: " + profile.getSkills());
         System.out.println("Profile skills list: " + profile.getSkillsList());
         System.out.println("Profile interests string: " + profile.getInterests());
         System.out.println("Profile interests list: " + profile.getInterestsList());
+        System.out.println("Profile followed organizations: " + profile.getFollowedOrganizationsList());
         System.out.println("DTO skills: " + dto.getSkills());
         System.out.println("DTO interests: " + dto.getInterests());
+        System.out.println("DTO followed orgs: " + dto.getFollowedOrganizations());
 
         return dto;
     }
+
+    /**
+     * Follow an organization
+     */
+    public VolunteerProfileDTO followOrganization(Long userId, Long organizationId) {
+        System.out.println("Volunteer " + userId + " following organization " + organizationId);
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (user.getUserType() != UserType.VOLUNTEER) {
+            throw new RuntimeException("Only volunteers can follow organizations");
+        }
+
+        VolunteerProfile profile = volunteerProfileRepository.findByUser(user)
+                .orElseThrow(() -> new RuntimeException("Volunteer profile not found"));
+
+        // Check if already following
+        if (profile.isFollowingOrganization(organizationId)) {
+            throw new RuntimeException("Already following this organization");
+        }
+
+        profile.followOrganization(organizationId);
+        profile.setUpdatedAt(LocalDateTime.now());
+
+        VolunteerProfile savedProfile = volunteerProfileRepository.save(profile);
+        System.out.println("Successfully followed organization. Total followed: " +
+                savedProfile.getFollowedOrganizationsCount());
+
+        return convertToDTO(savedProfile);
+    }
+
+    /**
+     * Unfollow an organization
+     */
+    public VolunteerProfileDTO unfollowOrganization(Long userId, Long organizationId) {
+        System.out.println("Volunteer " + userId + " unfollowing organization " + organizationId);
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        VolunteerProfile profile = volunteerProfileRepository.findByUser(user)
+                .orElseThrow(() -> new RuntimeException("Volunteer profile not found"));
+
+        // Check if actually following
+        if (!profile.isFollowingOrganization(organizationId)) {
+            throw new RuntimeException("Not following this organization");
+        }
+
+        profile.unfollowOrganization(organizationId);
+        profile.setUpdatedAt(LocalDateTime.now());
+
+        VolunteerProfile savedProfile = volunteerProfileRepository.save(profile);
+        System.out.println("Successfully unfollowed organization. Total followed: " +
+                savedProfile.getFollowedOrganizationsCount());
+
+        return convertToDTO(savedProfile);
+    }
+
+    /**
+     * Toggle follow status for an organization
+     */
+    public FollowStatusResponse toggleFollowOrganization(Long userId, Long organizationId) {
+        System.out.println("Toggling follow status for volunteer " + userId + " and organization " + organizationId);
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (user.getUserType() != UserType.VOLUNTEER) {
+            throw new RuntimeException("Only volunteers can follow organizations");
+        }
+
+        VolunteerProfile profile = volunteerProfileRepository.findByUser(user)
+                .orElseThrow(() -> new RuntimeException("Volunteer profile not found"));
+
+        boolean wasFollowing = profile.isFollowingOrganization(organizationId);
+        VolunteerProfileDTO updatedProfile;
+
+        if (wasFollowing) {
+            profile.unfollowOrganization(organizationId);
+            updatedProfile = convertToDTO(volunteerProfileRepository.save(profile));
+            return new FollowStatusResponse(false, "Unfollowed organization", updatedProfile);
+        } else {
+            profile.followOrganization(organizationId);
+            updatedProfile = convertToDTO(volunteerProfileRepository.save(profile));
+            return new FollowStatusResponse(true, "Following organization", updatedProfile);
+        }
+    }
+
+    /**
+     * Check if volunteer is following an organization
+     */
+    public boolean isFollowingOrganization(Long userId, Long organizationId) {
+        try {
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            Optional<VolunteerProfile> profileOpt = volunteerProfileRepository.findByUser(user);
+            if (profileOpt.isEmpty()) {
+                return false;
+            }
+
+            return profileOpt.get().isFollowingOrganization(organizationId);
+        } catch (Exception e) {
+            System.err.println("Error checking if following organization: " + e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Get volunteers following a specific organization
+     */
+    public List<VolunteerProfileDTO> getVolunteersFollowingOrganization(Long organizationId) {
+        System.out.println("Getting volunteers following organization " + organizationId);
+
+        List<VolunteerProfile> profiles = volunteerProfileRepository
+                .findVolunteersFollowingOrganization(organizationId);
+
+        return profiles.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Get follower count for an organization
+     */
+    public Long getOrganizationFollowerCount(Long organizationId) {
+        return volunteerProfileRepository.countVolunteersFollowingOrganization(organizationId);
+    }
+
+    /**
+     * Get organizations followed by a volunteer
+     */
+    public List<Long> getFollowedOrganizations(Long userId) {
+        try {
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            Optional<VolunteerProfile> profileOpt = volunteerProfileRepository.findByUser(user);
+            if (profileOpt.isEmpty()) {
+                return new ArrayList<>();
+            }
+
+            return profileOpt.get().getFollowedOrganizationsList();
+        } catch (Exception e) {
+            System.err.println("Error getting followed organizations: " + e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+
+    // ==========================================
+    // RESPONSE CLASSES FOR FOLLOW FUNCTIONALITY
+    // Add these classes to your VolunteerProfileService.java
+    // ==========================================
+
+    public static class FollowStatusResponse {
+        private boolean isFollowing;
+        private String message;
+        private VolunteerProfileDTO profile;
+
+        public FollowStatusResponse() {
+        }
+
+        public FollowStatusResponse(boolean isFollowing, String message, VolunteerProfileDTO profile) {
+            this.isFollowing = isFollowing;
+            this.message = message;
+            this.profile = profile;
+        }
+
+        public boolean isFollowing() {
+            return isFollowing;
+        }
+
+        public void setFollowing(boolean following) {
+            isFollowing = following;
+        }
+
+        public String getMessage() {
+            return message;
+        }
+
+        public void setMessage(String message) {
+            this.message = message;
+        }
+
+        public VolunteerProfileDTO getProfile() {
+            return profile;
+        }
+
+        public void setProfile(VolunteerProfileDTO profile) {
+            this.profile = profile;
+        }
+    }
+
     // ==========================================
     // REQUEST/RESPONSE CLASSES
     // ==========================================

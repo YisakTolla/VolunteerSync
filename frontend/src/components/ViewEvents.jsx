@@ -66,7 +66,9 @@ const ViewEvent = () => {
   const handleApplyToEvent = () => {
     // TODO: Implement apply to event functionality with application service
     console.log("Apply to event:", event.id);
-    alert("Application functionality will be implemented when we create the application system!");
+    alert(
+      "Application functionality will be implemented when we create the application system!"
+    );
   };
 
   const handleShareEvent = () => {
@@ -79,21 +81,32 @@ const ViewEvent = () => {
     if (!eventType) return "";
 
     const typeMap = {
-      COMMUNITY_SERVICE: "community-service",
-      FUNDRAISING: "fundraising",
-      EDUCATION: "education",
-      ENVIRONMENT: "environment",
-      HEALTHCARE: "healthcare",
-      HEALTHCARE_SUPPORT: "healthcare",
-      ANIMAL_WELFARE: "animal-welfare",
+      COMMUNITY_CLEANUP: "community-cleanup",
+      FOOD_SERVICE: "food-service",
+      TUTORING_EDUCATION: "tutoring-education",
+      ANIMAL_CARE: "animal-care",
+      ENVIRONMENTAL_CONSERVATION: "environmental-conservation",
+      SENIOR_SUPPORT: "senior-support",
+      YOUTH_MENTORING: "youth-mentoring",
+      HEALTHCARE_SUPPORT: "healthcare-support",
       DISASTER_RELIEF: "disaster-relief",
       ARTS_CULTURE: "arts-culture",
       SPORTS_RECREATION: "sports-recreation",
-      SENIOR_SERVICES: "senior-services",
-      SENIOR_SUPPORT: "senior-services",  
-      YOUTH_DEVELOPMENT: "youth-development",
+      FUNDRAISING: "fundraising",
+      ADMINISTRATIVE_SUPPORT: "administrative-support",
+      CONSTRUCTION_BUILDING: "construction-building",
+      TECHNOLOGY_SUPPORT: "technology-digital",
+      EVENT_PLANNING: "event-planning",
+      ADVOCACY_AWARENESS: "advocacy-awareness",
+      RESEARCH_DATA: "research-data",
+      TRANSPORTATION: "transportation",
+      GARDENING: "gardening",
+      CRISIS_SUPPORT: "crisis-support",
+      FESTIVAL_FAIR: "festival-fair",
+      WORKSHOP_TRAINING: "workshop-training",
+      BLOOD_DRIVE: "blood-drive",
+      OTHER: "other",
     };
-
     return typeMap[eventType] || "";
   };
 
@@ -283,12 +296,20 @@ const ViewEvent = () => {
                     <div className="view-event-meta">
                       <div className="view-event-meta-item">
                         <Calendar />
-                        <span>{formatEventDate(event.startDate, event.endDate)}</span>
+                        <span>
+                          {formatEventDate(event.startDate, event.endDate)}
+                        </span>
                       </div>
 
                       <div className="view-event-meta-item">
                         <Clock />
-                        <span>{formatDuration(event.startDate, event.endDate, event.estimatedHours)}</span>
+                        <span>
+                          {formatDuration(
+                            event.startDate,
+                            event.endDate,
+                            event.estimatedHours
+                          )}
+                        </span>
                       </div>
 
                       <div className="view-event-meta-item">
@@ -308,7 +329,10 @@ const ViewEvent = () => {
                       <div className="view-event-meta-item">
                         <Users />
                         <span>
-                          {getAvailableSpots(event.maxVolunteers, event.currentVolunteers)}
+                          {getAvailableSpots(
+                            event.maxVolunteers,
+                            event.currentVolunteers
+                          )}
                         </span>
                       </div>
                     </div>
@@ -316,15 +340,19 @@ const ViewEvent = () => {
                 </div>
 
                 <div className="view-event-actions">
-                  {!isEventPast(event.startDate) && !isEventFull(event.maxVolunteers, event.currentVolunteers) ? (
-                    <button 
+                  {!isEventPast(event.startDate) &&
+                  !isEventFull(event.maxVolunteers, event.currentVolunteers) ? (
+                    <button
                       className="view-event-btn primary"
                       onClick={handleApplyToEvent}
                     >
                       <Heart />
                       Apply to Volunteer
                     </button>
-                  ) : isEventFull(event.maxVolunteers, event.currentVolunteers) ? (
+                  ) : isEventFull(
+                      event.maxVolunteers,
+                      event.currentVolunteers
+                    ) ? (
                     <button className="view-event-btn disabled" disabled>
                       <Users />
                       Event Full
@@ -335,7 +363,7 @@ const ViewEvent = () => {
                       Event Ended
                     </button>
                   )}
-                  <button 
+                  <button
                     className="view-event-btn secondary"
                     onClick={handleShareEvent}
                   >
@@ -388,9 +416,15 @@ const ViewEvent = () => {
                       <div className="view-event-activity-item">
                         <Target />
                         <div>
-                          <span className="activity-label">Time Commitment</span>
+                          <span className="activity-label">
+                            Time Commitment
+                          </span>
                           <span className="activity-value">
-                            {formatDuration(event.startDate, event.endDate, event.estimatedHours)}
+                            {formatDuration(
+                              event.startDate,
+                              event.endDate,
+                              event.estimatedHours
+                            )}
                           </span>
                         </div>
                       </div>
@@ -436,7 +470,7 @@ const ViewEvent = () => {
                       <Globe />
                       <div>
                         <span className="detail-label">Virtual Meeting</span>
-                        <a 
+                        <a
                           href={event.virtualMeetingLink}
                           target="_blank"
                           rel="noopener noreferrer"
@@ -454,7 +488,9 @@ const ViewEvent = () => {
                       <span className="detail-label">Volunteers Needed</span>
                       <span className="detail-value">
                         {event.currentVolunteers || 0}
-                        {event.maxVolunteers ? ` of ${event.maxVolunteers}` : "+"}
+                        {event.maxVolunteers
+                          ? ` of ${event.maxVolunteers}`
+                          : "+"}
                       </span>
                     </div>
                   </div>
@@ -463,14 +499,14 @@ const ViewEvent = () => {
 
               {/* Contact Information */}
               <div className="view-event-sidebar-card">
-                <h3 className="view-event-sidebar-title">Contact Information</h3>
+                <h3 className="view-event-sidebar-title">
+                  Contact Information
+                </h3>
                 <div className="view-event-contact">
                   {event.contactEmail && (
                     <div className="view-event-contact-item">
                       <Mail />
-                      <a href={`mailto:${event.contactEmail}`}>
-                        Send Email
-                      </a>
+                      <a href={`mailto:${event.contactEmail}`}>Send Email</a>
                     </div>
                   )}
 
@@ -522,8 +558,11 @@ const ViewEvent = () => {
                       <div>
                         <span className="stat-number">
                           {Math.round(
-                            ((event.currentVolunteers || 0) / event.maxVolunteers) * 100
-                          )}%
+                            ((event.currentVolunteers || 0) /
+                              event.maxVolunteers) *
+                              100
+                          )}
+                          %
                         </span>
                         <span className="stat-label">Capacity Filled</span>
                       </div>

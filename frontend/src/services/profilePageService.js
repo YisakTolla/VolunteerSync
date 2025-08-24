@@ -8,12 +8,48 @@ import {
   fetchPublicProfile, 
   updateProfile, 
   uploadProfileImage as uploadImage,
-  getCurrentUser,
-  // ✅ FIXED: Import the missing utility functions
-  stringToArray,
-  arrayToString,
-  parseArrayField
+  getCurrentUser
 } from './profileSetUpService';
+
+// ==========================================
+// UTILITY FUNCTIONS (LOCAL TO THIS SERVICE)
+// ==========================================
+
+/**
+ * Convert string to array
+ * @param {string|array} value - Value to convert to array
+ * @returns {array} - Parsed array
+ */
+const stringToArray = (value) => {
+  if (Array.isArray(value)) {
+    return value;
+  }
+  if (typeof value === 'string' && value.trim()) {
+    return value.split(',').map(item => item.trim()).filter(item => item);
+  }
+  return [];
+};
+
+/**
+ * Convert array to comma-separated string
+ * @param {array|string} value - Value to convert to string
+ * @returns {string} - Comma-separated string
+ */
+const arrayToString = (value) => {
+  if (Array.isArray(value)) {
+    return value.length > 0 ? value.join(',') : '';
+  }
+  return value || '';
+};
+
+/**
+ * Parse comma-separated string into array
+ * @param {string|array} field - Field to parse
+ * @returns {array} - Parsed array
+ */
+const parseArrayField = (field) => {
+  return stringToArray(field);
+};
 
 // ==========================================
 // PROFILE DATA FUNCTIONS
@@ -211,7 +247,6 @@ export async function addSkill(skill) {
 // ==========================================
 
 /**
- * ✅ FIXED: Complete formatProfileDataForDisplay function
  * Format profile data for display in Profile component
  * @param {Object} rawData - Raw profile data from API
  * @param {string} userType - User type ('volunteer' or 'organization')
@@ -233,7 +268,6 @@ function formatProfileDataForDisplay(rawData, userType) {
     phoneNumber: rawData.phoneNumber || rawData.phone || '',
     website: rawData.website || '',
     joinDate: formatJoinDate(rawData.createdAt || rawData.joinDate),
-    // ✅ FIXED: Use the imported stringToArray function
     interests: stringToArray(rawData.interests || ''),
     skills: stringToArray(rawData.skills || ''),
     profileComplete: rawData.profileComplete || false,
@@ -271,8 +305,9 @@ function formatProfileDataForDisplay(rawData, userType) {
       organizationType: stringToArray(rawData.organizationType || ''),
       organizationSize: rawData.organizationSize || '',
       missionStatement: rawData.missionStatement || rawData.bio || '',
-      categories: stringToArray(rawData.categories || ''),
-      services: stringToArray(rawData.services || ''),
+      causes: rawData.causesArray || stringToArray(rawData.causes || ''),
+      categories: rawData.categoriesArray || stringToArray(rawData.categories || ''),
+      services: rawData.servicesArray || stringToArray(rawData.services || ''),
       primaryCategory: rawData.primaryCategory || '',
       foundedYear: formatFoundedDate(rawData.foundedYear),
       address: rawData.address || rawData.location || '',
@@ -286,36 +321,35 @@ function formatProfileDataForDisplay(rawData, userType) {
       volunteersCount: rawData.volunteersCount || rawData.totalVolunteersServed || 0,
       totalVolunteersServed: rawData.totalVolunteersServed || 0,
       totalEventsHosted: rawData.totalEventsHosted || 0,
-      fundingRaised: rawData.fundingRaised || 0,
-      fundingGoal: rawData.fundingGoal || 50000,
+      // ✅ FIXED: Preserve null values for funding fields
+      fundingRaised: rawData.fundingRaised !== null && rawData.fundingRaised !== undefined ? rawData.fundingRaised : null,
+      fundingGoal: rawData.fundingGoal !== null && rawData.fundingGoal !== undefined ? rawData.fundingGoal : null,
       stats: {
         volunteers: rawData.volunteersCount || rawData.totalVolunteersServed || 0,
         eventsHosted: rawData.eventsHosted || rawData.totalEventsHosted || 0,
         hoursImpacted: rawData.totalVolunteerHours || 0,
-        fundingGoal: rawData.fundingGoal || 50000,
-        fundingRaised: rawData.fundingRaised || 0,
+        // ✅ FIXED: Preserve null values in stats too
+        fundingGoal: rawData.fundingGoal !== null && rawData.fundingGoal !== undefined ? rawData.fundingGoal : null,
+        fundingRaised: rawData.fundingRaised !== null && rawData.fundingRaised !== undefined ? rawData.fundingRaised : null,
       },
       achievements: rawData.achievements || [],
       recentActivity: rawData.recentActivity || [],
       volunteers: rawData.volunteers || [],
+      // ✅ NEW: Add processed arrays for easier access
+      causesArray: rawData.causesArray || stringToArray(rawData.causes || ''),
+      categoriesArray: rawData.categoriesArray || stringToArray(rawData.categories || ''),
+      servicesArray: rawData.servicesArray || stringToArray(rawData.services || ''),
     };
 
     console.log('🏢 Formatted organization data:', organizationData);
+    console.log('🏢 Funding Goal (preserved):', organizationData.fundingGoal);
+    console.log('🏢 Funding Raised (preserved):', organizationData.fundingRaised);
     return organizationData;
   }
 
   // Fallback for unknown user types
   console.log('📄 Formatted base data (unknown user type):', baseData);
   return baseData;
-}
-
-/**
- * ✅ ENHANCED: Parse comma-separated string into array (now uses imported function)
- * @param {string|array} field - Field to parse
- * @returns {array} - Parsed array
- */
-function parseArrayField(field) {
-  return stringToArray(field);
 }
 
 /**

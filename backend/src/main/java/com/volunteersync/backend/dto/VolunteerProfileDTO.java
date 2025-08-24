@@ -23,11 +23,14 @@ public class VolunteerProfileDTO {
     private List<String> skills;
     private List<String> interests;
     private String availabilityPreference;
-    
+
     // FRONTEND INTEGRATION FIELDS
     private List<BadgeDTO> badges; // Frontend expects user badges
     private List<ActivityEntry> recentActivity; // Frontend expects recent activities
     private List<Connection> connections; // Frontend expects user connections
+
+    private List<Long> followedOrganizations;
+    private Integer followedOrganizationsCount;
 
     // =====================================================
     // SUPPORTING CLASSES
@@ -357,5 +360,26 @@ public class VolunteerProfileDTO {
 
     public void setConnections(List<Connection> connections) {
         this.connections = connections;
+    }
+
+    public List<Long> getFollowedOrganizations() {
+        return followedOrganizations;
+    }
+
+    public void setFollowedOrganizations(List<Long> followedOrganizations) {
+        this.followedOrganizations = followedOrganizations;
+        this.followedOrganizationsCount = followedOrganizations != null ? followedOrganizations.size() : 0;
+    }
+
+    public Integer getFollowedOrganizationsCount() {
+        return followedOrganizationsCount;
+    }
+
+    public void setFollowedOrganizationsCount(Integer followedOrganizationsCount) {
+        this.followedOrganizationsCount = followedOrganizationsCount;
+    }
+
+    public boolean isFollowingOrganization(Long organizationId) {
+        return followedOrganizations != null && followedOrganizations.contains(organizationId);
     }
 }

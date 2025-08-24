@@ -73,6 +73,87 @@ profileApi.interceptors.response.use(
 // UTILITY FUNCTIONS
 // ==========================================
 
+/**
+ * ✅ FIXED: Added missing stringToArray function
+ * Convert string to array
+ * @param {string|array} value - Value to convert to array
+ * @returns {array} - Parsed array
+ */
+const stringToArray = (value) => {
+  if (Array.isArray(value)) {
+    return value;
+  }
+  if (typeof value === 'string' && value.trim()) {
+    return value.split(',').map(item => item.trim()).filter(item => item);
+  }
+  return [];
+};
+
+/**
+ * Convert array to comma-separated string
+ * @param {array|string} value - Value to convert to string
+ * @returns {string} - Comma-separated string
+ */
+const arrayToString = (value) => {
+  if (!value) return '';
+
+  if (Array.isArray(value)) {
+    // Filter out empty values and trim whitespace
+    const cleanArray = value
+      .filter(item => item && typeof item === 'string' && item.trim() !== '')
+      .map(item => item.trim());
+    return cleanArray.length > 0 ? cleanArray.join(',') : '';
+  }
+
+  if (typeof value === 'string') {
+    // Already a string, clean it up by splitting and rejoining
+    const cleanArray = value
+      .split(',')
+      .map(item => item.trim())
+      .filter(item => item !== '');
+    return cleanArray.join(',');
+  }
+
+  return String(value || '');
+};
+
+/**
+ * Ensure value is a string
+ * @param {any} value - Value to convert to string
+ * @returns {string} - String value
+ */
+const ensureString = (value) => {
+  if (value === null || value === undefined) {
+    return '';
+  }
+  if (Array.isArray(value)) {
+    return arrayToString(value);
+  }
+  return String(value);
+};
+
+/**
+ * Ensure value is a number
+ * @param {any} value - Value to convert to number
+ * @returns {number|null} - Number value or null
+ */
+const ensureNumber = (value) => {
+  if (value === null || value === undefined || value === '') {
+    return null;
+  }
+  const num = Number(value);
+  return isNaN(num) ? null : num;
+};
+
+/**
+ * Parse comma-separated string into array
+ * @param {string|array} field - Field to parse
+ * @returns {array} - Parsed array
+ */
+const parseArrayField = (field) => {
+  return stringToArray(field);
+};
+
 const updateLocalUser = (updatedData) => {
   try {
     const currentUser = getCurrentUser();
@@ -89,53 +170,9 @@ const updateLocalUser = (updatedData) => {
   }
 };
 
-
-
 const formatProfileData = (profileData, userType) => {
   console.log('🔄 Formatting profile data for type:', userType);
   console.log('Raw profile data:', profileData);
-
-  // ✅ FIXED: Define helper functions within the formatProfileData function
-  const arrayToString = (value) => {
-    if (!value) return '';
-
-    if (Array.isArray(value)) {
-      // Filter out empty values and trim whitespace
-      const cleanArray = value
-        .filter(item => item && typeof item === 'string' && item.trim() !== '')
-        .map(item => item.trim());
-      return cleanArray.length > 0 ? cleanArray.join(',') : '';
-    }
-
-    if (typeof value === 'string') {
-      // Already a string, clean it up by splitting and rejoining
-      const cleanArray = value
-        .split(',')
-        .map(item => item.trim())
-        .filter(item => item !== '');
-      return cleanArray.join(',');
-    }
-
-    return String(value || '');
-  };
-
-  const ensureString = (value) => {
-    if (value === null || value === undefined) {
-      return '';
-    }
-    if (Array.isArray(value)) {
-      return arrayToString(value);
-    }
-    return String(value);
-  };
-
-  const ensureNumber = (value) => {
-    if (value === null || value === undefined || value === '') {
-      return null;
-    }
-    const num = Number(value);
-    return isNaN(num) ? null : num;
-  };
 
   const baseData = {
     bio: ensureString(profileData.bio),
@@ -219,14 +256,14 @@ const formatProfileData = (profileData, userType) => {
     return formattedData;
   }
 
-  console.log('🔄 Formatted base data:', baseData);
+  console.log('📄 Formatted base data:', baseData);
   return baseData;
 };
 
 const parseProfileDataFromBackend = (backendData, userType) => {
   if (!backendData) return null;
 
-  console.log('📥 Parsing backend data for frontend:', backendData);
+  console.log('🔥 Parsing backend data for frontend:', backendData);
 
   const parsedData = { ...backendData };
 
@@ -352,7 +389,7 @@ const createOrUpdateProfile = async (profileData) => {
       console.log('🛠️ Services:', formattedData.services);
       console.log('🗣️ Languages:', formattedData.languagesSupported);
       console.log('📍 Location:', `${formattedData.city}, ${formattedData.state}, ${formattedData.country}`);
-      console.log('🏗️ Organization Type:', formattedData.organizationType);
+      console.log('🗂️ Organization Type:', formattedData.organizationType);
       console.log('📏 Organization Size:', formattedData.organizationSize);
       console.log('🆔 EIN:', formattedData.ein);
       console.log('👥 Employee Count:', formattedData.employeeCount);
@@ -861,7 +898,12 @@ export {
   checkProfileCompleteness,
   getOrganizationCategories,
   getOrganizationSizes,
-  getSupportedLanguages
+  getSupportedLanguages,
+  // ✅ FIXED: Export the utility functions that were missing
+  stringToArray,
+  arrayToString,
+  ensureString,
+  parseArrayField
 };
 
 export default {
@@ -880,5 +922,8 @@ export default {
   setProfileComplete,
   getOrganizationCategories,
   getOrganizationSizes,
-  getSupportedLanguages
+  getSupportedLanguages,
+  stringToArray,
+  arrayToString,
+  parseArrayField
 };

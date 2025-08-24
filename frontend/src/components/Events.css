@@ -1,4 +1,4 @@
-/* Enhanced Events.css - Complete Tag System with Improved Card Design */
+/* Enhanced Events.css - Complete Tag System with Improved Card Design + Real-time Updates */
 
 /* Page Container */
 .events-page {
@@ -217,6 +217,10 @@
   border-color: #ef4444;
 }
 
+.events-filter-option.active.event-type-community-building {
+  color: var(--accent-purple);
+  border-color: var(--accent-purple);
+}
 
 /* Specific date filter colors matching date badges */
 .events-filter-option.active.date-today {
@@ -344,6 +348,62 @@
 .events-header {
   margin-bottom: var(--spacing-6);
   text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--spacing-4);
+}
+
+.events-header > div {
+  flex: 1;
+}
+
+/* Refresh Button */
+.events-refresh-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-3) var(--spacing-4);
+  background: var(--background-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-lg);
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--duration-200) var(--ease-out);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.events-refresh-btn:hover:not(:disabled) {
+  background: var(--accent-purple);
+  color: var(--white);
+  border-color: var(--accent-purple);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.events-refresh-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.events-refresh-btn:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
+}
+
+.events-refresh-icon {
+  width: 1rem;
+  height: 1rem;
+  transition: transform var(--duration-200) var(--ease-out);
+}
+
+.events-refresh-icon.spinning {
+  animation: spin 1s linear infinite;
 }
 
 .events-title {
@@ -375,6 +435,21 @@
 
 .events-search-input-container:last-child {
   margin-bottom: 0;
+}
+
+/* Search Loading Spinner */
+.search-loading-spinner {
+  position: absolute;
+  right: var(--spacing-4);
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid var(--border-primary);
+  border-top: 2px solid var(--accent-purple);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  z-index: 1;
 }
 
 .events-search-input {
@@ -610,7 +685,8 @@
 /* ========================================
    COMMUNITY SERVICE - PURPLE FAMILY
    ======================================== */
-.event-card-type-tag.advocacy-awareness {
+.event-card-type-tag.advocacy-awareness,
+.event-card-type-tag.community-building {
   background: #F3E5F5;
   /* Very light purple background */
   color: #7B1FA2;
@@ -1117,6 +1193,24 @@
     font-size: var(--font-size-2xl);
   }
 
+  .events-header {
+    text-align: left;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-3);
+  }
+
+  .events-header > div {
+    flex: none;
+    width: 100%;
+  }
+
+  .events-refresh-btn {
+    align-self: flex-end;
+    padding: var(--spacing-2) var(--spacing-3);
+    font-size: var(--font-size-xs);
+  }
+
   .events-search-input {
     padding: var(--spacing-3) var(--spacing-4) var(--spacing-3) var(--spacing-10);
   }
@@ -1213,6 +1307,21 @@
     font-size: var(--font-size-xl);
   }
 
+  .events-header {
+    gap: var(--spacing-2);
+  }
+
+  .events-refresh-btn {
+    padding: var(--spacing-2);
+    font-size: var(--font-size-xs);
+    min-width: auto;
+  }
+
+  .events-refresh-icon {
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+
   .events-empty-state {
     padding: var(--spacing-8) var(--spacing-2);
   }
@@ -1274,6 +1383,12 @@
     padding: 1px 4px;
     letter-spacing: 0;
   }
+
+  .search-loading-spinner {
+    width: 0.875rem;
+    height: 0.875rem;
+    right: var(--spacing-3);
+  }
 }
 
 /* ========================================
@@ -1288,7 +1403,8 @@
 .events-empty-state-cta-button:focus,
 .event-card:focus,
 .events-pagination-btn:focus,
-.events-pagination-number:focus {
+.events-pagination-number:focus,
+.events-refresh-btn:focus {
   outline: 2px solid var(--accent-purple);
   outline-offset: 2px;
 }
@@ -1299,7 +1415,8 @@
   .event-card,
   .events-filter-option,
   .events-pagination-btn,
-  .events-pagination-number {
+  .events-pagination-number,
+  .events-refresh-btn {
     transition: none;
   }
 
@@ -1308,11 +1425,14 @@
   }
 
   .events-clear-filters-btn:hover,
-  .events-retry-btn:hover {
+  .events-retry-btn:hover,
+  .events-refresh-btn:hover {
     transform: none;
   }
 
-  .events-loading-spinner {
+  .events-loading-spinner,
+  .search-loading-spinner,
+  .events-refresh-icon.spinning {
     animation: none;
   }
 }
@@ -1354,14 +1474,16 @@
 
   .events-clear-filters-btn,
   .events-empty-state-cta-button,
-  .events-retry-btn {
+  .events-retry-btn,
+  .events-refresh-btn {
     color: black !important;
     background: white !important;
     border: 1px solid black !important;
   }
 
   .events-pagination,
-  .events-sidebar {
+  .events-sidebar,
+  .events-refresh-btn {
     display: none;
   }
 

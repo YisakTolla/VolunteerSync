@@ -1,11 +1,381 @@
-// frontend/src/services/findEventService.js
+// frontend/src/services/findEventsService.js - ENHANCED FOR REAL-TIME SEARCH
 
 const API_BASE_URL = 'http://localhost:8080/api';
 
 class FindEventService {
   
+  constructor() {
+    this.lastRefreshTime = new Date();
+    this.refreshInterval = 30000; // 30 seconds
+    this.searchCache = new Map();
+    this.cacheTimeout = 10000; // 10 seconds cache timeout
+  }
+
+  // ==========================================
+  // NEW REAL-TIME SEARCH METHODS
+  // ==========================================
+
   /**
-   * Find all events (using multiple fallback strategies)
+   * ENHANCED: Real-time search with immediate data refresh
+   * This method ensures users see the latest events, including newly created ones
+   */
+  async performRealtimeSearch(searchParams = {}) {
+    try {
+      const {
+        searchTerm = '',
+        eventType = '',
+        location = '',
+        skillLevel = '',
+        isVirtual = null,
+        startDate = null,
+        endDate = null,
+        forceRefresh = false,
+        limit = 100
+      } = searchParams;
+
+      console.log('🚀 Performing real-time event search:', searchParams);
+
+      // Build query parameters
+      const params = new URLSearchParams();
+      if (searchTerm) params.append('searchTerm', searchTerm);
+      if (eventType) params.append('eventType', eventType);
+      if (location) params.append('location', location);
+      if (skillLevel) params.append('skillLevel', skillLevel);
+      if (isVirtual !== null) params.append('isVirtual', isVirtual.toString());
+      if (startDate) params.append('startDate', startDate);
+      if (endDate) params.append('endDate', endDate);
+      if (forceRefresh) params.append('forceRefresh', 'true');
+      params.append('limit', limit.toString());
+
+      // Add cache-busting timestamp
+      params.append('_t', new Date().getTime().toString());
+
+      const response = await fetch(`${API_BASE_URL}/events/search/realtime?${params}`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Real-time search failed: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      const timestamp = response.headers.get('X-Data-Timestamp');
+      const resultCount = response.headers.get('X-Results-Count');
+
+      console.log(`✅ Real-time event search completed: ${resultCount} results at ${timestamp}`);
+      
+      return {
+        data: Array.isArray(data) ? data : [],
+        timestamp,
+        resultCount: parseInt(resultCount) || 0,
+        searchParams
+      };
+
+    } catch (error) {
+      console.error('❌ Real-time event search failed:', error);
+      
+      // Fallback to standard search
+      try {
+        console.log('🔄 Falling back to standard event search...');
+        const fallback = await this.findAllEvents();
+        return {
+          data: Array.isArray(fallback) ? fallback : [],
+          timestamp: new Date().toISOString(),
+          resultCount: fallback?.length || 0,
+          searchParams,
+          fallback: true
+        };
+      } catch (fallbackError) {
+        console.error('❌ Fallback event search also failed:', fallbackError);
+        return {
+          data: [],
+          timestamp: new Date().toISOString(),
+          resultCount: 0,
+          searchParams,
+          error: error.message
+        };
+      }
+    }
+  }
+
+  /**
+   * ENHANCED: Live data refresh with comprehensive stats
+   * Ensures users always see the most up-to-date event data
+   */
+  async refreshLiveData(options = {}) {
+    try {
+      const {
+        force = false,
+        maxAgeMinutes = 5,
+        includeStats = true,
+        limit = 200
+      } = options;
+
+      console.log(`🔄 Live event data refresh (force: ${force}, maxAge: ${maxAgeMinutes}min)`);
+
+      const params = new URLSearchParams({
+        maxAgeMinutes: maxAgeMinutes.toString(),
+        force: force.toString(),
+        includeStats: includeStats.toString(),
+        limit: limit.toString(),
+        _t: new Date().getTime().toString()
+      });
+
+      const refreshStartTime = performance.now();
+
+      const response = await fetch(`${API_BASE_URL}/events/refresh/live?${params}`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Live refresh failed: ${response.status} ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      const refreshEndTime = performance.now();
+      const clientRefreshDuration = refreshEndTime - refreshStartTime;
+
+      // Update last refresh time
+      this.lastRefreshTime = new Date();
+
+      console.log(`✅ Live event refresh completed:`, {
+        totalCount: result.totalCount,
+        serverDuration: result.refreshDurationMs,
+        clientDuration: Math.round(clientRefreshDuration),
+        dataSource: result.dataSource,
+        timestamp: result.refreshTimestamp
+      });
+
+      return {
+        events: result.events || [],
+        totalCount: result.totalCount || 0,
+        refreshTimestamp: result.refreshTimestamp,
+        serverDurationMs: result.refreshDurationMs,
+        clientDurationMs: Math.round(clientRefreshDuration),
+        dataSource: result.dataSource,
+        stats: result.stats,
+        success: true
+      };
+
+    } catch (error) {
+      console.error('❌ Live event refresh failed:', error);
+      
+      // Try fallback refresh
+      try {
+        console.log('🔄 Attempting fallback event refresh...');
+        const fallback = await this.findAllEvents();
+        return {
+          events: Array.isArray(fallback) ? fallback : [],
+          totalCount: fallback?.length || 0,
+          refreshTimestamp: new Date().toISOString(),
+          success: false,
+          fallback: true,
+          error: error.message
+        };
+      } catch (fallbackError) {
+        return {
+          events: [],
+          totalCount: 0,
+          refreshTimestamp: new Date().toISOString(),
+          success: false,
+          error: error.message,
+          fallbackError: fallbackError.message
+        };
+      }
+    }
+  }
+
+  /**
+   * ENHANCED: Smart search with caching and real-time capabilities
+   * Combines local caching with real-time data for optimal performance
+   */
+  async smartSearch(searchParams = {}) {
+    try {
+      const cacheKey = JSON.stringify(searchParams);
+      const now = Date.now();
+      
+      // Check cache first (for non-empty searches)
+      if (searchParams.searchTerm && this.searchCache.has(cacheKey)) {
+        const cached = this.searchCache.get(cacheKey);
+        if (now - cached.timestamp < this.cacheTimeout) {
+          console.log('📋 Using cached event search results');
+          return {
+            ...cached.result,
+            cached: true,
+            cacheAge: now - cached.timestamp
+          };
+        }
+      }
+
+      // Determine if we need real-time search
+      const needsRealTime = this.shouldUseRealTimeSearch(searchParams);
+      
+      let result;
+      if (needsRealTime) {
+        console.log('🚀 Using real-time event search');
+        result = await this.performRealtimeSearch({
+          ...searchParams,
+          forceRefresh: this.isDataStale()
+        });
+      } else {
+        console.log('📡 Using standard event search');
+        result = await this.performStandardSearch(searchParams);
+      }
+
+      // Cache the result
+      if (searchParams.searchTerm && result.data.length > 0) {
+        this.searchCache.set(cacheKey, {
+          result,
+          timestamp: now
+        });
+        
+        // Clean old cache entries
+        this.cleanCache();
+      }
+
+      return result;
+
+    } catch (error) {
+      console.error('❌ Smart event search failed:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * ENHANCED: Immediate event finder for post-creation searches
+   * Uses multiple strategies to find newly created events immediately
+   */
+  async findEventImmediate(eventTitle, options = {}) {
+    try {
+      const {
+        maxAgeMinutes = 5,
+        searchRecent = true,
+        retryAttempts = 3,
+        retryDelay = 1000
+      } = options;
+
+      console.log(`🎯 Immediate search for event: "${eventTitle}"`);
+
+      if (!eventTitle || eventTitle.trim() === '') {
+        throw new Error('Event title is required');
+      }
+
+      // Build query parameters
+      const params = new URLSearchParams({
+        title: eventTitle.trim(),
+        maxAgeMinutes: maxAgeMinutes.toString(),
+        searchRecent: searchRecent.toString(),
+        _t: new Date().getTime().toString() // Cache busting
+      });
+
+      let lastError = null;
+
+      // Retry logic for immediate searches
+      for (let attempt = 1; attempt <= retryAttempts; attempt++) {
+        try {
+          console.log(`🔍 Immediate event search attempt ${attempt}/${retryAttempts}`);
+
+          const response = await fetch(`${API_BASE_URL}/events/find/immediate?${params}`, {
+            method: 'GET',
+            headers: {
+              'Accept': 'application/json',
+              'Cache-Control': 'no-cache',
+              'Pragma': 'no-cache'
+            }
+          });
+
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+
+          const result = await response.json();
+          const searchStrategy = response.headers.get('X-Search-Strategy');
+
+          console.log(`📊 Event search result:`, {
+            found: result.found,
+            strategy: searchStrategy,
+            timestamp: result.searchTimestamp
+          });
+
+          if (result.found && result.event) {
+            console.log(`✅ Found event on attempt ${attempt}:`, result.event.title);
+            return {
+              found: true,
+              event: result.event,
+              strategy: searchStrategy,
+              attempt,
+              timestamp: result.searchTimestamp,
+              isRecent: result.isRecent
+            };
+          } else if (attempt === retryAttempts) {
+            // Last attempt, return the detailed result even if not found
+            return {
+              found: false,
+              strategy: searchStrategy,
+              attempt,
+              timestamp: result.searchTimestamp,
+              suggestions: result.suggestions,
+              message: result.message
+            };
+          }
+
+          // Wait before retry (unless it's the last attempt)
+          if (attempt < retryAttempts) {
+            const waitTime = retryDelay * attempt; // Progressive delay
+            console.log(`⏳ Waiting ${waitTime}ms before retry...`);
+            await new Promise(resolve => setTimeout(resolve, waitTime));
+            
+            // Update cache buster for next attempt
+            params.set('_t', new Date().getTime().toString());
+          }
+
+        } catch (error) {
+          lastError = error;
+          console.log(`❌ Attempt ${attempt} failed:`, error.message);
+          
+          if (attempt < retryAttempts) {
+            const waitTime = retryDelay * attempt;
+            console.log(`⏳ Waiting ${waitTime}ms before retry due to error...`);
+            await new Promise(resolve => setTimeout(resolve, waitTime));
+          }
+        }
+      }
+
+      // All attempts failed
+      throw lastError || new Error('All immediate search attempts failed');
+
+    } catch (error) {
+      console.error('❌ Immediate event search failed completely:', error);
+      return {
+        found: false,
+        error: error.message,
+        timestamp: new Date().toISOString(),
+        suggestions: [
+          'The event may still be processing',
+          'Try refreshing the page and searching again',
+          'Check the event list manually',
+          'Contact support if the event should exist'
+        ]
+      };
+    }
+  }
+
+  // ==========================================
+  // ENHANCED EXISTING METHODS
+  // ==========================================
+
+  /**
+   * Find all events (enhanced with multiple fallback strategies)
    */
   async findAllEvents() {
     try {
@@ -65,6 +435,68 @@ class FindEventService {
   }
 
   /**
+   * Enhanced search events by title with real-time capabilities
+   */
+  async findEventsByTitle(title, options = {}) {
+    try {
+      if (!title || title.trim() === '') {
+        console.log('❌ Empty search title provided');
+        return [];
+      }
+
+      const {
+        includeRecent = true,
+        limit = 50,
+        useRealTime = false
+      } = options;
+
+      console.log(`🔍 Enhanced title search: "${title}" (realTime: ${useRealTime})`);
+      
+      if (useRealTime) {
+        const result = await this.performRealtimeSearch({ searchTerm: title, limit });
+        return result.data;
+      }
+
+      // Use enhanced backend endpoint
+      const params = new URLSearchParams({ 
+        q: title.trim(),
+        includeRecent: includeRecent.toString(),
+        limit: limit.toString()
+      });
+      
+      const response = await fetch(`${API_BASE_URL}/events/search/title?${params}`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      const searchTerm = response.headers.get('X-Search-Term');
+      const resultCount = response.headers.get('X-Results-Count');
+      
+      console.log(`✅ Enhanced search found ${resultCount} events for "${searchTerm}"`);
+      return Array.isArray(data) ? data : [];
+      
+    } catch (error) {
+      console.error('❌ Enhanced title search failed:', error);
+      
+      // Fallback to original method
+      try {
+        console.log('🔄 Trying standard search fallback...');
+        const fallbackData = await this.searchEvents({ searchTerm: title });
+        return Array.isArray(fallbackData) ? fallbackData : [];
+      } catch (fallbackError) {
+        console.error('❌ Fallback search also failed:', fallbackError);
+        return [];
+      }
+    }
+  }
+
+  // ==========================================
+  // ALL EXISTING METHODS (PRESERVED)
+  // ==========================================
+
+  /**
    * Find event by ID
    */
   async findEventById(id) {
@@ -95,6 +527,110 @@ class FindEventService {
   }
 
   /**
+   * Search events with multiple filters
+   */
+  async searchEvents(filters = {}) {
+    try {
+      const searchRequest = {
+        searchTerm: filters.searchTerm || '',
+        eventType: filters.eventType || '',
+        location: filters.location || '',
+        skillLevel: filters.skillLevel || '',
+        isVirtual: filters.isVirtual,
+        startDate: filters.startDate,
+        endDate: filters.endDate
+      };
+      
+      const response = await fetch(`${API_BASE_URL}/events/search`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(searchRequest)
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error searching events:', error);
+      throw error;
+    }
+  }
+
+  // ==========================================
+  // UTILITY METHODS
+  // ==========================================
+
+  /**
+   * Determine if real-time search should be used
+   */
+  shouldUseRealTimeSearch(searchParams) {
+    // Use real-time search if:
+    // 1. Searching for specific title (likely looking for new event)
+    // 2. Data is stale
+    // 3. No search term (showing all events, want fresh data)
+    
+    return (
+      (searchParams.searchTerm && searchParams.searchTerm.length > 2) ||
+      this.isDataStale() ||
+      (!searchParams.searchTerm && !searchParams.eventType)
+    );
+  }
+
+  /**
+   * Check if data is stale and needs refresh
+   */
+  isDataStale() {
+    const now = new Date();
+    const timeSinceRefresh = now - this.lastRefreshTime;
+    return timeSinceRefresh > this.refreshInterval;
+  }
+
+  /**
+   * Clean old cache entries
+   */
+  cleanCache() {
+    const now = Date.now();
+    for (const [key, value] of this.searchCache.entries()) {
+      if (now - value.timestamp > this.cacheTimeout * 2) {
+        this.searchCache.delete(key);
+      }
+    }
+  }
+
+  /**
+   * Perform standard search (fallback method)
+   */
+  async performStandardSearch(searchParams) {
+    try {
+      const filters = {};
+      if (searchParams.searchTerm) filters.searchTerm = searchParams.searchTerm;
+      if (searchParams.eventType) filters.eventType = searchParams.eventType;
+      if (searchParams.location) filters.location = searchParams.location;
+      if (searchParams.skillLevel) filters.skillLevel = searchParams.skillLevel;
+      
+      const data = await this.searchEvents(filters);
+      
+      return {
+        data: Array.isArray(data) ? data : [],
+        timestamp: new Date().toISOString(),
+        resultCount: data?.length || 0,
+        searchParams,
+        source: 'standard'
+      };
+    } catch (error) {
+      console.error('Standard search failed:', error);
+      throw error;
+    }
+  }
+
+  // ==========================================
+  // ALL OTHER EXISTING METHODS (PRESERVED)
+  // ==========================================
+
+  /**
    * Find events with pagination
    */
   async findAllEventsWithPagination(page = 0, size = 10, sortBy = 'startDate', sortDirection = 'asc') {
@@ -117,23 +653,6 @@ class FindEventService {
       return await response.json();
     } catch (error) {
       console.error('Error fetching paginated events:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Search events by title
-   */
-  async findEventsByTitle(title) {
-    try {
-      const params = new URLSearchParams({ q: title });
-      const response = await fetch(`${API_BASE_URL}/events/search/title?${params}`);
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      return await response.json();
-    } catch (error) {
-      console.error('Error searching events by title:', error);
       throw error;
     }
   }
@@ -265,39 +784,6 @@ class FindEventService {
   }
 
   /**
-   * Search events with multiple filters
-   */
-  async searchEvents(filters = {}) {
-    try {
-      const searchRequest = {
-        searchTerm: filters.title || '',
-        eventType: filters.eventType || '',
-        location: filters.location || '',
-        skillLevel: filters.skillLevel || '',
-        isVirtual: filters.isVirtual,
-        startDate: filters.startDate,
-        endDate: filters.endDate
-      };
-      
-      const response = await fetch(`${API_BASE_URL}/events/search`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(searchRequest)
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      return await response.json();
-    } catch (error) {
-      console.error('Error searching events:', error);
-      throw error;
-    }
-  }
-
-  /**
    * Get events sorted by start date
    */
   async findEventsSortedByDate() {
@@ -326,387 +812,25 @@ class FindEventService {
   }
 
   /**
-   * NEW METHOD - Find events from newly created organizations
-   * Helps users discover events from organizations that were recently established
+   * Get event statistics
    */
-  async findEventsFromNewOrganizations(days = 30, limit = 50) {
+  async getEventStats() {
     try {
-      console.log(`🔍 Searching for events from organizations created within the last ${days} days`);
-      
-      // Strategy 1: Try dedicated endpoint for events from new organizations
-      try {
-        const response = await fetch(`${API_BASE_URL}/events/from-new-organizations?days=${days}&limit=${limit}`);
-        if (response.ok) {
-          const data = await response.json();
-          console.log(`✅ Found ${data.length} events from new organizations`);
-          return Array.isArray(data) ? data : [];
-        } else {
-          console.log(`❌ New organizations events endpoint failed: ${response.status}`);
-        }
-      } catch (endpointError) {
-        console.log(`❌ New organizations events endpoint error:`, endpointError.message);
-      }
-      
-      // Strategy 2: Get recently created organizations and find their events
-      try {
-        // Import the organization service to get new organizations
-        // Note: In a real implementation, you might want to inject this dependency
-        const organizationResponse = await fetch(`${API_BASE_URL}/organization-profiles/recently-created?days=${days}`);
-        if (organizationResponse.ok) {
-          const newOrganizations = await organizationResponse.json();
-          console.log(`📋 Found ${newOrganizations.length} recently created organizations`);
-          
-          // Get events for each new organization
-          const eventPromises = newOrganizations.map(async (org) => {
-            try {
-              const orgEvents = await this.findEventsByOrganization(org.id || org.organizationId);
-              return orgEvents.map(event => ({
-                ...event,
-                organizationInfo: {
-                  id: org.id || org.organizationId,
-                  name: org.organizationName || org.name,
-                  isNew: true,
-                  createdDate: org.createdDate || org.registrationDate
-                }
-              }));
-            } catch (error) {
-              console.log(`❌ Failed to get events for organization ${org.id}:`, error.message);
-              return [];
-            }
-          });
-          
-          const eventsArrays = await Promise.all(eventPromises);
-          const allEvents = eventsArrays.flat();
-          
-          // Sort by event start date and limit results
-          const sortedEvents = allEvents
-            .sort((a, b) => new Date(a.startDate || a.eventDate) - new Date(b.startDate || b.eventDate))
-            .slice(0, limit);
-          
-          console.log(`✅ Found ${sortedEvents.length} events from ${newOrganizations.length} new organizations`);
-          return sortedEvents;
-        }
-      } catch (orgError) {
-        console.log(`❌ Failed to get new organizations:`, orgError.message);
-      }
-      
-      // Strategy 3: Use general search with organization creation date filter
-      try {
-        const searchRequest = {
-          searchTerm: '',
-          eventType: '',
-          location: '',
-          skillLevel: '',
-          organizationCreatedAfter: new Date(Date.now() - (days * 24 * 60 * 60 * 1000)).toISOString()
-        };
-        
-        const response = await fetch(`${API_BASE_URL}/events/search?page=0&size=${limit}&sortBy=startDate&sortDirection=asc`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(searchRequest)
-        });
-        
-        if (response.ok) {
-          const searchData = await response.json();
-          const events = searchData.content || searchData || [];
-          console.log(`✅ Found events using search with organization filter`);
-          return events;
-        }
-      } catch (searchError) {
-        console.log(`❌ Search with organization filter failed:`, searchError.message);
-      }
-      
-      // Final fallback: Get upcoming events and mark them as potentially from new organizations
-      console.log(`🔄 Using upcoming events as final fallback`);
-      const upcomingEvents = await this.findUpcomingEvents();
-      return upcomingEvents.slice(0, limit);
-      
-    } catch (error) {
-      console.error('Error fetching events from new organizations:', error);
-      throw error;
-    }
-  }
+      const [upcoming, featured, virtual] = await Promise.all([
+        this.findUpcomingEvents(),
+        this.findFeaturedEvents(),
+        this.findVirtualEvents()
+      ]);
 
-  /**
-   * NEW METHOD - Find recent events from newly created organizations
-   * More targeted search for events created recently by new organizations
-   */
-  async findRecentEventsFromNewOrganizations({
-    organizationAgeDays = 30,
-    eventAgeDays = 14,
-    limit = 30,
-    eventType = '',
-    location = '',
-    sortBy = 'startDate',
-    sortDirection = 'asc'
-  } = {}) {
-    try {
-      console.log(`🔍 Searching for events created within ${eventAgeDays} days by organizations created within ${organizationAgeDays} days`);
-      
-      // Calculate date thresholds
-      const orgCreatedAfter = new Date(Date.now() - (organizationAgeDays * 24 * 60 * 60 * 1000));
-      const eventCreatedAfter = new Date(Date.now() - (eventAgeDays * 24 * 60 * 60 * 1000));
-      
-      // Strategy 1: Try dedicated endpoint with advanced filters
-      try {
-        const params = new URLSearchParams({
-          orgAgeDays: organizationAgeDays.toString(),
-          eventAgeDays: eventAgeDays.toString(),
-          limit: limit.toString(),
-          sortBy,
-          sortDirection
-        });
-        
-        if (eventType) params.append('eventType', eventType);
-        if (location) params.append('location', location);
-        
-        const response = await fetch(`${API_BASE_URL}/events/recent-from-new-organizations?${params}`);
-        if (response.ok) {
-          const data = await response.json();
-          console.log(`✅ Found ${data.length} recent events from new organizations`);
-          return Array.isArray(data) ? data : [];
-        }
-      } catch (endpointError) {
-        console.log(`❌ Recent events from new organizations endpoint failed:`, endpointError.message);
-      }
-      
-      // Strategy 2: Combine organization and event searches
-      try {
-        // First get new organizations
-        const newOrgsResponse = await fetch(`${API_BASE_URL}/organization-profiles/recently-created?days=${organizationAgeDays}`);
-        if (newOrgsResponse.ok) {
-          const newOrganizations = await newOrgsResponse.json();
-          console.log(`📋 Found ${newOrganizations.length} new organizations`);
-          
-          // Then get recent events from those organizations
-          const recentEventsPromises = newOrganizations.map(async (org) => {
-            try {
-              // Get all events from this organization
-              const orgEvents = await this.findEventsByOrganization(org.id || org.organizationId);
-              
-              // Filter for events created recently
-              const recentEvents = orgEvents.filter(event => {
-                const eventCreated = new Date(event.createdDate || event.publishedDate);
-                return eventCreated >= eventCreatedAfter;
-              });
-              
-              // Add organization metadata
-              return recentEvents.map(event => ({
-                ...event,
-                organizationInfo: {
-                  id: org.id || org.organizationId,
-                  name: org.organizationName || org.name,
-                  isNew: true,
-                  createdDate: org.createdDate || org.registrationDate,
-                  daysSinceCreated: Math.floor((Date.now() - new Date(org.createdDate || org.registrationDate)) / (1000 * 60 * 60 * 24))
-                }
-              }));
-            } catch (error) {
-              console.log(`❌ Failed to get recent events for organization ${org.id}:`, error.message);
-              return [];
-            }
-          });
-          
-          const eventsArrays = await Promise.all(recentEventsPromises);
-          let allEvents = eventsArrays.flat();
-          
-          // Apply additional filters
-          if (eventType) {
-            allEvents = allEvents.filter(event => 
-              event.eventType?.toLowerCase() === eventType.toLowerCase() ||
-              event.type?.toLowerCase() === eventType.toLowerCase()
-            );
-          }
-          
-          if (location) {
-            allEvents = allEvents.filter(event => 
-              event.location?.toLowerCase().includes(location.toLowerCase()) ||
-              event.city?.toLowerCase().includes(location.toLowerCase()) ||
-              event.state?.toLowerCase().includes(location.toLowerCase())
-            );
-          }
-          
-          // Sort and limit results
-          const sortedEvents = allEvents
-            .sort((a, b) => {
-              const aDate = new Date(a[sortBy] || a.startDate || a.eventDate);
-              const bDate = new Date(b[sortBy] || b.startDate || b.eventDate);
-              return sortDirection === 'desc' ? bDate - aDate : aDate - bDate;
-            })
-            .slice(0, limit);
-          
-          console.log(`✅ Found ${sortedEvents.length} recent events from new organizations`);
-          return sortedEvents;
-        }
-      } catch (combinedError) {
-        console.log(`❌ Combined search strategy failed:`, combinedError.message);
-      }
-      
-      // Final fallback: Get events from new organizations without recency filter
-      console.log(`🔄 Falling back to general new organization events`);
-      return await this.findEventsFromNewOrganizations(organizationAgeDays, limit);
-      
+      return {
+        total: upcoming.length + featured.length,
+        upcoming: upcoming.length,
+        featured: featured.length,
+        virtual: virtual.length,
+        lastUpdated: new Date().toISOString()
+      };
     } catch (error) {
-      console.error('Error fetching recent events from new organizations:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * NEW METHOD - Refresh events from new organizations
-   * Forces a fresh fetch to ensure users see the latest events from newly created organizations
-   */
-  async refreshEventsFromNewOrganizations(organizationMaxAge = 7, limit = 50) {
-    try {
-      console.log(`🔄 Refreshing events from organizations created within ${organizationMaxAge} days`);
-      
-      // Add cache-busting parameter
-      const cacheBuster = new Date().getTime();
-      
-      // Try multiple endpoints with cache busting
-      const refreshEndpoints = [
-        `events/from-new-organizations?days=${organizationMaxAge}&limit=${limit}&_t=${cacheBuster}`,
-        `events/recent-from-new-organizations?orgAgeDays=${organizationMaxAge}&limit=${limit}&_t=${cacheBuster}`,
-        `events/by-new-organizations?maxAge=${organizationMaxAge}&limit=${limit}&_t=${cacheBuster}`
-      ];
-      
-      for (const endpoint of refreshEndpoints) {
-        try {
-          console.log(`🔄 Trying fresh data from: ${API_BASE_URL}/${endpoint}`);
-          const response = await fetch(`${API_BASE_URL}/${endpoint}`, {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-              'Cache-Control': 'no-cache',
-              'Pragma': 'no-cache'
-            }
-          });
-          
-          if (response.ok) {
-            const data = await response.json();
-            console.log(`✅ Successfully refreshed events from ${endpoint}:`, data.length);
-            return Array.isArray(data) ? data : [];
-          }
-        } catch (endpointError) {
-          console.log(`❌ Refresh failed for ${endpoint}:`, endpointError.message);
-          continue;
-        }
-      }
-      
-      // Fallback: Use the standard method with forced refresh
-      console.log(`🔄 Using standard method with forced refresh`);
-      return await this.findEventsFromNewOrganizations(organizationMaxAge, limit);
-      
-    } catch (error) {
-      console.error('Error refreshing events from new organizations:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * NEW METHOD - Find events from a specific newly created organization
-   * Helps users find events after they've just created an organization
-   */
-  async findEventsFromNewlyCreatedOrganization(organizationId, timeWindowHours = 24) {
-    try {
-      console.log(`🔍 Searching for events from newly created organization ${organizationId} within ${timeWindowHours} hours`);
-      
-      // Strategy 1: Get all events from the organization
-      try {
-        const orgEvents = await this.findEventsByOrganization(organizationId);
-        
-        // Filter for events created within the time window
-        const timeWindowMs = timeWindowHours * 60 * 60 * 1000;
-        const cutoffTime = new Date(Date.now() - timeWindowMs);
-        
-        const recentEvents = orgEvents.filter(event => {
-          const eventCreated = new Date(event.createdDate || event.publishedDate || event.startDate);
-          return eventCreated >= cutoffTime;
-        });
-        
-        console.log(`✅ Found ${recentEvents.length} recent events from organization ${organizationId}`);
-        return recentEvents;
-        
-      } catch (orgError) {
-        console.log(`❌ Failed to get events for organization ${organizationId}:`, orgError.message);
-      }
-      
-      // Strategy 2: Search by organization ID in general search
-      try {
-        const searchRequest = {
-          searchTerm: '',
-          eventType: '',
-          location: '',
-          skillLevel: '',
-          organizationId: organizationId
-        };
-        
-        const response = await fetch(`${API_BASE_URL}/events/search?page=0&size=50&sortBy=createdDate&sortDirection=desc`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(searchRequest)
-        });
-        
-        if (response.ok) {
-          const searchData = await response.json();
-          const events = searchData.content || searchData || [];
-          console.log(`✅ Found events using organization search`);
-          return events;
-        }
-      } catch (searchError) {
-        console.log(`❌ Organization search failed:`, searchError.message);
-      }
-      
-      // Strategy 3: Refresh and try again
-      console.log(`🔄 Refreshing data and searching again...`);
-      const refreshedEvents = await this.refreshEventsFromNewOrganizations(1, 100);
-      const orgEvents = refreshedEvents.filter(event => 
-        event.organizationId === organizationId ||
-        event.organizationInfo?.id === organizationId
-      );
-      
-      console.log(`✅ Found ${orgEvents.length} events after refresh`);
-      return orgEvents;
-      
-    } catch (error) {
-      console.error('Error finding events from newly created organization:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Get event types
-   */
-  async getEventTypes() {
-    try {
-      return [
-        'Community Service', 'Fundraising', 'Education', 'Environment', 
-        'Healthcare', 'Animal Welfare', 'Disaster Relief', 'Arts & Culture',
-        'Sports & Recreation', 'Senior Services', 'Youth Development',
-        'Mental Health', 'Technology', 'Religious', 'International'
-      ];
-    } catch (error) {
-      console.error('Error fetching event types:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Get skill levels
-   */
-  async getSkillLevels() {
-    try {
-      return [
-        'No Experience Required', 'Beginner', 'Intermediate', 
-        'Advanced', 'Expert', 'Professional'
-      ];
-    } catch (error) {
-      console.error('Error fetching skill levels:', error);
+      console.error('Error fetching event stats:', error);
       throw error;
     }
   }
@@ -787,25 +911,33 @@ class FindEventService {
   }
 
   /**
-   * Get event statistics
+   * Get event types
    */
-  async getEventStats() {
+  async getEventTypes() {
     try {
-      const [upcoming, featured, virtual] = await Promise.all([
-        this.findUpcomingEvents(),
-        this.findFeaturedEvents(),
-        this.findVirtualEvents()
-      ]);
-
-      return {
-        total: upcoming.length + featured.length,
-        upcoming: upcoming.length,
-        featured: featured.length,
-        virtual: virtual.length,
-        lastUpdated: new Date().toISOString()
-      };
+      return [
+        'Community Service', 'Fundraising', 'Education', 'Environment', 
+        'Healthcare', 'Animal Welfare', 'Disaster Relief', 'Arts & Culture',
+        'Sports & Recreation', 'Senior Services', 'Youth Development',
+        'Mental Health', 'Technology', 'Religious', 'International'
+      ];
     } catch (error) {
-      console.error('Error fetching event stats:', error);
+      console.error('Error fetching event types:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get skill levels
+   */
+  async getSkillLevels() {
+    try {
+      return [
+        'No Experience Required', 'Beginner', 'Intermediate', 
+        'Advanced', 'Expert', 'Professional'
+      ];
+    } catch (error) {
+      console.error('Error fetching skill levels:', error);
       throw error;
     }
   }

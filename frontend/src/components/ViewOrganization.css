@@ -746,8 +746,13 @@
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .view-organization-loading p {
@@ -812,12 +817,12 @@
     grid-template-columns: 1fr;
     gap: var(--spacing-6);
   }
-  
+
   .view-organization-sidebar {
     position: static;
     order: 2;
   }
-  
+
   .view-organization-main {
     order: 1;
   }
@@ -827,61 +832,61 @@
   .view-organization-page {
     padding: calc(var(--spacing-16) + 72px) var(--spacing-3) var(--spacing-4) var(--spacing-3);
   }
-  
+
   .view-organization-container {
     padding: 0 var(--spacing-3);
     gap: var(--spacing-4);
   }
-  
+
   .view-organization-header-main {
     flex-direction: column;
     gap: var(--spacing-4);
   }
-  
+
   .view-organization-profile-section {
     flex-direction: column;
     align-items: center;
     text-align: center;
     gap: var(--spacing-4);
   }
-  
+
   .view-organization-profile-image {
     margin-top: 0;
     width: 100px;
     height: 100px;
   }
-  
+
   .view-organization-actions {
     flex-direction: row;
     width: 100%;
   }
-  
+
   .view-organization-btn {
     flex: 1;
     min-width: auto;
   }
-  
+
   .view-organization-meta {
     justify-content: center;
     flex-wrap: wrap;
   }
-  
+
   .view-organization-title {
     font-size: var(--font-size-xl);
   }
-  
+
   .view-organization-section {
     padding: var(--spacing-4);
   }
-  
+
   .view-organization-sidebar-card {
     padding: var(--spacing-4);
   }
-  
+
   .view-organization-funding {
     gap: var(--spacing-3);
   }
-  
+
   .view-organization-stats {
     gap: var(--spacing-3);
   }
@@ -891,70 +896,355 @@
   .view-organization-page {
     padding: calc(var(--spacing-12) + 72px) var(--spacing-2) var(--spacing-3) var(--spacing-2);
   }
-  
+
   .view-organization-container {
     padding: 0 var(--spacing-2);
     gap: var(--spacing-3);
   }
-  
+
   .view-organization-back-button {
     padding: var(--spacing-2) var(--spacing-3);
     font-size: var(--font-size-xs);
   }
-  
+
   .view-organization-header-content {
     padding: var(--spacing-4);
   }
-  
+
   .view-organization-cover {
     height: 150px;
   }
-  
+
   .view-organization-profile-image {
     width: 80px;
     height: 80px;
   }
-  
+
   .view-organization-title {
     font-size: var(--font-size-lg);
   }
-  
+
   .view-organization-actions {
     flex-direction: column;
     gap: var(--spacing-2);
   }
-  
+
   .view-organization-btn {
     padding: var(--spacing-2) var(--spacing-3);
     font-size: var(--font-size-xs);
   }
-  
+
   .view-organization-section {
     padding: var(--spacing-3);
   }
-  
+
   .view-organization-section-title {
     font-size: var(--font-size-lg);
   }
-  
+
   .view-organization-sidebar-card {
     padding: var(--spacing-3);
   }
-  
+
   .view-organization-sidebar-title {
     font-size: var(--font-size-base);
   }
-  
+
   .view-organization-meta {
     flex-direction: column;
     align-items: center;
     gap: var(--spacing-2);
   }
-  
+
   .view-organization-categories {
     justify-content: center;
   }
 }
+
+/* ========================================
+   FOLLOW ORGANIZATION BUTTON STYLES
+   Add these styles to your existing ViewOrganization.css
+   ======================================== */
+
+/* Follow button states */
+.view-organization-btn.following {
+  background: var(--success-green, #10b981);
+  color: white;
+  border: 1px solid var(--success-green, #10b981);
+}
+
+.view-organization-btn.following:hover {
+  background: var(--danger-red, #ef4444);
+  border-color: var(--danger-red, #ef4444);
+  transform: translateY(-1px);
+}
+
+.view-organization-btn.following:hover .lucide-heart-off {
+  color: white;
+}
+
+/* Loading spinner for follow button */
+.loading-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-right: 8px;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Disabled state for follow button */
+.view-organization-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.view-organization-btn:disabled:hover {
+  transform: none !important;
+  background: var(--accent-green);
+  border-color: var(--accent-green);
+}
+
+.view-organization-btn.following:disabled:hover {
+  background: var(--success-green, #10b981);
+  border-color: var(--success-green, #10b981);
+}
+
+/* ========================================
+   AUTH POPUP STYLES
+   ======================================== */
+
+.auth-popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: var(--spacing-4, 16px);
+}
+
+.auth-popup-content {
+  background: white;
+  border-radius: var(--radius-xl, 12px);
+  padding: var(--spacing-8, 32px);
+  max-width: 480px;
+  width: 100%;
+  box-shadow: var(--shadow-2xl, 0 25px 50px -12px rgba(0, 0, 0, 0.25));
+  position: relative;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.auth-popup-close {
+  position: absolute;
+  top: var(--spacing-4, 16px);
+  right: var(--spacing-4, 16px);
+  background: none;
+  border: none;
+  color: var(--text-secondary, #6b7280);
+  cursor: pointer;
+  padding: var(--spacing-2, 8px);
+  border-radius: var(--radius-md, 6px);
+  transition: all var(--duration-200, 200ms) ease;
+}
+
+.auth-popup-close:hover {
+  background: var(--background-secondary, #f3f4f6);
+  color: var(--text-primary, #111827);
+}
+
+.auth-popup-header {
+  text-align: center;
+  margin-bottom: var(--spacing-6, 24px);
+}
+
+.auth-popup-header h3 {
+  font-size: var(--font-size-xl, 20px);
+  font-weight: var(--font-weight-bold, 700);
+  color: var(--text-primary, #111827);
+  margin-top: var(--spacing-4, 16px);
+  margin-bottom: 0;
+}
+
+.auth-popup-body p {
+  font-size: var(--font-size-base, 16px);
+  color: var(--text-secondary, #6b7280);
+  line-height: var(--line-height-relaxed, 1.625);
+  margin-bottom: var(--spacing-6, 24px);
+  text-align: center;
+}
+
+.auth-popup-actions {
+  display: flex;
+  gap: var(--spacing-3, 12px);
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.auth-popup-btn {
+  padding: var(--spacing-3, 12px) var(--spacing-6, 24px);
+  border-radius: var(--radius-lg, 8px);
+  font-size: var(--font-size-base, 16px);
+  font-weight: var(--font-weight-medium, 500);
+  cursor: pointer;
+  transition: all var(--duration-200, 200ms) ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  min-width: 140px;
+}
+
+.auth-popup-btn.primary {
+  background: var(--accent-green, #10b981);
+  color: white;
+  border: 1px solid var(--accent-green, #10b981);
+}
+
+.auth-popup-btn.primary:hover {
+  background: var(--accent-green-dark, #059669);
+  border-color: var(--accent-green-dark, #059669);
+  transform: translateY(-1px);
+}
+
+.auth-popup-btn.secondary {
+  background: white;
+  color: var(--text-primary, #111827);
+  border: 1px solid var(--border-primary, #d1d5db);
+}
+
+.auth-popup-btn.secondary:hover {
+  background: var(--background-secondary, #f3f4f6);
+  border-color: var(--border-secondary, #9ca3af);
+  transform: translateY(-1px);
+}
+
+/* ========================================
+   FOLLOWER COUNT HIGHLIGHT
+   ======================================== */
+
+.view-organization-stat .view-organization-stat-number {
+  font-weight: var(--font-weight-bold, 700);
+  font-size: var(--font-size-2xl, 24px);
+  color: var(--accent-green, #10b981);
+}
+
+.view-organization-stat:first-child .view-organization-stat-number {
+  color: var(--danger-red, #ef4444);
+  /* Highlight follower count in red/pink */
+}
+
+.view-organization-stat .lucide-heart {
+  color: var(--danger-red, #ef4444);
+}
+
+/* ========================================
+   RESPONSIVE DESIGN
+   ======================================== */
+
+@media (max-width: 768px) {
+  .view-organization-actions {
+    flex-direction: column;
+    gap: var(--spacing-3, 12px);
+  }
+
+  .view-organization-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .auth-popup-actions {
+    flex-direction: column;
+  }
+
+  .auth-popup-btn {
+    width: 100%;
+  }
+
+  .auth-popup-content {
+    margin: var(--spacing-4, 16px);
+    padding: var(--spacing-6, 24px);
+  }
+}
+
+/* ========================================
+   LOADING STATES
+   ======================================== */
+
+.view-organization-btn .loading-spinner+span {
+  margin-left: var(--spacing-1, 4px);
+}
+
+/* Enhanced button transitions */
+.view-organization-btn {
+  transition: all var(--duration-300, 300ms) ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.view-organization-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left var(--duration-500, 500ms) ease;
+}
+
+.view-organization-btn:hover::before {
+  left: 100%;
+}
+
+/* Follow button success animation */
+.view-organization-btn.success-animation {
+  animation: successPulse 0.6s ease-in-out;
+}
+
+@keyframes successPulse {
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.05);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+
 
 /* ========================================
    ACCESSIBILITY IMPROVEMENTS
@@ -972,19 +1262,20 @@
 
 /* Reduced motion for users who prefer it */
 @media (prefers-reduced-motion: reduce) {
+
   .view-organization-back-button,
   .view-organization-btn,
   .view-organization-contact-item,
   .progress-fill {
     transition: none;
   }
-  
+
   .view-organization-btn:hover,
   .view-organization-retry-btn:hover,
   .view-organization-back-btn:hover {
     transform: none;
   }
-  
+
   .view-organization-loading-spinner {
     animation: none;
   }
@@ -992,12 +1283,13 @@
 
 /* High contrast mode support */
 @media (prefers-contrast: high) {
+
   .view-organization-header,
   .view-organization-section,
   .view-organization-sidebar-card {
     border-width: 2px;
   }
-  
+
   .view-organization-btn {
     border-width: 2px;
   }
@@ -1013,12 +1305,12 @@
     color: black !important;
     padding: 0;
   }
-  
+
   .view-organization-back-button,
   .view-organization-actions {
     display: none;
   }
-  
+
   .view-organization-header,
   .view-organization-section,
   .view-organization-sidebar-card {
@@ -1027,15 +1319,15 @@
     box-shadow: none !important;
     break-inside: avoid;
   }
-  
+
   .view-organization-content {
     grid-template-columns: 1fr;
   }
-  
+
   .view-organization-cover {
     height: 150px;
   }
-  
+
   .view-organization-btn,
   .view-organization-contact-item a {
     color: black !important;
