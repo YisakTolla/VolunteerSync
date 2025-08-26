@@ -51,6 +51,26 @@ const parseArrayField = (field) => {
   return stringToArray(field);
 };
 
+/**
+ * Convert followed organizations to array of IDs
+ * @param {string|array|number} value - Value to convert to array of IDs
+ * @returns {array} - Array of organization IDs as numbers
+ */
+const parseFollowedOrganizations = (value) => {
+  if (Array.isArray(value)) {
+    return value.map(id => typeof id === 'number' ? id : parseInt(id, 10)).filter(id => !isNaN(id));
+  }
+  if (typeof value === 'string' && value.trim()) {
+    return value.split(',')
+      .map(id => parseInt(id.trim(), 10))
+      .filter(id => !isNaN(id));
+  }
+  if (typeof value === 'number') {
+    return [value];
+  }
+  return [];
+};
+
 // ==========================================
 // PROFILE DATA FUNCTIONS
 // ==========================================
@@ -276,6 +296,8 @@ function formatProfileDataForDisplay(rawData, userType) {
   };
 
   if (userType === 'volunteer') {
+    const followedOrganizations = parseFollowedOrganizations(rawData.followedOrganizations || []);
+    
     const volunteerData = {
       ...baseData,
       firstName: rawData.firstName || '',
@@ -284,17 +306,23 @@ function formatProfileDataForDisplay(rawData, userType) {
       availability: rawData.availability || 'flexible',
       totalHours: rawData.totalHours || 0,
       eventsAttended: rawData.eventsAttended || 0,
+      followedOrganizations: followedOrganizations,
+      followedOrganizationsCount: rawData.followedOrganizationsCount || followedOrganizations.length,
       stats: {
         volunteered: rawData.eventsAttended || 0,
         hours: rawData.totalHours || 0,
         skills: stringToArray(rawData.skills || '').length,
         causes: stringToArray(rawData.interests || '').length,
+        organizations: rawData.followedOrganizationsCount || followedOrganizations.length,
       },
       achievements: rawData.achievements || [],
-      recentActivity: rawData.recentActivity || []
+      recentActivity: rawData.recentActivity || [],
+      organizations: rawData.organizations || []
     };
 
     console.log('🙋 Formatted volunteer data:', volunteerData);
+    console.log('📊 Followed Organizations:', followedOrganizations);
+    console.log('📊 Followed Organizations Count:', volunteerData.followedOrganizationsCount);
     return volunteerData;
 
   } else if (userType === 'organization') {
@@ -321,21 +349,18 @@ function formatProfileDataForDisplay(rawData, userType) {
       volunteersCount: rawData.volunteersCount || rawData.totalVolunteersServed || 0,
       totalVolunteersServed: rawData.totalVolunteersServed || 0,
       totalEventsHosted: rawData.totalEventsHosted || 0,
-      // ✅ FIXED: Preserve null values for funding fields
       fundingRaised: rawData.fundingRaised !== null && rawData.fundingRaised !== undefined ? rawData.fundingRaised : null,
       fundingGoal: rawData.fundingGoal !== null && rawData.fundingGoal !== undefined ? rawData.fundingGoal : null,
       stats: {
         volunteers: rawData.volunteersCount || rawData.totalVolunteersServed || 0,
         eventsHosted: rawData.eventsHosted || rawData.totalEventsHosted || 0,
         hoursImpacted: rawData.totalVolunteerHours || 0,
-        // ✅ FIXED: Preserve null values in stats too
         fundingGoal: rawData.fundingGoal !== null && rawData.fundingGoal !== undefined ? rawData.fundingGoal : null,
         fundingRaised: rawData.fundingRaised !== null && rawData.fundingRaised !== undefined ? rawData.fundingRaised : null,
       },
       achievements: rawData.achievements || [],
       recentActivity: rawData.recentActivity || [],
       volunteers: rawData.volunteers || [],
-      // ✅ NEW: Add processed arrays for easier access
       causesArray: rawData.causesArray || stringToArray(rawData.causes || ''),
       categoriesArray: rawData.categoriesArray || stringToArray(rawData.categories || ''),
       servicesArray: rawData.servicesArray || stringToArray(rawData.services || ''),

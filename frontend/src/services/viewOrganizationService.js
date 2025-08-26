@@ -15,7 +15,7 @@ const ViewOrganizationService = {
    */
   async followOrganization(organizationId) {
     try {
-      console.log('🔄 Following organization:', organizationId);
+      console.log('📄 Following organization:', organizationId);
       
       const response = await api.post(`/volunteer-profiles/me/follow/${organizationId}`);
       
@@ -39,7 +39,7 @@ const ViewOrganizationService = {
    */
   async unfollowOrganization(organizationId) {
     try {
-      console.log('🔄 Unfollowing organization:', organizationId);
+      console.log('📄 Unfollowing organization:', organizationId);
       
       const response = await api.delete(`/volunteer-profiles/me/follow/${organizationId}`);
       
@@ -63,7 +63,7 @@ const ViewOrganizationService = {
    */
   async toggleFollowOrganization(organizationId) {
     try {
-      console.log('🔄 Toggling follow status for organization:', organizationId);
+      console.log('📄 Toggling follow status for organization:', organizationId);
       
       const response = await api.put(`/volunteer-profiles/me/follow/${organizationId}`);
       
@@ -88,7 +88,7 @@ const ViewOrganizationService = {
    */
   async checkFollowStatus(organizationId) {
     try {
-      console.log('🔄 Checking follow status for organization:', organizationId);
+      console.log('📄 Checking follow status for organization:', organizationId);
       
       const response = await api.get(`/volunteer-profiles/me/follow/${organizationId}/status`);
       
@@ -123,7 +123,7 @@ const ViewOrganizationService = {
    */
   async getFollowedOrganizations() {
     try {
-      console.log('🔄 Getting followed organizations...');
+      console.log('📄 Getting followed organizations...');
       
       const response = await api.get('/volunteer-profiles/me/followed-organizations');
       
@@ -151,7 +151,7 @@ const ViewOrganizationService = {
    */
   async getOrganizationFollowers(organizationId, limit = 10) {
     try {
-      console.log('🔄 Getting followers for organization:', organizationId);
+      console.log('📄 Getting followers for organization:', organizationId);
       
       const response = await api.get(`/volunteer-profiles/organization/${organizationId}/followers?limit=${limit}`);
       
@@ -174,7 +174,7 @@ const ViewOrganizationService = {
    */
   async getOrganizationFollowerCount(organizationId) {
     try {
-      console.log('🔄 Getting follower count for organization:', organizationId);
+      console.log('📄 Getting follower count for organization:', organizationId);
       
       const response = await api.get(`/volunteer-profiles/organization/${organizationId}/follower-count`);
       
@@ -203,7 +203,7 @@ const ViewOrganizationService = {
    */
   async getOrganizationWithFollowStatus(organizationId) {
     try {
-      console.log('🔄 Getting organization with follow status:', organizationId);
+      console.log('📄 Getting organization with follow status:', organizationId);
       
       // Get basic organization data (assuming you have this endpoint)
       // const orgResponse = await api.get(`/organizations/${organizationId}`);
@@ -227,6 +227,66 @@ const ViewOrganizationService = {
         isFollowing: false,
         followerCount: 0,
         message: 'Failed to get organization details'
+      };
+    }
+  },
+
+  // ==========================================
+  // BULK OPERATIONS
+  // ==========================================
+
+  /**
+   * Unfollow multiple organizations at once
+   */
+  async unfollowMultipleOrganizations(organizationIds) {
+    try {
+      console.log('📄 Unfollowing multiple organizations:', organizationIds);
+      
+      const response = await api.post('/volunteer-profiles/me/unfollow-multiple', {
+        organizationIds: organizationIds
+      });
+      
+      console.log('✅ Successfully unfollowed multiple organizations:', response.data);
+      return {
+        success: true,
+        data: response.data,
+        unfollowedCount: response.data.unfollowedCount || 0,
+        failedCount: response.data.failedCount || 0,
+        message: response.data.message || `Successfully unfollowed ${response.data.unfollowedCount} organization(s)`
+      };
+    } catch (error) {
+      console.error('❌ Error unfollowing multiple organizations:', error.response?.data);
+      return {
+        success: false,
+        message: error.response?.data?.error || error.response?.data?.message || 'Failed to unfollow organizations'
+      };
+    }
+  },
+
+  // ==========================================
+  // RECOMMENDATIONS
+  // ==========================================
+
+  /**
+   * Get recommended organizations for a volunteer based on their interests
+   */
+  async getRecommendedOrganizations(limit = 10) {
+    try {
+      console.log('📄 Getting recommended organizations...');
+      
+      const response = await api.get(`/volunteer-profiles/me/recommended-organizations?limit=${limit}`);
+      
+      console.log('✅ Successfully got recommended organizations:', response.data);
+      return {
+        success: true,
+        data: response.data || []
+      };
+    } catch (error) {
+      console.error('❌ Error getting recommended organizations:', error.response?.data);
+      return {
+        success: false,
+        data: [],
+        message: error.response?.data?.error || error.response?.data?.message || 'Failed to get recommended organizations'
       };
     }
   }

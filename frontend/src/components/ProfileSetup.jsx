@@ -757,7 +757,7 @@ const ProfileSetup = () => {
                   value={formData.location}
                   onChange={handleInputChange}
                   className="profile-setup-input"
-                  placeholder="City, State"
+                  placeholder="City, Country"
                   required
                 />
               </div>
