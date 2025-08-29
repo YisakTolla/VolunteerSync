@@ -176,28 +176,6 @@ The platform supports various volunteer categories:
 - CORS configuration for cross-origin requests
 - Input validation and sanitization
 
-## 📝 API Endpoints
-
-Key API endpoints include:
-- `/api/auth/**` - Authentication endpoints
-- `/api/volunteers/**` - Volunteer management
-- `/api/organizations/**` - Organization management
-- `/api/events/**` - Event and opportunity management
-- `/api/applications/**` - Application handling
-
-## 🧪 Testing
-
-Run tests for both frontend and backend:
-
-```bash
-# Backend tests
-cd backend
-mvn test
-
-# Frontend tests (when configured)
-cd frontend
-npm test
-```
 
 ## 📦 Production Deployment
 
