@@ -1052,6 +1052,100 @@
   }
 }
 
+/* Add this to your existing Profile.css file */
+
+/* ========================================
+   ORGANIZATION AVATAR FIXES
+   ======================================== */
+
+/* Fix for organization avatars with better contrast */
+.profile-connection-avatar,
+.org-avatar-placeholder {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #1f2937 0%, #374151 100%) !important;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--white);
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-lg);
+  flex-shrink: 0;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Alternative: If you want to keep gradient but make text more readable */
+.profile-connection-avatar.gradient-bg {
+  background: linear-gradient(135deg, #16a085 0%, #2980b9 100%);
+  color: var(--white);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+  font-weight: var(--font-weight-bold);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+/* For actual organization profile images */
+.org-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-full);
+  object-fit: cover;
+  background-color: var(--gray-100);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Ensure consistent styling for all organization avatars */
+.profile-connection-card .profile-connection-avatar {
+  background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
+  color: #ffffff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+/* Hover effects for better interaction */
+.profile-connection-card:hover .profile-connection-avatar {
+  transform: scale(1.05);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  transition: all var(--duration-200) var(--ease-out);
+}
+
+/* Alternative color schemes for variety */
+.profile-connection-avatar.environmental {
+  background: linear-gradient(135deg, #047857 0%, #065f46 100%);
+}
+
+.profile-connection-avatar.education {
+  background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+}
+
+.profile-connection-avatar.healthcare {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+}
+
+.profile-connection-avatar.community {
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .profile-connection-avatar,
+  .org-avatar-placeholder {
+    width: 40px;
+    height: 40px;
+    font-size: var(--font-size-base);
+  }
+}
+
+@media (max-width: 480px) {
+  .profile-connection-avatar,
+  .org-avatar-placeholder {
+    width: 36px;
+    height: 36px;
+    font-size: var(--font-size-sm);
+  }
+}
+
 /* ========================================
    PRINT STYLES
    ======================================== */

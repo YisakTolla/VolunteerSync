@@ -16,7 +16,11 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
+
+import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Event Controller - handles event-related HTTP endpoints
@@ -39,8 +43,8 @@ public class EventController {
      * POST /api/events
      */
     @PostMapping
-    public ResponseEntity<?> createEvent(@Valid @RequestBody CreateEventRequest request, 
-                                       Authentication authentication) {
+    public ResponseEntity<?> createEvent(@Valid @RequestBody CreateEventRequest request,
+            Authentication authentication) {
         try {
             Long organizerId = getCurrentUserId(authentication);
             EventDTO event = eventService.createEvent(request, organizerId);
@@ -84,8 +88,8 @@ public class EventController {
      */
     @PutMapping("/{id}")
     public ResponseEntity<?> updateEvent(@PathVariable Long id,
-                                       @Valid @RequestBody UpdateEventRequest request,
-                                       Authentication authentication) {
+            @Valid @RequestBody UpdateEventRequest request,
+            Authentication authentication) {
         try {
             Long organizerId = getCurrentUserId(authentication);
             EventDTO event = eventService.updateEvent(id, request, organizerId);
@@ -245,19 +249,85 @@ public class EventController {
         if (authentication == null || authentication.getPrincipal() == null) {
             throw new RuntimeException("User not authenticated");
         }
-        
+
         // Extract user ID from authentication principal
         // This assumes you have a custom UserPrincipal or similar
         Object principal = authentication.getPrincipal();
         if (principal instanceof UserPrincipal) {
             return ((UserPrincipal) principal).getId();
         }
-        
+
         // Fallback - extract from name if it's the user ID
         try {
             return Long.parseLong(authentication.getName());
         } catch (NumberFormatException e) {
             throw new RuntimeException("Invalid user authentication");
+        }
+    }
+
+    /**
+     * Real-time event search endpoint (MISSING - ADD THIS)
+     * GET /api/events/search/realtime
+     */
+    @GetMapping("/search/realtime")
+    public ResponseEntity<?> realtimeEventSearch(
+            @RequestParam(required = false) String searchTerm,
+            @RequestParam(required = false) String eventType,
+            @RequestParam(required = false) String location,
+            @RequestParam(required = false) String skillLevel,
+            @RequestParam(defaultValue = "100") int limit,
+            @RequestParam(required = false) Boolean forceRefresh) {
+
+        try {
+            System.out.println("Real-time event search: " + searchTerm + " (forceRefresh: " + forceRefresh + ")");
+
+            EventSearchRequest request = new EventSearchRequest();
+            request.setSearchTerm(searchTerm);
+            request.setEventType(eventType);
+            request.setLocation(location);
+            request.setSkillLevel(skillLevel);
+
+            List<EventDTO> events = eventService.searchEvents(request);
+
+            // Limit results
+            if (events.size() > limit) {
+                events = events.subList(0, limit);
+            }
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("data", events);
+            response.put("timestamp", LocalDateTime.now());
+            response.put("count", events.size());
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            System.err.println("Real-time search error: " + e.getMessage());
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("data", List.of());
+            errorResponse.put("error", e.getMessage());
+            errorResponse.put("timestamp", LocalDateTime.now());
+            return ResponseEntity.ok(errorResponse);
+        }
+    }
+
+    /**
+     * Get volunteer's events (MISSING - ADD THIS)
+     * GET /api/events/volunteer/me
+     */
+    @GetMapping("/volunteer/me")
+    public ResponseEntity<?> getVolunteerEvents(Authentication authentication) {
+        try {
+            Long userId = getCurrentUserId(authentication);
+
+            // For now, return empty list - implement based on your application logic
+            List<EventDTO> events = List.of();
+
+            return ResponseEntity.ok(events);
+
+        } catch (Exception e) {
+            System.err.println("Error fetching volunteer events: " + e.getMessage());
+            return ResponseEntity.ok(List.of());
         }
     }
 
@@ -274,10 +344,21 @@ public class EventController {
             this.timestamp = System.currentTimeMillis();
         }
 
-        public String getError() { return error; }
-        public void setError(String error) { this.error = error; }
-        public long getTimestamp() { return timestamp; }
-        public void setTimestamp(long timestamp) { this.timestamp = timestamp; }
+        public String getError() {
+            return error;
+        }
+
+        public void setError(String error) {
+            this.error = error;
+        }
+
+        public long getTimestamp() {
+            return timestamp;
+        }
+
+        public void setTimestamp(long timestamp) {
+            this.timestamp = timestamp;
+        }
     }
 
     public static class SuccessResponse {
@@ -289,16 +370,30 @@ public class EventController {
             this.timestamp = System.currentTimeMillis();
         }
 
-        public String getMessage() { return message; }
-        public void setMessage(String message) { this.message = message; }
-        public long getTimestamp() { return timestamp; }
-        public void setTimestamp(long timestamp) { this.timestamp = timestamp; }
+        public String getMessage() {
+            return message;
+        }
+
+        public void setMessage(String message) {
+            this.message = message;
+        }
+
+        public long getTimestamp() {
+            return timestamp;
+        }
+
+        public void setTimestamp(long timestamp) {
+            this.timestamp = timestamp;
+        }
     }
 
-    // Placeholder for UserPrincipal - should be implemented based on your security setup
+    // Placeholder for UserPrincipal - should be implemented based on your security
+    // setup
     public interface UserPrincipal {
         Long getId();
+
         String getUsername();
+
         String getUserType();
     }
 }

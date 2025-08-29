@@ -6,6 +6,7 @@ import { getCurrentUser, isLoggedIn } from "../services/authService";
 import VolunteerProfile from "./VolunteerProfile";
 import OrganizationProfile from "./OrganizationProfile";
 import "./Profile.css";
+import "./VolunteerProfile.css";
 
 /**
  * Main Profile Router Component

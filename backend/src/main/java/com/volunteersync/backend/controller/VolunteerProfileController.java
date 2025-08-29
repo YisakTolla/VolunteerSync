@@ -22,6 +22,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -413,6 +415,96 @@ public class VolunteerProfileController extends BaseController {
             return ResponseEntity.ok(stats);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
+        }
+    }
+
+    // Add these methods to your existing VolunteerProfileController.java file:
+
+    /**
+     * Get volunteer profile statistics (MISSING ENDPOINT - ADD THIS)
+     * GET /api/volunteer-profiles/me/stats
+     */
+    @GetMapping("/me/stats")
+    public ResponseEntity<?> getVolunteerStats(Authentication authentication) {
+        try {
+            Long userId = getCurrentUserId(authentication);
+
+            // Create mock stats - replace with actual service call
+            Map<String, Object> stats = new HashMap<>();
+            stats.put("totalHours", 0);
+            stats.put("eventsAttended", 0);
+            stats.put("organizationsFollowed", 0);
+            stats.put("badgesEarned", 0);
+            stats.put("hoursThisMonth", 0);
+            stats.put("upcomingEvents", 0);
+            stats.put("completedApplications", 0);
+            stats.put("profileCompletion", 75);
+
+            return ResponseEntity.ok(stats);
+
+        } catch (Exception e) {
+            System.err.println("Error fetching volunteer stats: " + e.getMessage());
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", e.getMessage());
+            return ResponseEntity.ok(errorResponse);
+        }
+    }
+
+    /**
+     * Follow an organization (MISSING ENDPOINT - ADD THIS)
+     * POST /api/volunteer-profiles/me/follow/{organizationId}
+     */
+    @PostMapping("/me/follow/{organizationId}")
+    public ResponseEntity<?> followOrganization(
+            @PathVariable Long organizationId,
+            Authentication authentication) {
+
+        try {
+            Long userId = getCurrentUserId(authentication);
+
+            // Mock implementation - replace with actual service
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Successfully followed organization");
+            response.put("organizationId", organizationId);
+            response.put("following", true);
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(errorResponse);
+        }
+    }
+
+    /**
+     * Unfollow an organization (MISSING ENDPOINT - ADD THIS)
+     * DELETE /api/volunteer-profiles/me/follow/{organizationId}
+     */
+    @DeleteMapping("/me/follow/{organizationId}")
+    public ResponseEntity<?> unfollowOrganization(
+            @PathVariable Long organizationId,
+            Authentication authentication) {
+
+        try {
+            Long userId = getCurrentUserId(authentication);
+
+            // Mock implementation - replace with actual service
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Successfully unfollowed organization");
+            response.put("organizationId", organizationId);
+            response.put("following", false);
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(errorResponse);
         }
     }
 

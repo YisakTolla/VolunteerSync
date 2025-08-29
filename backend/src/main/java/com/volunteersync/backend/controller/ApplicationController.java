@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
 import java.util.List;
+import java.util.Map;
+
 
 /**
  * Application Controller - handles volunteer application endpoints
@@ -39,7 +41,7 @@ public class ApplicationController {
      */
     @PostMapping
     public ResponseEntity<?> submitApplication(@Valid @RequestBody SubmitApplicationRequest request,
-                                             Authentication authentication) {
+            Authentication authentication) {
         try {
             Long volunteerId = getCurrentUserId(authentication);
             ApplicationDTO application = applicationService.submitApplication(request, volunteerId);
@@ -84,12 +86,13 @@ public class ApplicationController {
      * GET /api/applications/my-applications/{status}
      */
     @GetMapping("/my-applications/{status}")
-    public ResponseEntity<?> getMyApplicationsByStatus(@PathVariable String status, 
-                                                     Authentication authentication) {
+    public ResponseEntity<?> getMyApplicationsByStatus(@PathVariable String status,
+            Authentication authentication) {
         try {
             Long volunteerId = getCurrentUserId(authentication);
             ApplicationStatus appStatus = ApplicationStatus.valueOf(status.toUpperCase());
-            List<ApplicationDTO> applications = applicationService.getVolunteerApplicationsByStatus(volunteerId, appStatus);
+            List<ApplicationDTO> applications = applicationService.getVolunteerApplicationsByStatus(volunteerId,
+                    appStatus);
             return ResponseEntity.ok(applications);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
@@ -166,8 +169,8 @@ public class ApplicationController {
      */
     @PutMapping("/{id}/approve")
     public ResponseEntity<?> approveApplication(@PathVariable Long id,
-                                              @RequestBody(required = false) ApprovalRequest request,
-                                              Authentication authentication) {
+            @RequestBody(required = false) ApprovalRequest request,
+            Authentication authentication) {
         try {
             Long organizerId = getCurrentUserId(authentication);
             String notes = request != null ? request.getNotes() : null;
@@ -184,8 +187,8 @@ public class ApplicationController {
      */
     @PutMapping("/{id}/reject")
     public ResponseEntity<?> rejectApplication(@PathVariable Long id,
-                                             @RequestBody(required = false) ApprovalRequest request,
-                                             Authentication authentication) {
+            @RequestBody(required = false) ApprovalRequest request,
+            Authentication authentication) {
         try {
             Long organizerId = getCurrentUserId(authentication);
             String notes = request != null ? request.getNotes() : null;
@@ -202,8 +205,8 @@ public class ApplicationController {
      */
     @PutMapping("/{id}/attended")
     public ResponseEntity<?> markAttended(@PathVariable Long id,
-                                        @Valid @RequestBody AttendanceRequest request,
-                                        Authentication authentication) {
+            @Valid @RequestBody AttendanceRequest request,
+            Authentication authentication) {
         try {
             Long organizerId = getCurrentUserId(authentication);
             ApplicationDTO application = applicationService.markAttended(id, organizerId, request.getHoursCompleted());
@@ -247,6 +250,26 @@ public class ApplicationController {
         }
     }
 
+    /**
+     * Get volunteer's applications (MISSING ENDPOINT - ADD THIS)
+     * GET /api/applications/volunteer/me
+     */
+    @GetMapping("/volunteer/me")
+    public ResponseEntity<?> getVolunteerApplications(Authentication authentication) {
+        try {
+            Long userId = getCurrentUserId(authentication);
+
+            // For now, return empty list - you can implement actual logic later
+            List<Map<String, Object>> applications = List.of();
+
+            return ResponseEntity.ok(applications);
+
+        } catch (Exception e) {
+            System.err.println("Error fetching volunteer applications: " + e.getMessage());
+            return ResponseEntity.ok(List.of());
+        }
+    }
+
     // ==========================================
     // HELPER METHODS
     // ==========================================
@@ -255,13 +278,13 @@ public class ApplicationController {
         if (authentication == null || authentication.getPrincipal() == null) {
             throw new RuntimeException("User not authenticated");
         }
-        
+
         // Extract user ID from authentication principal
         Object principal = authentication.getPrincipal();
         if (principal instanceof UserPrincipal) {
             return ((UserPrincipal) principal).getId();
         }
-        
+
         // Fallback - extract from name if it's the user ID
         try {
             return Long.parseLong(authentication.getName());
@@ -276,16 +299,26 @@ public class ApplicationController {
 
     public static class ApprovalRequest {
         private String notes;
-        
-        public String getNotes() { return notes; }
-        public void setNotes(String notes) { this.notes = notes; }
+
+        public String getNotes() {
+            return notes;
+        }
+
+        public void setNotes(String notes) {
+            this.notes = notes;
+        }
     }
 
     public static class AttendanceRequest {
         private Integer hoursCompleted;
-        
-        public Integer getHoursCompleted() { return hoursCompleted; }
-        public void setHoursCompleted(Integer hoursCompleted) { this.hoursCompleted = hoursCompleted; }
+
+        public Integer getHoursCompleted() {
+            return hoursCompleted;
+        }
+
+        public void setHoursCompleted(Integer hoursCompleted) {
+            this.hoursCompleted = hoursCompleted;
+        }
     }
 
     public static class ErrorResponse {
@@ -297,10 +330,21 @@ public class ApplicationController {
             this.timestamp = System.currentTimeMillis();
         }
 
-        public String getError() { return error; }
-        public void setError(String error) { this.error = error; }
-        public long getTimestamp() { return timestamp; }
-        public void setTimestamp(long timestamp) { this.timestamp = timestamp; }
+        public String getError() {
+            return error;
+        }
+
+        public void setError(String error) {
+            this.error = error;
+        }
+
+        public long getTimestamp() {
+            return timestamp;
+        }
+
+        public void setTimestamp(long timestamp) {
+            this.timestamp = timestamp;
+        }
     }
 
     public static class SuccessResponse {
@@ -312,16 +356,30 @@ public class ApplicationController {
             this.timestamp = System.currentTimeMillis();
         }
 
-        public String getMessage() { return message; }
-        public void setMessage(String message) { this.message = message; }
-        public long getTimestamp() { return timestamp; }
-        public void setTimestamp(long timestamp) { this.timestamp = timestamp; }
+        public String getMessage() {
+            return message;
+        }
+
+        public void setMessage(String message) {
+            this.message = message;
+        }
+
+        public long getTimestamp() {
+            return timestamp;
+        }
+
+        public void setTimestamp(long timestamp) {
+            this.timestamp = timestamp;
+        }
     }
 
-    // Placeholder for UserPrincipal - should be implemented based on your security setup
+    // Placeholder for UserPrincipal - should be implemented based on your security
+    // setup
     public interface UserPrincipal {
         Long getId();
+
         String getUsername();
+
         String getUserType();
     }
 }

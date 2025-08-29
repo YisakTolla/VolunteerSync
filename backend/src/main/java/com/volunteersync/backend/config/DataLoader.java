@@ -44,7 +44,7 @@ public class DataLoader implements CommandLineRunner {
             "Academic Mentorship Network", "Educational Technology Hub", "Community Learning Center",
 
             // Environment Organizations (30)
-            "Green Earth Initiative", "Environmental Warriors", "Clean Water Project", 
+            "Green Earth Initiative", "Environmental Warriors", "Clean Water Project",
             "Coastal Conservation Society", "Urban Garden Project", "Climate Action Network",
             "Environmental Education Center", "River Restoration Foundation", "Wildlife Conservation Alliance",
             "Sustainable Future Coalition", "Ocean Cleanup Network", "Forest Protection Society",
@@ -98,7 +98,7 @@ public class DataLoader implements CommandLineRunner {
     private final String[] eventTitles = {
             // Community Cleanup Events
             "Beach Cleanup Drive", "Park Restoration Day", "River Cleanup Initiative", "Street Beautification Project",
-            "Neighborhood Cleanup Campaign", "Community Garden Cleanup", "Highway Cleanup Drive", 
+            "Neighborhood Cleanup Campaign", "Community Garden Cleanup", "Highway Cleanup Drive",
             "School Grounds Cleanup", "Historic Site Cleanup", "Downtown Cleanup Day",
 
             // Food Service Events
@@ -127,7 +127,8 @@ public class DataLoader implements CommandLineRunner {
             "Intergenerational Programs", "Senior Holiday Celebration",
 
             // Youth Mentoring Events
-            "Youth Leadership Program", "Teen Mentorship Sessions", "Career Exploration Workshop", "Life Skills Training",
+            "Youth Leadership Program", "Teen Mentorship Sessions", "Career Exploration Workshop",
+            "Life Skills Training",
             "Youth Sports Coaching", "Creative Arts Mentoring", "STEM Mentorship", "Youth Entrepreneurship",
             "College Guidance Sessions", "Youth Community Service",
 
@@ -137,13 +138,15 @@ public class DataLoader implements CommandLineRunner {
             "Chronic Disease Support", "Health Insurance Education",
 
             // Disaster Relief Events
-            "Emergency Response Training", "Disaster Preparedness Workshop", "Relief Supply Packing", "Evacuation Support",
+            "Emergency Response Training", "Disaster Preparedness Workshop", "Relief Supply Packing",
+            "Evacuation Support",
             "Emergency Shelter Setup", "Disaster Recovery Cleanup", "Emergency Communications", "Relief Fund Drive",
             "Community Emergency Planning", "Post-Disaster Counseling",
 
             // Arts & Culture Events
             "Community Art Project", "Cultural Festival Planning", "Art Therapy Sessions", "Music Education Program",
-            "Theater Production Support", "Cultural Heritage Preservation", "Community Mural Painting", "Art Gallery Support",
+            "Theater Production Support", "Cultural Heritage Preservation", "Community Mural Painting",
+            "Art Gallery Support",
             "Creative Writing Workshop", "Dance Instruction Volunteer",
 
             // Sports & Recreation Events
@@ -152,8 +155,10 @@ public class DataLoader implements CommandLineRunner {
             "Outdoor Adventure Club", "Community Sports Tournament",
 
             // Fundraising Events
-            "Charity Auction Setup", "Fundraising Gala Planning", "Crowdfunding Campaign", "Donation Drive Coordination",
-            "Benefit Concert Organization", "Silent Auction Support", "Corporate Sponsorship Outreach", "Grant Writing Workshop",
+            "Charity Auction Setup", "Fundraising Gala Planning", "Crowdfunding Campaign",
+            "Donation Drive Coordination",
+            "Benefit Concert Organization", "Silent Auction Support", "Corporate Sponsorship Outreach",
+            "Grant Writing Workshop",
             "Fundraising Strategy Session", "Donor Appreciation Event",
 
             // Administrative Support Events
@@ -162,7 +167,8 @@ public class DataLoader implements CommandLineRunner {
             "Phone Call Support", "Record Keeping Assistance",
 
             // Construction & Building Events
-            "Habitat for Humanity Build", "Playground Construction", "Community Center Renovation", "Wheelchair Ramp Building",
+            "Habitat for Humanity Build", "Playground Construction", "Community Center Renovation",
+            "Wheelchair Ramp Building",
             "Garden Shed Assembly", "Fence Installation", "Roof Repair Project", "Accessibility Improvements",
             "Community Infrastructure", "Building Maintenance",
 
@@ -172,9 +178,10 @@ public class DataLoader implements CommandLineRunner {
             "Online Safety Education", "Tech Equipment Drive",
 
             // Event Planning Events
-            "Community Festival Planning", "Wedding Planning for Low-Income", "Birthday Party Organization", 
-            "Holiday Celebration Planning", "Awards Ceremony Setup", "Conference Organization", 
-            "Workshop Coordination", "Volunteer Recognition Event", "Graduation Ceremony Support", "Networking Event Setup",
+            "Community Festival Planning", "Wedding Planning for Low-Income", "Birthday Party Organization",
+            "Holiday Celebration Planning", "Awards Ceremony Setup", "Conference Organization",
+            "Workshop Coordination", "Volunteer Recognition Event", "Graduation Ceremony Support",
+            "Networking Event Setup",
 
             // Advocacy & Awareness Events
             "Community Forum Facilitation", "Awareness Campaign", "Policy Research", "Community Surveying",
@@ -187,7 +194,7 @@ public class DataLoader implements CommandLineRunner {
             "Field Research Support", "Database Development",
 
             // Transportation Events
-            "Senior Transportation Service", "Medical Appointment Rides", "Grocery Shopping Assistance", 
+            "Senior Transportation Service", "Medical Appointment Rides", "Grocery Shopping Assistance",
             "Community Event Shuttle", "Wheelchair Accessible Transport", "Emergency Transportation",
             "Student Transportation", "Job Interview Rides", "Volunteer Driver Program", "Public Transit Assistance",
 
@@ -197,8 +204,10 @@ public class DataLoader implements CommandLineRunner {
             "Greenhouse Volunteer", "Landscaping Project",
 
             // Crisis Support Events
-            "Crisis Hotline Training", "Emergency Response Support", "Disaster Relief Coordination", "Mental Health First Aid",
-            "Homeless Shelter Volunteer", "Domestic Violence Support", "Suicide Prevention Training", "Crisis Intervention",
+            "Crisis Hotline Training", "Emergency Response Support", "Disaster Relief Coordination",
+            "Mental Health First Aid",
+            "Homeless Shelter Volunteer", "Domestic Violence Support", "Suicide Prevention Training",
+            "Crisis Intervention",
             "Emergency Shelter Setup", "Trauma Support Training",
 
             // Festival & Fair Events
@@ -208,7 +217,8 @@ public class DataLoader implements CommandLineRunner {
 
             // Workshop & Training Events
             "Skills Training Workshop", "Professional Development", "Leadership Training", "Communication Workshop",
-            "Financial Literacy Training", "Job Skills Development", "Personal Development Session", "Team Building Workshop",
+            "Financial Literacy Training", "Job Skills Development", "Personal Development Session",
+            "Team Building Workshop",
             "Conflict Resolution Training", "Public Speaking Workshop",
 
             // Blood Drive Events
@@ -224,10 +234,10 @@ public class DataLoader implements CommandLineRunner {
 
     // UPDATED: Complete filter coverage arrays - ALL 25 EVENT TYPES
     private final EventType[] allEventTypes = {
-            EventType.COMMUNITY_CLEANUP, EventType.FOOD_SERVICE, EventType.TUTORING_EDUCATION, 
-            EventType.ANIMAL_CARE, EventType.ENVIRONMENTAL_CONSERVATION, EventType.SENIOR_SUPPORT, 
+            EventType.COMMUNITY_CLEANUP, EventType.FOOD_SERVICE, EventType.TUTORING_EDUCATION,
+            EventType.ANIMAL_CARE, EventType.ENVIRONMENTAL_CONSERVATION, EventType.SENIOR_SUPPORT,
             EventType.YOUTH_MENTORING, EventType.HEALTHCARE_SUPPORT, EventType.DISASTER_RELIEF,
-            EventType.ARTS_CULTURE, EventType.SPORTS_RECREATION, EventType.FUNDRAISING, 
+            EventType.ARTS_CULTURE, EventType.SPORTS_RECREATION, EventType.FUNDRAISING,
             EventType.ADMINISTRATIVE_SUPPORT, EventType.CONSTRUCTION_BUILDING, EventType.TECHNOLOGY_SUPPORT,
             EventType.EVENT_PLANNING, EventType.ADVOCACY_AWARENESS, EventType.RESEARCH_DATA,
             EventType.TRANSPORTATION, EventType.GARDENING, EventType.CRISIS_SUPPORT,
@@ -242,7 +252,7 @@ public class DataLoader implements CommandLineRunner {
     // CORRECTED TO MATCH YOUR ACTUAL EventDuration ENUM
     private final EventDuration[] allDurations = {
             EventDuration.SHORT, EventDuration.MEDIUM, EventDuration.FULL_DAY,
-            EventDuration.MULTI_DAY, EventDuration.WEEKLY_COMMITMENT, 
+            EventDuration.MULTI_DAY, EventDuration.WEEKLY_COMMITMENT,
             EventDuration.MONTHLY_COMMITMENT, EventDuration.ONGOING_LONG_TERM
     };
 
@@ -305,14 +315,14 @@ public class DataLoader implements CommandLineRunner {
         // Create organization users and profiles
         List<User> organizationUsers = createOrganizationUsers();
         List<OrganizationProfile> organizations = createComprehensiveOrganizations(organizationUsers);
-        
+
         // Create comprehensive events covering all filters
         createComprehensiveEvents(organizations);
     }
 
     private List<User> createOrganizationUsers() {
         List<User> users = new ArrayList<>();
-        
+
         // Create 200 organization users
         for (int i = 0; i < 200; i++) {
             User user = new User();
@@ -323,73 +333,77 @@ public class DataLoader implements CommandLineRunner {
             user.setEmailVerified(random.nextBoolean());
             user.setCreatedAt(generateDistributedCreatedAt());
             user.setUpdatedAt(generateUpdatedAt(user.getCreatedAt()));
-            
+
             users.add(userRepository.save(user));
         }
-        
+
         return users;
     }
 
     private List<OrganizationProfile> createComprehensiveOrganizations(List<User> users) {
         List<OrganizationProfile> organizations = new ArrayList<>();
-        
+
         for (int i = 0; i < users.size(); i++) {
             OrganizationProfile org = new OrganizationProfile();
             org.setUser(users.get(i));
-            
+
             // Ensure even distribution across categories
             String primaryCategory = allCategories[i % allCategories.length];
             org.setPrimaryCategory(primaryCategory);
             org.setCategories(generateMultipleCategories(primaryCategory));
-            
+
             // Organization details
-            org.setOrganizationName(orgNames[i % orgNames.length] + " " + (i / orgNames.length > 0 ? (i / orgNames.length + 1) : ""));
-            org.setDescription("A dedicated organization focused on " + primaryCategory.toLowerCase() + 
-                             " and community impact. We strive to make meaningful change through volunteer engagement.");
-            org.setMissionStatement("To create positive change in our community through " + primaryCategory.toLowerCase() + 
-                                  " initiatives and volunteer collaboration.");
-            
+            org.setOrganizationName(
+                    orgNames[i % orgNames.length] + " " + (i / orgNames.length > 0 ? (i / orgNames.length + 1) : ""));
+            org.setDescription("A dedicated organization focused on " + primaryCategory.toLowerCase() +
+                    " and community impact. We strive to make meaningful change through volunteer engagement.");
+            org.setMissionStatement(
+                    "To create positive change in our community through " + primaryCategory.toLowerCase() +
+                            " initiatives and volunteer collaboration.");
+
             // Location - ensure coverage of all countries and cities
             setComprehensiveLocation(org, i);
-            
+
             // Organization characteristics
             org.setOrganizationType(getRandomOrgType());
             org.setOrganizationSize(organizationSizes[i % organizationSizes.length]);
             org.setEmployeeCount(generateEmployeeCountForSize(org.getOrganizationSize()));
             org.setFoundedYear(1970 + random.nextInt(55));
             org.setIsVerified(random.nextDouble() < 0.7);
-            
+
             // Contact info
             org.setWebsite("https://" + org.getOrganizationName().toLowerCase().replaceAll("[^a-z0-9]", "") + ".org");
             org.setPhoneNumber(generatePhoneNumber());
             org.setAddress(generateAddress());
-            
+
             // Financial info
             org.setFundingGoal(25000 + random.nextInt(2000000));
             org.setFundingRaised(random.nextInt(org.getFundingGoal()));
-            
+
             // Stats
             org.setTotalEventsHosted(random.nextInt(200));
             org.setTotalVolunteersServed(random.nextInt(5000));
-            
+
             // Additional fields
             org.setLanguagesSupported(generateLanguages());
             org.setTaxExemptStatus(getTaxExemptStatus());
             org.setVerificationLevel(getVerificationLevel());
             org.setServices(generateServices());
             org.setCauses(generateCauses());
-            
+
             // Images
-            org.setProfileImageUrl("https://images.unsplash.com/photo-" + (1500000000 + random.nextInt(200000000)) + "?w=400&h=400");
-            org.setCoverImageUrl("https://images.unsplash.com/photo-" + (1500000000 + random.nextInt(200000000)) + "?w=1200&h=400");
-            
+            org.setProfileImageUrl(
+                    "https://images.unsplash.com/photo-" + (1500000000 + random.nextInt(200000000)) + "?w=400&h=400");
+            org.setCoverImageUrl(
+                    "https://images.unsplash.com/photo-" + (1500000000 + random.nextInt(200000000)) + "?w=1200&h=400");
+
             // Timestamps to cover all date filter options
             org.setCreatedAt(generateDistributedCreatedAt());
             org.setUpdatedAt(generateUpdatedAt(org.getCreatedAt()));
-            
+
             organizations.add(organizationRepository.save(org));
         }
-        
+
         return organizations;
     }
 
@@ -397,19 +411,19 @@ public class DataLoader implements CommandLineRunner {
         // Create 750 events to ensure comprehensive coverage (30 events per event type)
         for (int i = 0; i < 750; i++) {
             Event event = new Event();
-            
+
             // Ensure coverage of all 25 event types
             EventType eventType = allEventTypes[i % allEventTypes.length];
             event.setEventType(eventType);
-            
+
             // Match title to event type
             event.setTitle(getEventTitleForType(eventType, i));
             event.setDescription(generateEventDescription(event.getTitle()));
-            
+
             // Assign to organization
             OrganizationProfile org = organizations.get(i % organizations.size());
             event.setOrganization(org);
-            
+
             // Location - ensure coverage including Virtual/Remote
             if (i % 10 == 0) {
                 // 10% virtual events
@@ -428,52 +442,54 @@ public class DataLoader implements CommandLineRunner {
                 event.setAddress(generateAddress());
                 event.setZipCode(generateZipCode());
             }
-            
+
             // Date and time - ensure coverage of all date filters
             LocalDateTime startDate = generateComprehensiveDateTime(i);
             event.setStartDate(startDate);
-            
+
             // Duration - ensure coverage of all duration options
             SkillLevel skillLevel = SkillLevel.valueOf(allSkillLevels[i % allSkillLevels.length]);
             event.setSkillLevelRequired(skillLevel);
-            
+
             // Duration category - ensure coverage
             EventDuration duration = allDurations[i % allDurations.length];
             event.setDurationCategory(duration);
             event.setEstimatedHours(generateHoursForDuration(duration));
-            
+
             // End date based on duration
             event.setEndDate(calculateEndDate(startDate, duration));
-            
+
             // Time-based flags for time filter coverage
             setTimeBasedFlags(event, startDate, i);
-            
+
             // Volunteer details
             int maxVolunteers = 5 + random.nextInt(195); // 5-200
             event.setMaxVolunteers(maxVolunteers);
             event.setCurrentVolunteers(random.nextInt(maxVolunteers + 1));
-            
+
             // Event status based on date
             event.setStatus(calculateEventStatus(startDate));
-            
+
             // Other flags
             event.setIsRecurring(random.nextDouble() < 0.25);
             event.setHasFlexibleTiming(random.nextDouble() < 0.4);
-            
+
             // Contact info
-            event.setContactEmail("events@" + org.getOrganizationName().toLowerCase().replaceAll("[^a-z0-9]", "") + ".org");
+            event.setContactEmail(
+                    "events@" + org.getOrganizationName().toLowerCase().replaceAll("[^a-z0-9]", "") + ".org");
             event.setContactPhone(generatePhoneNumber());
-            
+
             // Requirements
             event.setRequirements(generateRequirements());
-            
+
             // Image
-            event.setImageUrl("https://images.unsplash.com/photo-" + (1500000000 + random.nextInt(200000000)) + "?w=800&h=400");
-            
+            event.setImageUrl(
+                    "https://images.unsplash.com/photo-" + (1500000000 + random.nextInt(200000000)) + "?w=800&h=400");
+
             // Timestamps
             event.setCreatedAt(LocalDateTime.now().minusDays(random.nextInt(90)));
             event.setUpdatedAt(LocalDateTime.now().minusDays(random.nextInt(14)));
-            
+
             eventRepository.save(event);
         }
     }
@@ -484,10 +500,10 @@ public class DataLoader implements CommandLineRunner {
         // Ensure even distribution across all countries
         String country = allCountries[index % allCountries.length];
         org.setCountry(country);
-        
+
         // Set city based on country
         if (country.equals("United States")) {
-            String[] usCities = {"New York, NY", "Los Angeles, CA", "Chicago, IL"};
+            String[] usCities = { "New York, NY", "Los Angeles, CA", "Chicago, IL" };
             String city = usCities[index % usCities.length];
             String[] parts = city.split(", ");
             org.setCity(parts[0]);
@@ -499,13 +515,13 @@ public class DataLoader implements CommandLineRunner {
             org.setCity(parts[0]);
             org.setState(parts.length > 1 ? parts[1] : getStateForCountry(country));
         }
-        
+
         org.setZipCode(generateZipCode());
     }
 
     private LocalDateTime generateComprehensiveDateTime(int index) {
         LocalDateTime now = LocalDateTime.now();
-        
+
         // Ensure coverage of all date filter options
         int dateFilter = index % 10;
         switch (dateFilter) {
@@ -519,7 +535,8 @@ public class DataLoader implements CommandLineRunner {
                 return now.plusDays(7 + random.nextInt(7)).plusHours(random.nextInt(12));
             case 4: // This Weekend
                 int daysUntilWeekend = 6 - now.getDayOfWeek().getValue(); // Saturday
-                if (daysUntilWeekend <= 0) daysUntilWeekend += 7;
+                if (daysUntilWeekend <= 0)
+                    daysUntilWeekend += 7;
                 return now.plusDays(daysUntilWeekend).plusHours(random.nextInt(12));
             case 5: // Next Weekend
                 int daysUntilNextWeekend = 13 - now.getDayOfWeek().getValue(); // Next Saturday
@@ -539,7 +556,7 @@ public class DataLoader implements CommandLineRunner {
 
     private void setTimeBasedFlags(Event event, LocalDateTime startDate, int index) {
         int hour = startDate.getHour();
-        
+
         // Time of day coverage
         if (hour >= 6 && hour < 12) {
             // Morning event
@@ -548,7 +565,7 @@ public class DataLoader implements CommandLineRunner {
         } else {
             // Evening event
         }
-        
+
         // Weekday/Weekend flags
         int dayOfWeek = startDate.getDayOfWeek().getValue(); // 1=Monday, 7=Sunday
         if (index % 5 == 0) {
@@ -566,7 +583,7 @@ public class DataLoader implements CommandLineRunner {
     private LocalDateTime generateDistributedCreatedAt() {
         LocalDateTime now = LocalDateTime.now();
         double rand = random.nextDouble();
-        
+
         if (rand < 0.05) {
             // Last 24 hours
             return now.minusHours(random.nextInt(24));
@@ -590,204 +607,208 @@ public class DataLoader implements CommandLineRunner {
 
     private LocalDateTime generateUpdatedAt(LocalDateTime createdAt) {
         long daysBetween = java.time.temporal.ChronoUnit.DAYS.between(createdAt, LocalDateTime.now());
-        if (daysBetween <= 0) return createdAt;
+        if (daysBetween <= 0)
+            return createdAt;
         return createdAt.plusDays(random.nextInt((int) daysBetween + 1));
     }
 
-    // UPDATED: Complete getEventTitleForType method covering ALL 25 event types
     private String getEventTitleForType(EventType eventType, int index) {
-        switch (eventType) {
-            case COMMUNITY_CLEANUP:
-                String[] cleanupTitles = {"Beach Cleanup Drive", "Park Restoration Day", "River Cleanup Initiative", 
-                                        "Street Beautification Project", "Neighborhood Cleanup Campaign", "Community Garden Cleanup",
-                                        "Highway Cleanup Drive", "School Grounds Cleanup", "Historic Site Cleanup", "Downtown Cleanup Day"};
-                return cleanupTitles[index % cleanupTitles.length];
-                
-            case FOOD_SERVICE:
-                String[] foodTitles = {"Community Kitchen Service", "Food Bank Sorting", "Meal Preparation for Homeless",
-                                     "Food Drive Collection", "Senior Meal Delivery", "School Lunch Program", 
-                                     "Holiday Meal Service", "Soup Kitchen Volunteer", "Emergency Food Distribution", "Community Pantry Stocking"};
-                return foodTitles[index % foodTitles.length];
-                
-            case TUTORING_EDUCATION:
-                String[] tutorTitles = {"After School Tutoring", "Reading to Children", "Math Help Session",
-                                      "ESL Classes", "Computer Literacy Training", "Study Skills Workshop", 
-                                      "Homework Help Program", "College Prep Session", "Adult Education Classes", "Special Needs Tutoring"};
-                return tutorTitles[index % tutorTitles.length];
-                
-            case ANIMAL_CARE:
-                String[] animalTitles = {"Animal Shelter Volunteering", "Pet Adoption Event", "Dog Walking Program",
-                                       "Cat Socialization", "Wildlife Rehabilitation", "Pet Food Drive", 
-                                       "Animal Rescue Transport", "Pet Therapy Sessions", "Veterinary Clinic Support", "Animal Education Program"};
-                return animalTitles[index % animalTitles.length];
-                
-            case ENVIRONMENTAL_CONSERVATION:
-                String[] envTitles = {"Tree Planting Drive", "Nature Trail Maintenance", "Wildlife Habitat Restoration",
-                                    "Recycling Education", "Water Quality Testing", "Solar Panel Installation", 
-                                    "Composting Workshop", "Green Energy Fair", "Conservation Photography", "Environmental Film Screening"};
-                return envTitles[index % envTitles.length];
-                
-            case SENIOR_SUPPORT:
-                String[] seniorTitles = {"Senior Center Activities", "Elder Care Visits", "Technology Training for Seniors",
-                                       "Senior Meal Delivery", "Companion Services", "Senior Transportation", 
-                                       "Health Screening for Elderly", "Senior Exercise Classes", "Intergenerational Programs", "Senior Holiday Celebration"};
-                return seniorTitles[index % seniorTitles.length];
-                
-            case YOUTH_MENTORING:
-                String[] youthTitles = {"Youth Leadership Program", "Teen Mentorship Sessions", "Career Exploration Workshop",
-                                      "Life Skills Training", "Youth Sports Coaching", "Creative Arts Mentoring", 
-                                      "STEM Mentorship", "Youth Entrepreneurship", "College Guidance Sessions", "Youth Community Service"};
-                return youthTitles[index % youthTitles.length];
-                
-            case HEALTHCARE_SUPPORT:
-                String[] healthTitles = {"Health Screening Clinic", "Blood Drive Campaign", "First Aid Training",
-                                       "Health Education Seminar", "Vaccination Clinic Support", "Medical Equipment Drive", 
-                                       "Health Fair Volunteering", "Wellness Workshop", "Chronic Disease Support", "Health Insurance Education"};
-                return healthTitles[index % healthTitles.length];
-                
-            case DISASTER_RELIEF:
-                String[] disasterTitles = {"Emergency Response Training", "Disaster Preparedness Workshop", "Relief Supply Packing",
-                                         "Evacuation Support", "Emergency Shelter Setup", "Disaster Recovery Cleanup", 
-                                         "Emergency Communications", "Relief Fund Drive", "Community Emergency Planning", "Post-Disaster Counseling"};
-                return disasterTitles[index % disasterTitles.length];
-                
-            case ARTS_CULTURE:
-                String[] artsTitles = {"Community Art Project", "Cultural Festival Planning", "Art Therapy Sessions",
-                                     "Music Education Program", "Theater Production Support", "Cultural Heritage Preservation", 
-                                     "Community Mural Painting", "Art Gallery Support", "Creative Writing Workshop", "Dance Instruction Volunteer"};
-                return artsTitles[index % artsTitles.length];
-                
-            case SPORTS_RECREATION:
-                String[] sportsTitles = {"Youth Soccer Coaching", "Community Basketball League", "Senior Fitness Classes",
-                                       "Swimming Lessons", "Marathon Event Support", "Sports Equipment Drive", 
-                                       "Disability Sports Program", "Summer Camp Activities", "Outdoor Adventure Club", "Community Sports Tournament"};
-                return sportsTitles[index % sportsTitles.length];
-                
-            case FUNDRAISING:
-                String[] fundraisingTitles = {"Charity Auction Setup", "Fundraising Gala Planning", "Crowdfunding Campaign",
-                                            "Donation Drive Coordination", "Benefit Concert Organization", "Silent Auction Support", 
-                                            "Corporate Sponsorship Outreach", "Grant Writing Workshop", "Fundraising Strategy Session", "Donor Appreciation Event"};
-                return fundraisingTitles[index % fundraisingTitles.length];
-                
-            case ADMINISTRATIVE_SUPPORT:
-                String[] adminTitles = {"Data Entry Volunteer", "Office Administration Help", "Reception Desk Coverage",
-                                      "Document Filing", "Mail Processing Support", "Database Management", 
-                                      "Volunteer Coordination", "Event Registration", "Phone Call Support", "Record Keeping Assistance"};
-                return adminTitles[index % adminTitles.length];
-                
-            case CONSTRUCTION_BUILDING:
-                String[] constructionTitles = {"Habitat for Humanity Build", "Playground Construction", "Community Center Renovation",
-                                             "Wheelchair Ramp Building", "Garden Shed Assembly", "Fence Installation", 
-                                             "Roof Repair Project", "Accessibility Improvements", "Community Infrastructure", "Building Maintenance"};
-                return constructionTitles[index % constructionTitles.length];
-                
-            case TECHNOLOGY_SUPPORT:
-                String[] techTitles = {"Computer Repair Workshop", "Digital Literacy Training", "Website Development",
-                                     "Tech Support for Seniors", "Equipment Setup", "Software Training", 
-                                     "IT Support Volunteer", "Digital Divide Bridge", "Online Safety Education", "Tech Equipment Drive"};
-                return techTitles[index % techTitles.length];
-                
-            case EVENT_PLANNING:
-                String[] eventTitles = {"Community Festival Planning", "Wedding Planning for Low-Income", "Birthday Party Organization",
-                                      "Holiday Celebration Planning", "Awards Ceremony Setup", "Conference Organization", 
-                                      "Workshop Coordination", "Volunteer Recognition Event", "Graduation Ceremony Support", "Networking Event Setup"};
-                return eventTitles[index % eventTitles.length];
-                
-            case ADVOCACY_AWARENESS:
-                String[] advocacyTitles = {"Community Forum Facilitation", "Awareness Campaign", "Policy Research",
-                                         "Community Surveying", "Public Speaking Training", "Grassroots Organizing", 
-                                         "Petition Drive", "Educational Workshop", "Community Meeting Support", "Advocacy Training"};
-                return advocacyTitles[index % advocacyTitles.length];
-                
-            case RESEARCH_DATA:
-                String[] researchTitles = {"Survey Data Collection", "Research Study Support", "Data Analysis Volunteer",
-                                         "Community Needs Assessment", "Academic Research Assistance", "Grant Research", 
-                                         "Statistical Analysis", "Report Writing", "Field Research Support", "Database Development"};
-                return researchTitles[index % researchTitles.length];
-                
-            case TRANSPORTATION:
-                String[] transportTitles = {"Senior Transportation Service", "Medical Appointment Rides", "Grocery Shopping Assistance",
-                                          "Community Event Shuttle", "Wheelchair Accessible Transport", "Emergency Transportation", 
-                                          "Student Transportation", "Job Interview Rides", "Volunteer Driver Program", "Public Transit Assistance"};
-                return transportTitles[index % transportTitles.length];
-                
-            case GARDENING:
-                String[] gardenTitles = {"Community Garden Maintenance", "School Garden Project", "Urban Farming Initiative",
-                                       "Composting Program", "Herb Garden Workshop", "Vegetable Harvest Event", 
-                                       "Garden Design Project", "Plant Distribution", "Greenhouse Volunteer", "Landscaping Project"};
-                return gardenTitles[index % gardenTitles.length];
-                
-            case CRISIS_SUPPORT:
-                String[] crisisTitles = {"Crisis Hotline Training", "Emergency Response Support", "Disaster Relief Coordination",
-                                       "Mental Health First Aid", "Homeless Shelter Volunteer", "Domestic Violence Support", 
-                                       "Suicide Prevention Training", "Crisis Intervention", "Emergency Shelter Setup", "Trauma Support Training"};
-                return crisisTitles[index % crisisTitles.length];
-                
-            case FESTIVAL_FAIR:
-                String[] festivalTitles = {"County Fair Volunteer", "Music Festival Support", "Cultural Festival Booth",
-                                         "Arts & Crafts Fair", "Food Festival Helper", "Holiday Market Setup", 
-                                         "Farmers Market Support", "Community Carnival", "Street Festival Coordination", "Craft Fair Organization"};
-                return festivalTitles[index % festivalTitles.length];
-                
-            case WORKSHOP_TRAINING:
-                String[] workshopTitles = {"Skills Training Workshop", "Professional Development", "Leadership Training",
-                                         "Communication Workshop", "Financial Literacy Training", "Job Skills Development", 
-                                         "Personal Development Session", "Team Building Workshop", "Conflict Resolution Training", "Public Speaking Workshop"};
-                return workshopTitles[index % workshopTitles.length];
-                
-            case BLOOD_DRIVE:
-                String[] bloodTitles = {"Red Cross Blood Drive", "Hospital Blood Drive", "Community Blood Donation",
-                                      "Emergency Blood Drive", "Blood Donor Registration", "Blood Drive Coordination", 
-                                      "Mobile Blood Unit Support", "Donor Recruitment", "Blood Drive Setup", "Post-Donation Care"};
-                return bloodTitles[index % bloodTitles.length];
-                
-            case OTHER:
-                String[] otherTitles = {"Special Project Support", "Community Initiative", "Volunteer Orientation",
-                                      "Skills Assessment", "Community Outreach", "Public Service Project", 
-                                      "Social Impact Initiative", "Civic Engagement", "Community Development", "Volunteer Recognition"};
-                return otherTitles[index % otherTitles.length];
-                
-            default:
-                return "Community Volunteer Event";
+        // Use a HashMap instead of switch to avoid potential compilation issues
+        Map<EventType, String[]> titleMap = createTitleMap();
+
+        String[] titles = titleMap.get(eventType);
+        if (titles != null && titles.length > 0) {
+            return titles[index % titles.length];
         }
+
+        return "Community Volunteer Event";
+    }
+
+    private Map<EventType, String[]> createTitleMap() {
+        Map<EventType, String[]> titleMap = new HashMap<>();
+
+        titleMap.put(EventType.COMMUNITY_CLEANUP, new String[] {
+                "Beach Cleanup Drive", "Park Restoration Day", "River Cleanup Initiative",
+                "Street Beautification Project", "Neighborhood Cleanup Campaign"
+        });
+
+        titleMap.put(EventType.FOOD_SERVICE, new String[] {
+                "Community Kitchen Service", "Food Bank Sorting", "Meal Preparation for Homeless",
+                "Food Drive Collection", "Senior Meal Delivery"
+        });
+
+        titleMap.put(EventType.TUTORING_EDUCATION, new String[] {
+                "After School Tutoring", "Reading to Children", "Math Help Session",
+                "ESL Classes", "Computer Literacy Training"
+        });
+
+        titleMap.put(EventType.ANIMAL_CARE, new String[] {
+                "Animal Shelter Volunteering", "Pet Adoption Event", "Dog Walking Program",
+                "Cat Socialization", "Wildlife Rehabilitation"
+        });
+
+        titleMap.put(EventType.ENVIRONMENTAL_CONSERVATION, new String[] {
+                "Tree Planting Drive", "Nature Trail Maintenance", "Wildlife Habitat Restoration",
+                "Recycling Education", "Water Quality Testing"
+        });
+
+        titleMap.put(EventType.SENIOR_SUPPORT, new String[] {
+                "Senior Center Activities", "Elder Care Visits", "Technology Training for Seniors",
+                "Senior Meal Delivery", "Companion Services"
+        });
+
+        titleMap.put(EventType.YOUTH_MENTORING, new String[] {
+                "Youth Leadership Program", "Teen Mentorship Sessions", "Career Exploration Workshop",
+                "Life Skills Training", "Youth Sports Coaching"
+        });
+
+        titleMap.put(EventType.HEALTHCARE_SUPPORT, new String[] {
+                "Health Screening Clinic", "Blood Drive Campaign", "First Aid Training",
+                "Health Education Seminar", "Vaccination Clinic Support"
+        });
+
+        titleMap.put(EventType.DISASTER_RELIEF, new String[] {
+                "Emergency Response Training", "Disaster Preparedness Workshop", "Relief Supply Packing",
+                "Evacuation Support", "Emergency Shelter Setup"
+        });
+
+        titleMap.put(EventType.ARTS_CULTURE, new String[] {
+                "Community Art Project", "Cultural Festival Planning", "Art Therapy Sessions",
+                "Music Education Program", "Theater Production Support"
+        });
+
+        titleMap.put(EventType.SPORTS_RECREATION, new String[] {
+                "Youth Soccer Coaching", "Community Basketball League", "Senior Fitness Classes",
+                "Swimming Lessons", "Marathon Event Support"
+        });
+
+        titleMap.put(EventType.FUNDRAISING, new String[] {
+                "Charity Auction Setup", "Fundraising Gala Planning", "Crowdfunding Campaign",
+                "Donation Drive Coordination", "Benefit Concert Organization"
+        });
+
+        titleMap.put(EventType.ADMINISTRATIVE_SUPPORT, new String[] {
+                "Data Entry Volunteer", "Office Administration Help", "Reception Desk Coverage",
+                "Document Filing", "Mail Processing Support"
+        });
+
+        titleMap.put(EventType.CONSTRUCTION_BUILDING, new String[] {
+                "Habitat for Humanity Build", "Playground Construction", "Community Center Renovation",
+                "Wheelchair Ramp Building", "Garden Shed Assembly"
+        });
+
+        titleMap.put(EventType.TECHNOLOGY_SUPPORT, new String[] {
+                "Computer Repair Workshop", "Digital Literacy Training", "Website Development",
+                "Tech Support for Seniors", "Equipment Setup"
+        });
+
+        titleMap.put(EventType.EVENT_PLANNING, new String[] {
+                "Community Festival Planning", "Wedding Planning for Low-Income", "Birthday Party Organization",
+                "Holiday Celebration Planning", "Awards Ceremony Setup"
+        });
+
+        titleMap.put(EventType.ADVOCACY_AWARENESS, new String[] {
+                "Community Forum Facilitation", "Awareness Campaign", "Policy Research",
+                "Community Surveying", "Public Speaking Training"
+        });
+
+        titleMap.put(EventType.RESEARCH_DATA, new String[] {
+                "Survey Data Collection", "Research Study Support", "Data Analysis Volunteer",
+                "Community Needs Assessment", "Academic Research Assistance"
+        });
+
+        titleMap.put(EventType.TRANSPORTATION, new String[] {
+                "Senior Transportation Service", "Medical Appointment Rides", "Grocery Shopping Assistance",
+                "Community Event Shuttle", "Wheelchair Accessible Transport"
+        });
+
+        titleMap.put(EventType.GARDENING, new String[] {
+                "Community Garden Maintenance", "School Garden Project", "Urban Farming Initiative",
+                "Composting Program", "Herb Garden Workshop"
+        });
+
+        titleMap.put(EventType.CRISIS_SUPPORT, new String[] {
+                "Crisis Hotline Training", "Emergency Response Support", "Disaster Relief Coordination",
+                "Mental Health First Aid", "Homeless Shelter Volunteer"
+        });
+
+        titleMap.put(EventType.FESTIVAL_FAIR, new String[] {
+                "County Fair Volunteer", "Music Festival Support", "Cultural Festival Booth",
+                "Arts & Crafts Fair", "Food Festival Helper"
+        });
+
+        titleMap.put(EventType.WORKSHOP_TRAINING, new String[] {
+                "Skills Training Workshop", "Professional Development", "Leadership Training",
+                "Communication Workshop", "Financial Literacy Training"
+        });
+
+        titleMap.put(EventType.BLOOD_DRIVE, new String[] {
+                "Red Cross Blood Drive", "Hospital Blood Drive", "Community Blood Donation",
+                "Emergency Blood Drive", "Blood Donor Registration"
+        });
+
+        titleMap.put(EventType.OTHER, new String[] {
+                "Special Project Support", "Community Initiative", "Volunteer Orientation",
+                "Skills Assessment", "Community Outreach"
+        });
+
+        return titleMap;
     }
 
     // CORRECTED TO USE YOUR ACTUAL EventDuration ENUM VALUES
     private int generateHoursForDuration(EventDuration duration) {
         switch (duration) {
-            case SHORT: return duration.getMinHours() + random.nextInt(duration.getMaxHours() - duration.getMinHours() + 1);
-            case MEDIUM: return duration.getMinHours() + random.nextInt(duration.getMaxHours() - duration.getMinHours() + 1);
-            case FULL_DAY: return duration.getMinHours() + random.nextInt(duration.getMaxHours() - duration.getMinHours() + 1);
-            case MULTI_DAY: return 8 + random.nextInt(16); // 8-24 hours for multi-day
-            case WEEKLY_COMMITMENT: return 4 + random.nextInt(6); // 4-10 hours weekly
-            case MONTHLY_COMMITMENT: return 2 + random.nextInt(4); // 2-6 hours monthly
-            case ONGOING_LONG_TERM: return 3 + random.nextInt(5); // 3-8 hours ongoing
-            default: return 2 + random.nextInt(4);
+            case SHORT:
+                return duration.getMinHours() + random.nextInt(duration.getMaxHours() - duration.getMinHours() + 1);
+            case MEDIUM:
+                return duration.getMinHours() + random.nextInt(duration.getMaxHours() - duration.getMinHours() + 1);
+            case FULL_DAY:
+                return duration.getMinHours() + random.nextInt(duration.getMaxHours() - duration.getMinHours() + 1);
+            case MULTI_DAY:
+                return 8 + random.nextInt(16); // 8-24 hours for multi-day
+            case WEEKLY_COMMITMENT:
+                return 4 + random.nextInt(6); // 4-10 hours weekly
+            case MONTHLY_COMMITMENT:
+                return 2 + random.nextInt(4); // 2-6 hours monthly
+            case ONGOING_LONG_TERM:
+                return 3 + random.nextInt(5); // 3-8 hours ongoing
+            default:
+                return 2 + random.nextInt(4);
         }
     }
 
     private LocalDateTime calculateEndDate(LocalDateTime startDate, EventDuration duration) {
         switch (duration) {
-            case SHORT: return startDate.plusHours(1 + random.nextInt(2));
-            case MEDIUM: return startDate.plusHours(3 + random.nextInt(2));
-            case FULL_DAY: return startDate.plusHours(5 + random.nextInt(4));
-            case MULTI_DAY: return startDate.plusDays(1 + random.nextInt(6));
-            case WEEKLY_COMMITMENT: return startDate.plusWeeks(1);
-            case MONTHLY_COMMITMENT: return startDate.plusMonths(1);
-            case ONGOING_LONG_TERM: return startDate.plusMonths(3 + random.nextInt(9));
-            default: return startDate.plusHours(2 + random.nextInt(4));
+            case SHORT:
+                return startDate.plusHours(1 + random.nextInt(2));
+            case MEDIUM:
+                return startDate.plusHours(3 + random.nextInt(2));
+            case FULL_DAY:
+                return startDate.plusHours(5 + random.nextInt(4));
+            case MULTI_DAY:
+                return startDate.plusDays(1 + random.nextInt(6));
+            case WEEKLY_COMMITMENT:
+                return startDate.plusWeeks(1);
+            case MONTHLY_COMMITMENT:
+                return startDate.plusMonths(1);
+            case ONGOING_LONG_TERM:
+                return startDate.plusMonths(3 + random.nextInt(9));
+            default:
+                return startDate.plusHours(2 + random.nextInt(4));
         }
     }
 
     private EventStatus calculateEventStatus(LocalDateTime startDate) {
         LocalDateTime now = LocalDateTime.now();
-        
+
         if (startDate.isBefore(now.minusDays(1))) {
             return random.nextDouble() < 0.9 ? EventStatus.COMPLETED : EventStatus.CANCELLED;
         } else if (startDate.isAfter(now.plusDays(7))) {
             double rand = random.nextDouble();
-            if (rand < 0.7) return EventStatus.ACTIVE;
-            if (rand < 0.85) return EventStatus.DRAFT;
+            if (rand < 0.7)
+                return EventStatus.ACTIVE;
+            if (rand < 0.85)
+                return EventStatus.DRAFT;
             return EventStatus.FULL;
         } else {
             return EventStatus.ACTIVE;
@@ -797,34 +818,34 @@ public class DataLoader implements CommandLineRunner {
     private String getCityForCountry(String country, int index) {
         switch (country) {
             case "Canada":
-                String[] canadaCities = {"Toronto, ON", "Vancouver, BC", "Montreal, QC"};
+                String[] canadaCities = { "Toronto, ON", "Vancouver, BC", "Montreal, QC" };
                 return canadaCities[index % canadaCities.length];
             case "United Kingdom":
-                String[] ukCities = {"London, UK", "Manchester, UK", "Edinburgh, UK"};
+                String[] ukCities = { "London, UK", "Manchester, UK", "Edinburgh, UK" };
                 return ukCities[index % ukCities.length];
             case "Australia":
-                String[] ausCities = {"Sydney, NSW", "Melbourne, VIC", "Brisbane, QLD"};
+                String[] ausCities = { "Sydney, NSW", "Melbourne, VIC", "Brisbane, QLD" };
                 return ausCities[index % ausCities.length];
             case "Germany":
-                String[] germanCities = {"Berlin, Germany", "Munich, Germany", "Hamburg, Germany"};
+                String[] germanCities = { "Berlin, Germany", "Munich, Germany", "Hamburg, Germany" };
                 return germanCities[index % germanCities.length];
             case "France":
-                String[] frenchCities = {"Paris, France", "Lyon, France", "Marseille, France"};
+                String[] frenchCities = { "Paris, France", "Lyon, France", "Marseille, France" };
                 return frenchCities[index % frenchCities.length];
             case "Netherlands":
-                String[] dutchCities = {"Amsterdam, Netherlands", "Rotterdam, Netherlands", "The Hague, Netherlands"};
+                String[] dutchCities = { "Amsterdam, Netherlands", "Rotterdam, Netherlands", "The Hague, Netherlands" };
                 return dutchCities[index % dutchCities.length];
             case "Sweden":
-                String[] swedishCities = {"Stockholm, Sweden", "Gothenberg, Sweden", "Malmö, Sweden"};
+                String[] swedishCities = { "Stockholm, Sweden", "Gothenberg, Sweden", "Malmö, Sweden" };
                 return swedishCities[index % swedishCities.length];
             case "Denmark":
-                String[] danishCities = {"Copenhagen, Denmark", "Aarhus, Denmark", "Odense, Denmark"};
+                String[] danishCities = { "Copenhagen, Denmark", "Aarhus, Denmark", "Odense, Denmark" };
                 return danishCities[index % danishCities.length];
             case "Ireland":
-                String[] irishCities = {"Dublin, Ireland", "Cork, Ireland", "Galway, Ireland"};
+                String[] irishCities = { "Dublin, Ireland", "Cork, Ireland", "Galway, Ireland" };
                 return irishCities[index % irishCities.length];
             case "Switzerland":
-                String[] swissCities = {"Zurich, Switzerland", "Geneva, Switzerland", "Basel, Switzerland"};
+                String[] swissCities = { "Zurich, Switzerland", "Geneva, Switzerland", "Basel, Switzerland" };
                 return swissCities[index % swissCities.length];
             default:
                 return "International City";
@@ -833,34 +854,50 @@ public class DataLoader implements CommandLineRunner {
 
     private String getStateForCountry(String country) {
         switch (country) {
-            case "Canada": return "Province";
-            case "United Kingdom": return "England";
-            case "Australia": return "State";
-            case "Germany": return "State";
-            case "France": return "Region";
-            case "Netherlands": return "Province";
-            case "Sweden": return "County";
-            case "Denmark": return "Region";
-            case "Ireland": return "County";
-            case "Switzerland": return "Canton";
-            default: return "Region";
+            case "Canada":
+                return "Province";
+            case "United Kingdom":
+                return "England";
+            case "Australia":
+                return "State";
+            case "Germany":
+                return "State";
+            case "France":
+                return "Region";
+            case "Netherlands":
+                return "Province";
+            case "Sweden":
+                return "County";
+            case "Denmark":
+                return "Region";
+            case "Ireland":
+                return "County";
+            case "Switzerland":
+                return "Canton";
+            default:
+                return "Region";
         }
     }
 
     private int generateEmployeeCountForSize(String size) {
         switch (size) {
-            case "Small (1-50)": return 1 + random.nextInt(50);
-            case "Medium (51-200)": return 51 + random.nextInt(150);
-            case "Large (201-1000)": return 201 + random.nextInt(800);
-            case "Enterprise (1000+)": return 1001 + random.nextInt(4000);
-            default: return 1 + random.nextInt(100);
+            case "Small (1-50)":
+                return 1 + random.nextInt(50);
+            case "Medium (51-200)":
+                return 51 + random.nextInt(150);
+            case "Large (201-1000)":
+                return 201 + random.nextInt(800);
+            case "Enterprise (1000+)":
+                return 1001 + random.nextInt(4000);
+            default:
+                return 1 + random.nextInt(100);
         }
     }
 
     private String generateMultipleCategories(String primaryCategory) {
         List<String> categories = new ArrayList<>();
         categories.add(primaryCategory);
-        
+
         // Add 1-3 additional categories
         int additionalCount = random.nextInt(3);
         for (int i = 0; i < additionalCount; i++) {
@@ -869,13 +906,13 @@ public class DataLoader implements CommandLineRunner {
                 categories.add(category);
             }
         }
-        
+
         return String.join(",", categories);
     }
 
     private String getRandomOrgType() {
-        String[] types = {"Non-Profit", "Charity", "Foundation", "Community Group", "Religious Organization",
-                         "Educational Institution", "Government Agency", "Social Enterprise", "Cooperative", "NGO"};
+        String[] types = { "Non-Profit", "Charity", "Foundation", "Community Group", "Religious Organization",
+                "Educational Institution", "Government Agency", "Social Enterprise", "Cooperative", "NGO" };
         return types[random.nextInt(types.length)];
     }
 
@@ -884,7 +921,7 @@ public class DataLoader implements CommandLineRunner {
     }
 
     private String generateAddress() {
-        String[] streets = {"Main St", "Oak Ave", "Pine Rd", "Elm Dr", "Maple Ln", "Cedar Blvd", "Park Ave"};
+        String[] streets = { "Main St", "Oak Ave", "Pine Rd", "Elm Dr", "Maple Ln", "Cedar Blvd", "Park Ave" };
         return (100 + random.nextInt(9900)) + " " + streets[random.nextInt(streets.length)];
     }
 
@@ -893,10 +930,11 @@ public class DataLoader implements CommandLineRunner {
     }
 
     private String generateLanguages() {
-        String[] languages = {"English", "Spanish", "French", "German", "Italian", "Portuguese", "Chinese", "Japanese"};
+        String[] languages = { "English", "Spanish", "French", "German", "Italian", "Portuguese", "Chinese",
+                "Japanese" };
         List<String> selected = new ArrayList<>();
         selected.add("English");
-        
+
         int count = random.nextInt(3);
         for (int i = 0; i < count; i++) {
             String lang = languages[1 + random.nextInt(languages.length - 1)];
@@ -904,63 +942,70 @@ public class DataLoader implements CommandLineRunner {
                 selected.add(lang);
             }
         }
-        
+
         return String.join(",", selected);
     }
 
     private String getTaxExemptStatus() {
-        String[] statuses = {"501(c)(3)", "501(c)(4)", "501(c)(6)", "501(c)(7)", "Not Applicable"};
+        String[] statuses = { "501(c)(3)", "501(c)(4)", "501(c)(6)", "501(c)(7)", "Not Applicable" };
         return statuses[random.nextInt(statuses.length)];
     }
 
     private String getVerificationLevel() {
-        String[] levels = {"Unverified", "Basic", "Verified", "Premium"};
+        String[] levels = { "Unverified", "Basic", "Verified", "Premium" };
         double rand = random.nextDouble();
-        if (rand < 0.1) return "Premium";
-        if (rand < 0.4) return "Verified";
-        if (rand < 0.7) return "Basic";
+        if (rand < 0.1)
+            return "Premium";
+        if (rand < 0.4)
+            return "Verified";
+        if (rand < 0.7)
+            return "Basic";
         return "Unverified";
     }
 
     private String generateServices() {
-        String[] services = {"Tutoring", "Cleanup Events", "Food Distribution", "Mentoring", "Fundraising",
-                           "Community Outreach", "Health Screenings", "Emergency Response", "Educational Workshops",
-                           "Social Services", "Environmental Education", "Senior Care", "Youth Programs"};
+        String[] services = { "Tutoring", "Cleanup Events", "Food Distribution", "Mentoring", "Fundraising",
+                "Community Outreach", "Health Screenings", "Emergency Response", "Educational Workshops",
+                "Social Services", "Environmental Education", "Senior Care", "Youth Programs" };
         List<String> selected = new ArrayList<>();
         int count = 1 + random.nextInt(4);
-        
+
         for (int i = 0; i < count; i++) {
             String service = services[random.nextInt(services.length)];
             if (!selected.contains(service)) {
                 selected.add(service);
             }
         }
-        
+
         return String.join(",", selected);
     }
 
     private String generateCauses() {
         List<String> selected = new ArrayList<>();
         int count = 1 + random.nextInt(4);
-        
+
         for (int i = 0; i < count; i++) {
             String cause = allCategories[random.nextInt(allCategories.length)];
             if (!selected.contains(cause)) {
                 selected.add(cause);
             }
         }
-        
+
         return String.join(",", selected);
     }
 
     private String generateEventDescription(String title) {
         String[] templates = {
-            "Join us for " + title.toLowerCase() + ". This is a fantastic opportunity to make a meaningful difference in our community.",
-            "We're excited to invite you to participate in " + title.toLowerCase() + ". All skill levels welcome!",
-            "Come be part of " + title.toLowerCase() + " and help us create lasting positive impact in our community.",
-            "Volunteers needed for " + title.toLowerCase() + "! This is an excellent opportunity to gain hands-on experience.",
-            "Join our team for " + title.toLowerCase() + " and experience the joy of community service.",
-            "Make a difference at " + title.toLowerCase() + "! This volunteer opportunity allows you to contribute directly to our mission."
+                "Join us for " + title.toLowerCase()
+                        + ". This is a fantastic opportunity to make a meaningful difference in our community.",
+                "We're excited to invite you to participate in " + title.toLowerCase() + ". All skill levels welcome!",
+                "Come be part of " + title.toLowerCase()
+                        + " and help us create lasting positive impact in our community.",
+                "Volunteers needed for " + title.toLowerCase()
+                        + "! This is an excellent opportunity to gain hands-on experience.",
+                "Join our team for " + title.toLowerCase() + " and experience the joy of community service.",
+                "Make a difference at " + title.toLowerCase()
+                        + "! This volunteer opportunity allows you to contribute directly to our mission."
         };
         return templates[random.nextInt(templates.length)];
     }
@@ -972,29 +1017,31 @@ public class DataLoader implements CommandLineRunner {
             for (int j = 0; j < 4; j++) {
                 id.append(chars.charAt(random.nextInt(chars.length())));
             }
-            if (i < 2) id.append("-");
+            if (i < 2)
+                id.append("-");
         }
         return id.toString();
     }
 
     private String generateRequirements() {
         String[] requirements = {
-            "No experience necessary", "Must be 18 or older", "Physical activity required",
-            "Background check required", "Own transportation preferred", "Comfortable working with children",
-            "Lifting up to 25 lbs required", "Outdoor work in various weather", "Must be comfortable with public speaking",
-            "Basic computer skills helpful", "Flexible schedule preferred", "Team player attitude essential"
+                "No experience necessary", "Must be 18 or older", "Physical activity required",
+                "Background check required", "Own transportation preferred", "Comfortable working with children",
+                "Lifting up to 25 lbs required", "Outdoor work in various weather",
+                "Must be comfortable with public speaking",
+                "Basic computer skills helpful", "Flexible schedule preferred", "Team player attitude essential"
         };
-        
+
         List<String> selected = new ArrayList<>();
         int count = 1 + random.nextInt(4);
-        
+
         for (int i = 0; i < count; i++) {
             String req = requirements[random.nextInt(requirements.length)];
             if (!selected.contains(req)) {
                 selected.add(req);
             }
         }
-        
+
         return String.join("; ", selected);
     }
 }

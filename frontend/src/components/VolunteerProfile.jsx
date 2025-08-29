@@ -18,6 +18,9 @@ import {
   Loader,
   ExternalLink,
   HeartOff,
+  X,
+  Check,
+  Trash2,
 } from "lucide-react";
 import {
   updateProfileData,
@@ -40,7 +43,41 @@ const VolunteerProfile = ({ userData, userType, onDataUpdate, onError }) => {
   const [followedOrgsDetails, setFollowedOrgsDetails] = useState([]);
   const [loadingFollowedOrgs, setLoadingFollowedOrgs] = useState(false);
   
+  // Popup states
+  const [showInterestsPopup, setShowInterestsPopup] = useState(false);
+  const [showSkillsPopup, setShowSkillsPopup] = useState(false);
+  const [newSkill, setNewSkill] = useState("");
+  const [savingChanges, setSavingChanges] = useState(false);
+  
   const navigate = useNavigate();
+
+  // Available interests list
+  const availableInterests = [
+    "Community Cleanup",
+    "Food Service", 
+    "Tutoring & Education",
+    "Animal Care",
+    "Environmental Conservation",
+    "Senior Support",
+    "Youth Mentoring",
+    "Healthcare Support",
+    "Disaster Relief",
+    "Arts & Culture",
+    "Sports & Recreation",
+    "Fundraising",
+    "Administrative Support",
+    "Construction & Building",
+    "Technology Support",
+    "Event Planning",
+    "Advocacy & Awareness",
+    "Research & Data",
+    "Transportation",
+    "Gardening",
+    "Crisis Support",
+    "Festival & Fair",
+    "Workshop & Training",
+    "Blood Drive"
+  ];
 
   useEffect(() => {
     // Load followed organizations details when component mounts
@@ -57,19 +94,19 @@ const VolunteerProfile = ({ userData, userType, onDataUpdate, onError }) => {
 
     try {
       setLoadingFollowedOrgs(true);
-      console.log("📊 Loading details for followed organizations:", orgIds);
+      console.log("Loading details for followed organizations:", orgIds);
       
       const result = await ViewOrganizationService.getFollowedOrganizations();
       
       if (result.success && result.data) {
         setFollowedOrgsDetails(result.data);
-        console.log("✅ Followed organizations details loaded:", result.data);
+        console.log("Followed organizations details loaded:", result.data);
       } else {
-        console.error("❌ Failed to load followed organizations details:", result.message);
+        console.error("Failed to load followed organizations details:", result.message);
         setFollowedOrgsDetails([]);
       }
     } catch (error) {
-      console.error("❌ Error loading followed organizations details:", error);
+      console.error("Error loading followed organizations details:", error);
       setFollowedOrgsDetails([]);
     } finally {
       setLoadingFollowedOrgs(false);
@@ -87,13 +124,13 @@ const VolunteerProfile = ({ userData, userType, onDataUpdate, onError }) => {
           ...prev,
           [imageType === 'profile' ? 'profileImageUrl' : 'coverImageUrl']: result.imageUrl
         }));
-        console.log("✅ Image uploaded successfully");
+        console.log("Image uploaded successfully");
       } else {
         onError(result.message || "Failed to upload image");
       }
     } catch (err) {
       onError("Failed to upload image");
-      console.error("❌ Error uploading image:", err);
+      console.error("Error uploading image:", err);
     } finally {
       setUploading(false);
     }
@@ -127,14 +164,115 @@ const VolunteerProfile = ({ userData, userType, onDataUpdate, onError }) => {
           }
         }));
         
-        console.log("✅ Successfully unfollowed organization");
+        console.log("Successfully unfollowed organization");
       } else {
-        console.error("❌ Failed to unfollow organization:", result.message);
+        console.error("Failed to unfollow organization:", result.message);
         onError(result.message || "Failed to unfollow organization");
       }
     } catch (error) {
-      console.error("❌ Error unfollowing organization:", error);
+      console.error("Error unfollowing organization:", error);
       onError("Failed to unfollow organization");
+    }
+  };
+
+  // Interest management functions
+  const handleInterestToggle = (interest) => {
+    const currentInterests = userData.interests || [];
+    const isSelected = currentInterests.includes(interest);
+    
+    let updatedInterests;
+    if (isSelected) {
+      updatedInterests = currentInterests.filter(i => i !== interest);
+    } else {
+      updatedInterests = [...currentInterests, interest];
+    }
+    
+    onDataUpdate(prev => ({
+      ...prev,
+      interests: updatedInterests,
+      stats: {
+        ...prev.stats,
+        causes: updatedInterests.length
+      }
+    }));
+  };
+
+  const saveInterests = async () => {
+    try {
+      setSavingChanges(true);
+      const result = await updateProfileData({
+        interests: userData.interests
+      });
+      
+      if (result.success) {
+        console.log("Interests updated successfully");
+        setShowInterestsPopup(false);
+      } else {
+        onError(result.message || "Failed to update interests");
+      }
+    } catch (error) {
+      console.error("Error saving interests:", error);
+      onError("Failed to save interests");
+    } finally {
+      setSavingChanges(false);
+    }
+  };
+
+  // Skills management functions
+  const handleAddSkill = () => {
+    if (!newSkill.trim()) return;
+    
+    const currentSkills = userData.skills || [];
+    if (currentSkills.includes(newSkill.trim())) {
+      onError("Skill already exists");
+      return;
+    }
+    
+    const updatedSkills = [...currentSkills, newSkill.trim()];
+    onDataUpdate(prev => ({
+      ...prev,
+      skills: updatedSkills,
+      stats: {
+        ...prev.stats,
+        skills: updatedSkills.length
+      }
+    }));
+    
+    setNewSkill("");
+  };
+
+  const handleRemoveSkill = (skillToRemove) => {
+    const currentSkills = userData.skills || [];
+    const updatedSkills = currentSkills.filter(skill => skill !== skillToRemove);
+    
+    onDataUpdate(prev => ({
+      ...prev,
+      skills: updatedSkills,
+      stats: {
+        ...prev.stats,
+        skills: updatedSkills.length
+      }
+    }));
+  };
+
+  const saveSkills = async () => {
+    try {
+      setSavingChanges(true);
+      const result = await updateProfileData({
+        skills: userData.skills
+      });
+      
+      if (result.success) {
+        console.log("Skills updated successfully");
+        setShowSkillsPopup(false);
+      } else {
+        onError(result.message || "Failed to update skills");
+      }
+    } catch (error) {
+      console.error("Error saving skills:", error);
+      onError("Failed to save skills");
+    } finally {
+      setSavingChanges(false);
     }
   };
 
@@ -265,7 +403,10 @@ const VolunteerProfile = ({ userData, userType, onDataUpdate, onError }) => {
         <div className="profile-card">
           <div className="profile-card-header">
             <h3 className="profile-card-title">Interests</h3>
-            <button className="profile-add-btn">
+            <button 
+              className="profile-add-btn"
+              onClick={() => setShowInterestsPopup(true)}
+            >
               <Plus />
             </button>
           </div>
@@ -290,7 +431,10 @@ const VolunteerProfile = ({ userData, userType, onDataUpdate, onError }) => {
         <div className="profile-card">
           <div className="profile-card-header">
             <h3 className="profile-card-title">Skills</h3>
-            <button className="profile-add-btn">
+            <button 
+              className="profile-add-btn"
+              onClick={() => setShowSkillsPopup(true)}
+            >
               <Plus />
             </button>
           </div>
@@ -380,9 +524,6 @@ const VolunteerProfile = ({ userData, userType, onDataUpdate, onError }) => {
                     </div>
                     <div className="profile-connection-role">
                       {(() => {
-                        // Debug log to see what data we're receiving
-                        console.log('Organization data:', org);
-                        
                         // Display categories with better fallback handling
                         const categories = org.categories || org.primaryCategory || org.organizationType;
                         
@@ -427,7 +568,7 @@ const VolunteerProfile = ({ userData, userType, onDataUpdate, onError }) => {
                   <div className="profile-connection-actions">
                     <button 
                       className="profile-connection-action"
-                      onClick={() => navigate(`/view-organization/${org.id}`)}
+                      onClick={() => navigate(`/find-organizations/${org.id}`)}
                       title="View Organization"
                     >
                       <ExternalLink size={16} />
@@ -461,6 +602,151 @@ const VolunteerProfile = ({ userData, userType, onDataUpdate, onError }) => {
       </div>
     </div>
   );
+
+  const renderInterestsPopup = () => {
+    if (!showInterestsPopup) return null;
+
+    return (
+      <div className="popup-overlay" onClick={() => setShowInterestsPopup(false)}>
+        <div className="popup-content" onClick={(e) => e.stopPropagation()}>
+          <div className="popup-header">
+            <h3>Manage Interests</h3>
+            <button 
+              className="popup-close"
+              onClick={() => setShowInterestsPopup(false)}
+            >
+              <X />
+            </button>
+          </div>
+          
+          <div className="popup-body">
+            <p>Select the causes and activities you're interested in:</p>
+            
+            <div className="interests-grid">
+              {availableInterests.map((interest) => {
+                const isSelected = userData.interests?.includes(interest) || false;
+                return (
+                  <button
+                    key={interest}
+                    className={`interest-option ${isSelected ? 'selected' : ''}`}
+                    onClick={() => handleInterestToggle(interest)}
+                  >
+                    <span className="interest-text">{interest}</span>
+                    {isSelected && <Check size={16} />}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          
+          <div className="popup-footer">
+            <button 
+              className="btn-secondary"
+              onClick={() => setShowInterestsPopup(false)}
+              disabled={savingChanges}
+            >
+              Cancel
+            </button>
+            <button 
+              className="btn-primary"
+              onClick={saveInterests}
+              disabled={savingChanges}
+            >
+              {savingChanges ? <Loader className="btn-loader" /> : null}
+              Save Changes
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderSkillsPopup = () => {
+    if (!showSkillsPopup) return null;
+
+    return (
+      <div className="popup-overlay" onClick={() => setShowSkillsPopup(false)}>
+        <div className="popup-content" onClick={(e) => e.stopPropagation()}>
+          <div className="popup-header">
+            <h3>Manage Skills</h3>
+            <button 
+              className="popup-close"
+              onClick={() => setShowSkillsPopup(false)}
+            >
+              <X />
+            </button>
+          </div>
+          
+          <div className="popup-body">
+            <div className="add-skill-section">
+              <label htmlFor="new-skill">Add New Skill:</label>
+              <div className="add-skill-input">
+                <input
+                  id="new-skill"
+                  type="text"
+                  value={newSkill}
+                  onChange={(e) => setNewSkill(e.target.value)}
+                  placeholder="Enter a skill (e.g., Project Management)"
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      handleAddSkill();
+                    }
+                  }}
+                />
+                <button 
+                  className="add-skill-btn"
+                  onClick={handleAddSkill}
+                  disabled={!newSkill.trim()}
+                >
+                  <Plus size={16} />
+                </button>
+              </div>
+            </div>
+            
+            <div className="current-skills-section">
+              <h4>Current Skills:</h4>
+              {userData.skills && userData.skills.length > 0 ? (
+                <div className="skills-list">
+                  {userData.skills.map((skill, index) => (
+                    <div key={`skill-${index}-${skill}`} className="skill-item">
+                      <span>{skill}</span>
+                      <button
+                        className="remove-skill-btn"
+                        onClick={() => handleRemoveSkill(skill)}
+                        title="Remove skill"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="no-skills">No skills added yet.</p>
+              )}
+            </div>
+          </div>
+          
+          <div className="popup-footer">
+            <button 
+              className="btn-secondary"
+              onClick={() => setShowSkillsPopup(false)}
+              disabled={savingChanges}
+            >
+              Cancel
+            </button>
+            <button 
+              className="btn-primary"
+              onClick={saveSkills}
+              disabled={savingChanges}
+            >
+              {savingChanges ? <Loader className="btn-loader" /> : null}
+              Save Changes
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <>
@@ -570,6 +856,10 @@ const VolunteerProfile = ({ userData, userType, onDataUpdate, onError }) => {
         {activeTab === "overview" && renderOverview()}
         {activeTab === "organizations" && renderOrganizations()}
       </div>
+
+      {/* Popups */}
+      {renderInterestsPopup()}
+      {renderSkillsPopup()}
     </>
   );
 };
