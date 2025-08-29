@@ -51,7 +51,7 @@ const VolunteerProfile = ({ userData, userType, onDataUpdate, onError }) => {
   
   const navigate = useNavigate();
 
-  // Available interests list
+  // Available interests list - matching profile setup page
   const availableInterests = [
     "Community Cleanup",
     "Food Service", 
@@ -61,22 +61,11 @@ const VolunteerProfile = ({ userData, userType, onDataUpdate, onError }) => {
     "Senior Support",
     "Youth Mentoring",
     "Healthcare Support",
-    "Disaster Relief",
     "Arts & Culture",
-    "Sports & Recreation",
-    "Fundraising",
-    "Administrative Support",
-    "Construction & Building",
-    "Technology Support",
-    "Event Planning",
-    "Advocacy & Awareness",
-    "Research & Data",
-    "Transportation",
-    "Gardening",
-    "Crisis Support",
-    "Festival & Fair",
-    "Workshop & Training",
-    "Blood Drive"
+    "Technology & Digital",
+    "Disaster Relief",
+    "Community Building",
+    "Other"
   ];
 
   useEffect(() => {
@@ -197,15 +186,44 @@ const VolunteerProfile = ({ userData, userType, onDataUpdate, onError }) => {
     }));
   };
 
+  const handleRemoveInterest = (interestToRemove) => {
+    const currentInterests = userData.interests || [];
+    const updatedInterests = currentInterests.filter(interest => interest !== interestToRemove);
+    
+    onDataUpdate(prev => ({
+      ...prev,
+      interests: updatedInterests,
+      stats: {
+        ...prev.stats,
+        causes: updatedInterests.length
+      }
+    }));
+  };
+
   const saveInterests = async () => {
     try {
       setSavingChanges(true);
+      console.log('Saving interests:', userData.interests);
+      
+      // Convert array to comma-separated string for backend
+      const interestsString = Array.isArray(userData.interests) 
+        ? userData.interests.join(',') 
+        : userData.interests || '';
+      
       const result = await updateProfileData({
-        interests: userData.interests
+        interests: interestsString
       });
       
       if (result.success) {
         console.log("Interests updated successfully");
+        // Update the user data in localStorage if needed
+        if (result.data) {
+          onDataUpdate(prev => ({
+            ...prev,
+            ...result.data,
+            interests: userData.interests // Keep as array in frontend
+          }));
+        }
         setShowInterestsPopup(false);
       } else {
         onError(result.message || "Failed to update interests");
@@ -258,12 +276,27 @@ const VolunteerProfile = ({ userData, userType, onDataUpdate, onError }) => {
   const saveSkills = async () => {
     try {
       setSavingChanges(true);
+      console.log('Saving skills:', userData.skills);
+      
+      // Convert array to comma-separated string for backend
+      const skillsString = Array.isArray(userData.skills) 
+        ? userData.skills.join(',') 
+        : userData.skills || '';
+      
       const result = await updateProfileData({
-        skills: userData.skills
+        skills: skillsString
       });
       
       if (result.success) {
         console.log("Skills updated successfully");
+        // Update the user data in localStorage if needed
+        if (result.data) {
+          onDataUpdate(prev => ({
+            ...prev,
+            ...result.data,
+            skills: userData.skills // Keep as array in frontend
+          }));
+        }
         setShowSkillsPopup(false);
       } else {
         onError(result.message || "Failed to update skills");
@@ -620,22 +653,55 @@ const VolunteerProfile = ({ userData, userType, onDataUpdate, onError }) => {
           </div>
           
           <div className="popup-body">
-            <p>Select the causes and activities you're interested in:</p>
+            <div className="add-skill-section">
+              <label>Add New Interest:</label>
+              <div className="interests-selection">
+                <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)', marginBottom: 'var(--spacing-3)' }}>
+                  Select from available interests:
+                </p>
+                <div className="interests-grid">
+                  {availableInterests.map((interest) => {
+                    const isAlreadyAdded = userData.interests?.includes(interest) || false;
+                    return (
+                      <button
+                        key={interest}
+                        className={`interest-option ${isAlreadyAdded ? 'disabled' : ''}`}
+                        onClick={() => {
+                          if (!isAlreadyAdded) {
+                            handleInterestToggle(interest);
+                          }
+                        }}
+                        disabled={isAlreadyAdded}
+                      >
+                        <span className="interest-text">{interest}</span>
+                        {isAlreadyAdded ? <Check size={16} /> : <Plus size={16} />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
             
-            <div className="interests-grid">
-              {availableInterests.map((interest) => {
-                const isSelected = userData.interests?.includes(interest) || false;
-                return (
-                  <button
-                    key={interest}
-                    className={`interest-option ${isSelected ? 'selected' : ''}`}
-                    onClick={() => handleInterestToggle(interest)}
-                  >
-                    <span className="interest-text">{interest}</span>
-                    {isSelected && <Check size={16} />}
-                  </button>
-                );
-              })}
+            <div className="current-skills-section">
+              <h4>Current Interests:</h4>
+              {userData.interests && userData.interests.length > 0 ? (
+                <div className="skills-list">
+                  {userData.interests.map((interest, index) => (
+                    <div key={`interest-${index}-${interest}`} className="skill-item">
+                      <span>{interest}</span>
+                      <button
+                        className="remove-skill-btn"
+                        onClick={() => handleRemoveInterest(interest)}
+                        title="Remove interest"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="no-skills">No interests added yet.</p>
+              )}
             </div>
           </div>
           
