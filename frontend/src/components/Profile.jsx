@@ -5,8 +5,8 @@ import { getProfileData } from "../services/profilePageService";
 import { getCurrentUser, isLoggedIn } from "../services/authService";
 import VolunteerProfile from "./VolunteerProfile";
 import OrganizationProfile from "./OrganizationProfile";
-import "./Profile.css";
 import "./VolunteerProfile.css";
+import "./OrganizationProfile.css";
 
 /**
  * Main Profile Router Component

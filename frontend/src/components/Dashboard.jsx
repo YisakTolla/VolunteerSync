@@ -77,16 +77,6 @@ const Dashboard = () => {
     navigate('/login');
   };
 
-  const handleEditProfile = () => {
-    if (user?.userType === 'VOLUNTEER') {
-      navigate('/profile');
-    } else if (user?.userType === 'ORGANIZATION') {
-      navigate('/profile');
-    } else {
-      navigate('/profile');
-    }
-  };
-
   const handleViewProfile = () => {
     if (user?.userType === 'VOLUNTEER') {
       navigate('/profile');
@@ -279,9 +269,6 @@ const Dashboard = () => {
             </div>
 
             <div className="header-actions">
-              <button onClick={handleEditProfile} className="btn-secondary">
-                Edit Profile
-              </button>
               <button onClick={handleViewProfile} className="btn-secondary">
                 View Profile
               </button>
@@ -474,7 +461,7 @@ const OrganizationDashboard = ({ dashboardData, onRefresh, refreshing, onNavigat
             ))}
           </div>
         ) : (
-          <p>No events posted yet. <button onClick={() => onNavigate('/organization/events/create')} className="btn-primary">Create Event</button></p>
+          <p>No events posted yet.</p>
         )}
       </div>
       <div className="card-actions">

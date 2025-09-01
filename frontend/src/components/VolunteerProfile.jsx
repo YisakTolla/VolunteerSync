@@ -657,7 +657,7 @@ const VolunteerProfile = ({ userData, userType, onDataUpdate, onError }) => {
               <label>Add New Interest:</label>
               <div className="interests-selection">
                 <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)', marginBottom: 'var(--spacing-3)' }}>
-                  Select from available interests:
+                  Select from available interests (already added interests are disabled):
                 </p>
                 <div className="interests-grid">
                   {availableInterests.map((interest) => {
@@ -672,6 +672,7 @@ const VolunteerProfile = ({ userData, userType, onDataUpdate, onError }) => {
                           }
                         }}
                         disabled={isAlreadyAdded}
+                        title={isAlreadyAdded ? 'Already added - remove from current interests below' : 'Click to add this interest'}
                       >
                         <span className="interest-text">{interest}</span>
                         {isAlreadyAdded ? <Check size={16} /> : <Plus size={16} />}
