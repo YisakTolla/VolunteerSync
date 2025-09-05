@@ -45,138 +45,91 @@ const Dashboard = () => {
       }
     } catch (err) {
       setError('Failed to load dashboard. Please try refreshing.');
-      console.error('❌ Error loading dashboard data:', err);
     } finally {
       setLoading(false);
     }
   };
 
   const handleRefresh = async () => {
+    setRefreshing(true);
     try {
-      setRefreshing(true);
-      setError('');
-
       const result = await refreshDashboardData();
       if (result.success) {
         setDashboardData(result.data);
-        setUser(result.data.user);
         setError('');
       } else {
         setError(result.message || 'Failed to refresh dashboard data');
       }
     } catch (err) {
-      setError('Failed to refresh dashboard');
-      console.error('❌ Error refreshing dashboard:', err);
+      setError('Failed to refresh dashboard data');
     } finally {
       setRefreshing(false);
     }
   };
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     navigate('/login');
   };
 
   const handleViewProfile = () => {
-    if (user?.userType === 'VOLUNTEER') {
-      navigate('/profile');
-    } else if (user?.userType === 'ORGANIZATION') {
-      navigate('/profile');
-    } else {
-      navigate('/profile');
-    }
+    navigate('/profile');
   };
 
   const getUserInitials = () => {
-    if (!user) return 'U';
-
-    if (user.userType === 'ORGANIZATION' && user.organizationName) {
-      const words = user.organizationName.split(' ').filter(Boolean);
-      if (words.length >= 2) {
-        return `${words[0][0]}${words[1][0]}`.toUpperCase();
-      } else {
-        return words[0].substring(0, 2).toUpperCase();
-      }
+    if (user.firstName && user.lastName) {
+      return `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`;
+    } else if (user.organizationName) {
+      return user.organizationName.charAt(0);
+    } else if (user.email) {
+      return user.email.charAt(0);
     }
-
-    if (user.userType === 'VOLUNTEER' && user.firstName && user.lastName) {
-      return `${user.firstName[0]}${user.lastName[0]}`.toUpperCase();
-    }
-
-    if (user.email) {
-      return user.email[0].toUpperCase();
-    }
-
-    return 'U';
+    return '?';
   };
 
   const getUserTypeDisplay = () => {
-    if (!user) return '';
-    switch (user.userType) {
-      case 'ORGANIZATION':
-        return '🏢 Organization';
-      case 'VOLUNTEER':
-        return '🙋‍♀️ Volunteer';
-      default:
-        return user.userType;
-    }
+    if (user.userType === 'VOLUNTEER') return 'Volunteer';
+    if (user.userType === 'ORGANIZATION') return 'Organization';
+    return 'User';
   };
 
   const getStatsOverview = () => {
-    if (!dashboardData?.stats) return [];
-
-    if (user?.userType === 'VOLUNTEER') {
+    if (!dashboardData || !dashboardData.stats) return [];
+    
+    if (user.userType === 'VOLUNTEER') {
       return [
         {
-          icon: '⏰',
-          title: 'Hours Completed',
-          value: dashboardData.stats.hoursCompleted || 0,
-          color: 'green'
+          title: 'Active Applications',
+          value: dashboardData.stats.activeApplications || 0,
+          icon: '📋'
         },
         {
-          icon: '📅',
-          title: 'Events Attended',
-          value: dashboardData.stats.eventsAttended || 0,
-          color: 'blue'
-        },
-        {
-          icon: '🎯',
           title: 'Upcoming Events',
           value: dashboardData.stats.upcomingEvents || 0,
-          color: 'purple'
+          icon: '📅'
         },
         {
-          icon: '⭐',
-          title: 'Rating',
-          value: dashboardData.stats.rating ? `${dashboardData.stats.rating}/5` : 'N/A',
-          color: 'yellow'
+          title: 'Hours Volunteered',
+          value: dashboardData.stats.hoursVolunteered || 0,
+          icon: '⏰'
         }
       ];
     } else {
       return [
         {
-          icon: '📊',
           title: 'Active Events',
           value: dashboardData.stats.activeEvents || 0,
-          color: 'green'
+          icon: '📊'
         },
         {
-          icon: '👥',
           title: 'Total Volunteers',
           value: dashboardData.stats.totalVolunteers || 0,
-          color: 'blue'
+          icon: '👥'
         },
         {
-          icon: '📋',
           title: 'Pending Applications',
           value: dashboardData.stats.pendingApplications || 0,
-          color: 'orange'
-        },
-        {
-          icon: '📈',
-          title: 'Events This Month',
-          value: dashboardData.stats.eventsThisMonth || 0,
-          color: 'purple'
+          icon: '📋'
         }
       ];
     }
@@ -247,317 +200,190 @@ const Dashboard = () => {
   const statsOverview = getStatsOverview();
 
   return (
-    <div className="dashboard-wrapper">
-      <div className="dashboard">
-        <div className="dashboard-header">
-          <div className="header-content">
-            <div className="user-welcome">
-              <div className="user-avatar-large">
-                {user.profileImageUrl || user.profilePicture ? (
-                  <img src={user.profileImageUrl || user.profilePicture} alt="Profile" />
-                ) : (
-                  <div className="avatar-placeholder-large">
-                    {getUserInitials()}
-                  </div>
-                )}
-              </div>
-              <div className="user-info">
-                <h1>Welcome back, {getUserWelcomeName(user)}! 👋</h1>
-                <p className="user-type">{getUserTypeDisplay()} Account</p>
-                <p className="user-email">{user.email}</p>
-              </div>
-            </div>
-
-            <div className="header-actions">
-              <button onClick={handleViewProfile} className="btn-secondary">
-                View Profile
-              </button>
-              <button onClick={handleLogout} className="btn-danger">
-                Sign Out
-              </button>
-            </div>
-          </div>
-
-          {error && (
-            <div className="header-error">
-              <span>⚠️ {error}</span>
-              <button onClick={handleRefresh} className="refresh-btn" disabled={refreshing}>
-                {refreshing ? 'Refreshing...' : 'Refresh'}
-              </button>
-            </div>
-          )}
-        </div>
-
-        <div className="dashboard-content">
-          {/* Stats Overview */}
-          <div className="stats-overview">
-            {statsOverview.map((stat, index) => (
-              <div key={index} className="stat-card">
-                <div className="stat-icon">{stat.icon}</div>
-                <div className="stat-info">
-                  <h3>{stat.value}</h3>
-                  <p>{stat.title}</p>
+    <div className="dashboard-simple">
+      {/* Simple Header */}
+      <div className="dashboard-header-simple">
+        <div className="header-content-simple">
+          <div className="user-section">
+            <div className="user-avatar-simple">
+              {user.profileImageUrl || user.profilePicture ? (
+                <img src={user.profileImageUrl || user.profilePicture} alt="Profile" />
+              ) : (
+                <div className="avatar-placeholder-simple">
+                  {getUserInitials()}
                 </div>
-              </div>
-            ))}
+              )}
+            </div>
+            <div>
+              <h1>Welcome back, {getUserWelcomeName(user)}!</h1>
+              <p className="user-role">{getUserTypeDisplay()}</p>
+            </div>
           </div>
-
-          {/* Dashboard Content Based on User Type */}
-          {user.userType === 'VOLUNTEER' ? (
-            <VolunteerDashboard
-              dashboardData={dashboardData}
-              onRefresh={handleRefresh}
-              refreshing={refreshing}
-              onNavigate={navigate}
-            />
-          ) : (
-            <OrganizationDashboard
-              dashboardData={dashboardData}
-              onRefresh={handleRefresh}
-              refreshing={refreshing}
-              onNavigate={navigate}
-            />
-          )}
+          
+          <div className="header-actions-simple">
+            <button onClick={handleViewProfile} className="btn-outline">
+              Profile
+            </button>
+            <button onClick={handleLogout} className="btn-outline">
+              Sign Out
+            </button>
+          </div>
         </div>
+      </div>
+
+      {/* Simple Stats */}
+      <div className="dashboard-content-simple">
+        <div className="stats-simple">
+          {statsOverview.map((stat, index) => (
+            <div key={index} className="stat-item">
+              <span className="stat-icon">{stat.icon}</span>
+              <div>
+                <h3>{stat.value}</h3>
+                <p>{stat.title}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Content based on user type */}
+        {user.userType === 'VOLUNTEER' ? (
+          <SimpleVolunteerContent 
+            dashboardData={dashboardData} 
+            navigate={navigate}
+          />
+        ) : (
+          <SimpleOrganizationContent 
+            dashboardData={dashboardData} 
+            navigate={navigate}
+          />
+        )}
       </div>
     </div>
   );
 };
 
-const VolunteerDashboard = ({ dashboardData, onRefresh, refreshing, onNavigate }) => (
-  <div className="dashboard-grid">
-    {/* Upcoming Events Card */}
-    <div className="dashboard-card">
-      <div className="card-header">
-        <h3>📅 Upcoming Events</h3>
-        <p>Your scheduled volunteer activities</p>
+const SimpleVolunteerContent = ({ dashboardData, navigate }) => (
+  <>
+    {/* Find Events Section */}
+    <div className="content-section">
+      <div className="section-header">
+        <h2>Find & Apply to Events</h2>
+        <p>Discover volunteer opportunities and manage your applications</p>
       </div>
-      <div className="card-content">
-        {dashboardData?.events?.length > 0 ? (
-          <div className="events-list">
-            {dashboardData.events.slice(0, 3).map((event, idx) => (
-              <div key={idx} className="event-item">
-                <div className="event-info">
-                  <h4>{event.title || event.name}</h4>
-                  <p>{event.date || event.eventDate}</p>
-                  <p>{event.location}</p>
-                </div>
-                <div className={`event-status ${event.status?.toLowerCase()}`}>
-                  {event.status || 'Active'}
-                </div>
-              </div>
-            ))}
+      
+      <div className="main-actions">
+        <div className="main-action-card primary" onClick={() => navigate('/find-events')}>
+          <div className="action-icon">🔍</div>
+          <div className="action-content">
+            <h3>Find Events</h3>
+            <p>Browse available volunteer opportunities</p>
           </div>
-        ) : (
-          <p>No upcoming events. <button onClick={() => onNavigate('/find-events')} className="btn-primary">Find Events</button></p>
-        )}
-      </div>
-      <div className="card-actions">
-        <button onClick={() => onNavigate('/volunteer/events')} className="btn-secondary">
-          View All Events
-        </button>
-      </div>
-    </div>
-
-    {/* Recent Activity Card */}
-    <div className="dashboard-card">
-      <div className="card-header">
-        <h3>📈 Recent Activity</h3>
-        <p>Your volunteer history</p>
-      </div>
-      <div className="card-content">
-        {dashboardData?.recentActivity?.length > 0 ? (
-          <div className="activity-list">
-            {dashboardData.recentActivity.slice(0, 3).map((activity, idx) => (
-              <div key={idx} className="activity-item">
-                <p>{activity.description}</p>
-                <span>{activity.date}</span>
-              </div>
-            ))}
+        </div>
+        
+        <div className="main-action-card" onClick={() => navigate('/volunteer/applications')}>
+          <div className="action-icon">📄</div>
+          <div className="action-content">
+            <h3>My Applications</h3>
+            <p>View and manage your event applications</p>
           </div>
-        ) : (
-          <p>No recent activity to display.</p>
-        )}
-      </div>
-    </div>
-
-    {/* Applications Card */}
-    <div className="dashboard-card">
-      <div className="card-header">
-        <h3>📝 My Applications</h3>
-        <p>Track your volunteer applications</p>
-      </div>
-      <div className="card-content">
-        {dashboardData?.applications?.length > 0 ? (
-          <div className="applications-list">
-            {dashboardData.applications.slice(0, 3).map((app, idx) => (
-              <div key={idx} className="application-item">
-                <div className="application-info">
-                  <h5>{app.eventTitle || app.event?.title}</h5>
-                  <p>{app.submittedDate || app.createdAt}</p>
-                </div>
-                <div className={`application-status ${app.status?.toLowerCase()}`}>
-                  {app.status}
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p>No applications yet. <button onClick={() => onNavigate('/find-events')} className="btn-primary">Apply to Events</button></p>
-        )}
-      </div>
-      <div className="card-actions">
-        <button onClick={() => onNavigate('/volunteer/applications')} className="btn-secondary">
-          View All Applications
-        </button>
-      </div>
-    </div>
-
-    {/* Quick Actions Card */}
-    <div className="dashboard-card featured">
-      <div className="card-header">
-        <h3>🚀 Quick Actions</h3>
-        <p>Get started with volunteer activities</p>
-      </div>
-      <div className="card-content">
-        <div className="quick-actions-grid">
-          <button onClick={() => onNavigate('/find-events')} className="btn-primary">
-            Find Events
-          </button>
-          <button onClick={() => onNavigate('/find-organizations')} className="btn-secondary">
-            Find Organizations
-          </button>
-          <button onClick={() => onNavigate('/profile')} className="btn-secondary">
-            Update Profile
-          </button>
         </div>
       </div>
     </div>
-  </div>
+
+    {/* Manage Profile Section */}
+    <div className="content-section">
+      <div className="section-header">
+        <h2>Manage Your Profile</h2>
+        <p>Keep your volunteer profile updated and connect with organizations</p>
+      </div>
+      
+      <div className="main-actions">
+        <div className="main-action-card" onClick={() => navigate('/profile')}>
+          <div className="action-icon">👤</div>
+          <div className="action-content">
+            <h3>Update Profile</h3>
+            <p>Edit your skills, availability, and preferences</p>
+          </div>
+        </div>
+        
+        <div className="main-action-card" onClick={() => navigate('/find-organizations')}>
+          <div className="action-icon">🏢</div>
+          <div className="action-content">
+            <h3>Find Organizations</h3>
+            <p>Discover organizations you'd like to volunteer with</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </>
 );
 
-const OrganizationDashboard = ({ dashboardData, onRefresh, refreshing, onNavigate }) => (
-  <div className="dashboard-grid">
-    {/* Posted Events Card */}
-    <div className="dashboard-card">
-      <div className="card-header">
-        <h3>📊 Posted Events</h3>
-        <p>Your organization's volunteer opportunities</p>
+const SimpleOrganizationContent = ({ dashboardData, navigate }) => (
+  <>
+    {/* Create/Manage Events Section */}
+    <div className="content-section">
+      <div className="section-header">
+        <h2>Create & Manage Events</h2>
+        <p>Post volunteer opportunities and manage your organization's events</p>
       </div>
-      <div className="card-content">
-        {dashboardData?.events?.length > 0 ? (
-          <div className="events-list">
-            {dashboardData.events.slice(0, 3).map((event, idx) => (
-              <div key={idx} className="event-item">
-                <div className="event-info">
-                  <h4>{event.title}</h4>
-                  <p>{event.eventDate}</p>
-                  <p>{event.location}</p>
-                </div>
-                <div className={`event-status ${event.status?.toLowerCase()}`}>
-                  {event.status}
-                </div>
-              </div>
-            ))}
+      
+      <div className="main-actions">
+        <div className="main-action-card primary" onClick={() => navigate('/create-events')}>
+          <div className="action-icon">➕</div>
+          <div className="action-content">
+            <h3>Create New Event</h3>
+            <p>Post a new volunteer opportunity for your organization</p>
+            <div className="action-meta">
+              <span className="meta-item">📊 {dashboardData?.stats?.activeEvents || 0} active events</span>
+            </div>
           </div>
-        ) : (
-          <p>No events posted yet.</p>
-        )}
-      </div>
-      <div className="card-actions">
-        <button onClick={() => onNavigate('/organization/events')} className="btn-secondary">
-          Manage Events
-        </button>
-        <button onClick={() => onNavigate('/organization/events/create')} className="btn-primary">
-          Create Event
-        </button>
-      </div>
-    </div>
-
-    {/* Applications Card */}
-    <div className="dashboard-card">
-      <div className="card-header">
-        <h3>📋 Recent Applications</h3>
-        <p>Volunteer applications to review</p>
-      </div>
-      <div className="card-content">
-        {dashboardData?.applications?.length > 0 ? (
-          <div className="applications-list">
-            {dashboardData.applications.slice(0, 3).map((app, idx) => (
-              <div key={idx} className="application-item">
-                <div className="application-info">
-                  <h5>{app.volunteerName}</h5>
-                  <p>{app.eventTitle}</p>
-                  <span>{app.submittedDate}</span>
-                </div>
-                <div className={`application-status ${app.status?.toLowerCase()}`}>
-                  {app.status}
-                </div>
-              </div>
-            ))}
+        </div>
+        
+        <div className="main-action-card" onClick={() => navigate('/organization/events')}>
+          <div className="action-icon">📋</div>
+          <div className="action-content">
+            <h3>Manage Events</h3>
+            <p>Edit, update, and monitor your existing events</p>
+            <div className="action-meta">
+              <span className="meta-item">📈 {dashboardData?.stats?.eventsThisMonth || 0} events this month</span>
+            </div>
           </div>
-        ) : (
-          <p>No recent applications.</p>
-        )}
-      </div>
-      <div className="card-actions">
-        <button onClick={() => onNavigate('/organization/applications')} className="btn-secondary">
-          Review Applications
-        </button>
-      </div>
-    </div>
-
-    {/* Volunteers Card */}
-    <div className="dashboard-card">
-      <div className="card-header">
-        <h3>👥 Your Volunteers</h3>
-        <p>Active volunteer community</p>
-      </div>
-      <div className="card-content">
-        {dashboardData?.volunteers?.length > 0 ? (
-          <div className="volunteers-list">
-            {dashboardData.volunteers.slice(0, 3).map((volunteer, idx) => (
-              <div key={idx} className="volunteer-item">
-                <div className="volunteer-info">
-                  <h5>{volunteer.firstName} {volunteer.lastName}</h5>
-                  <p>{volunteer.email}</p>
-                  <span>{volunteer.totalHours || 0} hours</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p>No volunteers yet. Share your events to attract volunteers!</p>
-        )}
-      </div>
-      <div className="card-actions">
-        <button onClick={() => onNavigate('/organization/volunteers')} className="btn-secondary">
-          Manage Volunteers
-        </button>
-      </div>
-    </div>
-
-    {/* Quick Actions Card */}
-    <div className="dashboard-card featured">
-      <div className="card-header">
-        <h3>🚀 Quick Actions</h3>
-        <p>Manage your organization efficiently</p>
-      </div>
-      <div className="card-content">
-        <div className="quick-actions-grid">
-          <button onClick={() => onNavigate('/organization/events/create')} className="btn-primary">
-            Create Event
-          </button>
-          <button onClick={() => onNavigate('/organization/profile')} className="btn-secondary">
-            Update Profile
-          </button>
-          <button onClick={() => onNavigate('/organization/analytics')} className="btn-secondary">
-            View Analytics
-          </button>
         </div>
       </div>
     </div>
-  </div>
+
+    {/* Review Applications / Manage Volunteers Section */}
+    <div className="content-section">
+      <div className="section-header">
+        <h2>Review Applications & Manage Volunteers</h2>
+        <p>Review volunteer applications and manage your volunteer community</p>
+      </div>
+      
+      <div className="main-actions">
+        <div className="main-action-card primary" onClick={() => navigate('/organization/applications')}>
+          <div className="action-icon">👥</div>
+          <div className="action-content">
+            <h3>Review Applications</h3>
+            <p>Review and approve volunteer applications for your events</p>
+            <div className="action-meta">
+              <span className="meta-item">📋 {dashboardData?.stats?.pendingApplications || 0} pending applications</span>
+            </div>
+          </div>
+        </div>
+        
+        <div className="main-action-card" onClick={() => navigate('/organization/volunteers')}>
+          <div className="action-icon">🤝</div>
+          <div className="action-content">
+            <h3>Manage Volunteers</h3>
+            <p>View and communicate with your volunteer community</p>
+            <div className="action-meta">
+              <span className="meta-item">👥 {dashboardData?.stats?.totalVolunteers || 0} total volunteers</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </>
 );
 
 export default Dashboard;

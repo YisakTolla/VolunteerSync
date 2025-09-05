@@ -7,6 +7,7 @@ import Organizations from './components/Organizations';
 import ViewOrganization from './components/ViewOrganization';
 import Events from './components/Events';
 import ViewEvent from './components/ViewEvents'; 
+import CreateEvent from './components/CreateEvent'; // ADD THIS IMPORT
 import About from './components/About';
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
@@ -89,7 +90,6 @@ function App() {
             } 
           />
 
-          {/* ADD THIS NEW ROUTE FOR EVENT DETAILS */}
           <Route 
             path="/find-events/:id" 
             element={
@@ -147,6 +147,7 @@ function App() {
               </ProtectedRoute>
             } 
           />
+          
           <Route 
             path="/profile" 
             element={
@@ -168,6 +169,79 @@ function App() {
               </ProtectedRoute>
             } 
           />
+
+          {/* Organization Routes - Protected routes for organizations */}
+          <Route 
+            path="/create-events" 
+            element={
+              <ProtectedRoute>
+                <Navbar />
+                <CreateEvent />
+                <Footer />
+              </ProtectedRoute>
+            } 
+          />
+
+          {/* ADD MORE ORGANIZATION ROUTES AS NEEDED */}
+          {/* 
+          <Route 
+            path="/organization/events" 
+            element={
+              <ProtectedRoute>
+                <Navbar />
+                <ManageEvents />
+                <Footer />
+              </ProtectedRoute>
+            } 
+          />
+          
+          <Route 
+            path="/organization/events/:id/edit" 
+            element={
+              <ProtectedRoute>
+                <Navbar />
+                <EditEvent />
+                <Footer />
+              </ProtectedRoute>
+            } 
+          />
+          
+          <Route 
+            path="/organization/applications" 
+            element={
+              <ProtectedRoute>
+                <Navbar />
+                <ManageApplications />
+                <Footer />
+              </ProtectedRoute>
+            } 
+          />
+          
+          <Route 
+            path="/organization/volunteers" 
+            element={
+              <ProtectedRoute>
+                <Navbar />
+                <ManageVolunteers />
+                <Footer />
+              </ProtectedRoute>
+            } 
+          />
+          */}
+
+          {/* Volunteer Routes - Protected routes for volunteers */}
+          {/* 
+          <Route 
+            path="/volunteer/applications" 
+            element={
+              <ProtectedRoute>
+                <Navbar />
+                <VolunteerApplications />
+                <Footer />
+              </ProtectedRoute>
+            } 
+          />
+          */}
           
           {/* Catch-all route for 404 */}
           <Route 
