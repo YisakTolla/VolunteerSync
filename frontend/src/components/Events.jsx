@@ -249,122 +249,7 @@ const Events = () => {
     return dateClassMap[dateOption] || "";
   };
 
-  const performSearch = useCallback(
-    async (searchParams = {}, delay = 0) => {
-      if (searchDebounceTimer) {
-        clearTimeout(searchDebounceTimer);
-      }
-
-      const executeSearch = async () => {
-        try {
-          setSearchLoading(true);
-          setError(null);
-
-          const {
-            searchTerm: term = searchTerm,
-            locationTerm = locationSearchTerm,
-            eventTypes = selectedEventTypes,
-            locations = selectedLocations,
-            dates = selectedDates,
-            times = selectedTimes,
-            durations = selectedDurations,
-            skillLevels = selectedSkillLevels,
-            forceRefresh = false,
-          } = searchParams;
-
-          console.log("🔍 Performing real-time search with params:", {
-            term,
-            locationTerm,
-            eventTypes: eventTypes.length,
-            locations: locations.length,
-            hasFilters: dates.length > 0 || times.length > 0 || durations.length > 0 || skillLevels.length > 0,
-            forceRefresh
-          });
-
-          let searchResult;
-
-          // Check if we have search terms or need real-time data
-          if (term || locationTerm || eventTypes.length > 0 || forceRefresh) {
-            const realTimeSearchParams = {
-              searchTerm: term,
-              location: locationTerm,
-              eventType: eventTypes.length > 0 ? eventTypes[0] : '',
-              forceRefresh: forceRefresh,
-              limit: 200 // Get more results for better filtering
-            };
-
-            console.log("🚀 Using real-time search with params:", realTimeSearchParams);
-            searchResult = await findEventsService.performRealtimeSearch(realTimeSearchParams);
-          } else {
-            // No search terms, get all events with real-time data
-            console.log("📋 Getting all events with real-time refresh");
-            const allEventsData = await findEventsService.findAllEvents();
-            searchResult = {
-              data: allEventsData || [],
-              timestamp: new Date().toISOString(),
-              resultCount: allEventsData.length,
-              source: "all_events"
-            };
-          }
-
-          let filteredResults = searchResult.data || [];
-
-          filteredResults = applyClientSideFilters(filteredResults, {
-            eventTypes,
-            locations,
-            dates,
-            times,
-            durations,
-            skillLevels,
-            locationTerm
-          });
-
-          console.log(`Real-time search completed: ${searchResult.resultCount} -> ${filteredResults.length} events`);
-
-          setEvents(filteredResults);
-          setFilteredEvents(filteredResults);
-          setCurrentPage(1);
-
-          // Update last refresh time
-          if (searchResult.timestamp) {
-            setLastRefresh(new Date(searchResult.timestamp));
-          }
-
-        } catch (err) {
-          console.error("❌ Real-time search failed:", err);
-          setError("Search failed. Please try again.");
-
-          // Fallback: try to get all events
-          try {
-            console.log("🔄 Attempting fallback to all events...");
-            const fallbackEvents = await findEventsService.findAllEvents();
-            const fallbackFiltered = applyClientSideFilters(fallbackEvents, searchParams);
-            
-            setEvents(fallbackFiltered);
-            setFilteredEvents(fallbackFiltered);
-            setCurrentPage(1);
-            console.log("Fallback successful");
-          } catch (fallbackErr) {
-            console.error("Fallback also failed:", fallbackErr);
-            setEvents([]);
-            setFilteredEvents([]);
-          }
-        } finally {
-          setSearchLoading(false);
-        }
-      };
-
-      if (delay > 0) {
-        const timer = setTimeout(executeSearch, delay);
-        setSearchDebounceTimer(timer);
-      } else {
-        await executeSearch();
-      }
-    },
-    [searchTerm, locationSearchTerm, selectedEventTypes, selectedLocations, selectedDates, selectedTimes, selectedDurations, selectedSkillLevels, searchDebounceTimer]
-  );
-
-  const applyClientSideFilters = (events, params) => {
+  const applyClientSideFilters = useCallback((events, params) => {
     let filtered = [...events];
 
     // Apply event type filters (multiple types)
@@ -544,10 +429,131 @@ const Events = () => {
     }
 
     return filtered;
-  };
+  }, []);
+
+  // FIXED: performSearch with empty dependency array
+  const performSearch = useCallback(
+    async (searchParams = {}, delay = 0) => {
+      // Clear any existing timer
+      if (searchDebounceTimer) {
+        clearTimeout(searchDebounceTimer);
+        setSearchDebounceTimer(null);
+      }
+
+      const executeSearch = async () => {
+        try {
+          setSearchLoading(true);
+          setError(null);
+
+          const {
+            searchTerm: term = searchTerm,
+            locationTerm = locationSearchTerm,
+            eventTypes = selectedEventTypes,
+            locations = selectedLocations,
+            dates = selectedDates,
+            times = selectedTimes,
+            durations = selectedDurations,
+            skillLevels = selectedSkillLevels,
+            forceRefresh = false,
+          } = searchParams;
+
+          console.log("Performing real-time search with params:", {
+            term,
+            locationTerm,
+            eventTypes: eventTypes.length,
+            locations: locations.length,
+            hasFilters: dates.length > 0 || times.length > 0 || durations.length > 0 || skillLevels.length > 0,
+            forceRefresh
+          });
+
+          let searchResult;
+
+          // Check if we have search terms or need real-time data
+          if (term || locationTerm || eventTypes.length > 0 || forceRefresh) {
+            const realTimeSearchParams = {
+              searchTerm: term,
+              location: locationTerm,
+              eventType: eventTypes.length > 0 ? eventTypes[0] : '',
+              forceRefresh: forceRefresh,
+              limit: 200 // Get more results for better filtering
+            };
+
+            console.log("Using real-time search with params:", realTimeSearchParams);
+            searchResult = await findEventsService.performRealtimeSearch(realTimeSearchParams);
+          } else {
+            // No search terms, get all events with real-time data
+            console.log("Getting all events with real-time refresh");
+            const allEventsData = await findEventsService.findAllEvents();
+            searchResult = {
+              data: allEventsData || [],
+              timestamp: new Date().toISOString(),
+              resultCount: allEventsData.length,
+              source: "all_events"
+            };
+          }
+
+          let filteredResults = searchResult.data || [];
+
+          filteredResults = applyClientSideFilters(filteredResults, {
+            eventTypes,
+            locations,
+            dates,
+            times,
+            durations,
+            skillLevels,
+            locationTerm
+          });
+
+          console.log(`Real-time search completed: ${searchResult.resultCount} -> ${filteredResults.length} events`);
+
+          setEvents(filteredResults);
+          setFilteredEvents(filteredResults);
+          setCurrentPage(1);
+
+          // Update last refresh time
+          if (searchResult.timestamp) {
+            setLastRefresh(new Date(searchResult.timestamp));
+          }
+
+        } catch (err) {
+          console.error("Real-time search failed:", err);
+          setError("Search failed. Please try again.");
+
+          // Fallback: try to get all events
+          try {
+            console.log("Attempting fallback to all events...");
+            const fallbackEvents = await findEventsService.findAllEvents();
+            const fallbackFiltered = applyClientSideFilters(fallbackEvents, searchParams);
+            
+            setEvents(fallbackFiltered);
+            setFilteredEvents(fallbackFiltered);
+            setCurrentPage(1);
+            console.log("Fallback successful");
+          } catch (fallbackErr) {
+            console.error("Fallback also failed:", fallbackErr);
+            setEvents([]);
+            setFilteredEvents([]);
+          }
+        } finally {
+          setSearchLoading(false);
+        }
+      };
+
+      if (delay > 0) {
+        const timer = setTimeout(() => {
+          executeSearch();
+          setSearchDebounceTimer(null);
+        }, delay);
+        setSearchDebounceTimer(timer);
+      } else {
+        await executeSearch();
+      }
+    },
+    [] // FIXED: Empty dependency array
+  );
 
   const handleRefresh = async () => {
-    console.log("🔄 Manual real-time refresh triggered");
+    console.log("Manual real-time refresh triggered");
     setLastRefresh(new Date());
     
     try {
@@ -589,7 +595,7 @@ const Events = () => {
         throw new Error(refreshResult.error || "Refresh failed");
       }
     } catch (err) {
-      console.error("❌ Manual refresh failed:", err);
+      console.error("Manual refresh failed:", err);
       setError("Refresh failed. Please try again.");
       
       // Fallback to regular search
@@ -614,6 +620,7 @@ const Events = () => {
     loadEvents();
   }, []);
 
+  // FIXED: Remove performSearch from dependency array
   useEffect(() => {
     const searchParams = {
       searchTerm,
@@ -640,8 +647,8 @@ const Events = () => {
     selectedDates,
     selectedTimes,
     selectedDurations,
-    selectedSkillLevels,
-    performSearch
+    selectedSkillLevels
+    // FIXED: Removed performSearch from dependencies
   ]);
 
   // Update pagination when filtered results change
@@ -653,7 +660,7 @@ const Events = () => {
     try {
       setLoading(true);
       setError(null);
-      console.log("📋 Initial load with real-time events");
+      console.log("Initial load with real-time events");
       
       // Use smart search for initial load to get fresh data
       const searchResult = await findEventsService.smartSearch({});
@@ -1088,7 +1095,7 @@ const Events = () => {
                   <>
                     Showing {(currentPage - 1) * itemsPerPage + 1}-
                     {Math.min(currentPage * itemsPerPage, filteredEvents.length)}{" "}
-                    of {filteredEvents.length} •{" "}
+                    of {filteredEvents.length} • {" "}
                   </>
                 )}
                 Last Updated:{" "}

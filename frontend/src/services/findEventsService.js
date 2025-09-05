@@ -715,6 +715,8 @@ class FindEventService {
     }
   }
 
+  
+
   /**
    * Find events by organization
    */
