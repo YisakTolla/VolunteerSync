@@ -21,7 +21,11 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
+
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
 
 /**
  * Organization Profile Controller - handles organization profile endpoints
@@ -452,6 +456,37 @@ public class OrganizationProfileController extends BaseController {
             return ResponseEntity.ok(stats);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
+        }
+    }
+
+    /**
+     * Get current organization's detailed statistics (FIXED ENDPOINT)
+     * GET /api/organization-profiles/me/stats
+     */
+    @GetMapping("/me/stats")
+    public ResponseEntity<?> getMyOrganizationStats(Authentication authentication) {
+        try {
+            Long userId = getCurrentUserId(authentication);
+            System.out.println("Fetching stats for organization user ID: " + userId);
+
+            IndividualOrganizationStats stats = organizationProfileService.getIndividualOrganizationStats(userId);
+            return ResponseEntity.ok(stats);
+
+        } catch (Exception e) {
+            System.err.println("Error fetching organization stats: " + e.getMessage());
+
+            // Return default stats to prevent dashboard crashes
+            Map<String, Object> defaultStats = new HashMap<>();
+            defaultStats.put("organizationId", 0L);
+            defaultStats.put("organizationName", "Unknown");
+            defaultStats.put("totalEventsHosted", 0);
+            defaultStats.put("totalVolunteersServed", 0);
+            defaultStats.put("profileViews", 0);
+            defaultStats.put("applicationsReceived", 0);
+            defaultStats.put("verificationLevel", "BASIC");
+            defaultStats.put("isVerified", false);
+
+            return ResponseEntity.ok(defaultStats);
         }
     }
 

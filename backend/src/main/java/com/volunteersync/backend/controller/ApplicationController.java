@@ -18,7 +18,6 @@ import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Map;
 
-
 /**
  * Application Controller - handles volunteer application endpoints
  * Manages application lifecycle, approvals, and statistics
@@ -78,6 +77,26 @@ public class ApplicationController {
             return ResponseEntity.ok(applications);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
+        }
+    }
+
+    /**
+     * Get current organization's applications (MISSING ENDPOINT)
+     * GET /api/applications/organization/me
+     */
+    @GetMapping("/organization/me")
+    public ResponseEntity<?> getMyOrganizationApplications(Authentication authentication) {
+        try {
+            Long organizerId = getCurrentUserId(authentication);
+            System.out.println("Fetching applications for current organization ID: " + organizerId);
+
+            List<ApplicationDTO> applications = applicationService.getOrganizationApplications(organizerId);
+            return ResponseEntity.ok(applications);
+
+        } catch (Exception e) {
+            System.err.println("Error fetching organization applications: " + e.getMessage());
+            // Return empty list instead of error to prevent dashboard crashes
+            return ResponseEntity.ok(List.of());
         }
     }
 

@@ -47,7 +47,7 @@ const Events = () => {
   // Search debounce
   const [searchDebounceTimer, setSearchDebounceTimer] = useState(null);
 
-  // ADD THIS FUNCTION FOR HANDLING CARD CLICKS
+  // Handle event card clicks
   const handleEventCardClick = (eventId) => {
     navigate(`/find-events/${eventId}`);
   };
@@ -195,7 +195,7 @@ const Events = () => {
     "Training Provided",
   ];
 
-  // Helper function to get event type CSS class (works with display names)
+  // Helper function to get event type CSS class
   const getEventTypeClass = (eventType) => {
     if (!eventType) return "";
 
@@ -252,7 +252,7 @@ const Events = () => {
   const applyClientSideFilters = useCallback((events, params) => {
     let filtered = [...events];
 
-    // Apply event type filters (multiple types)
+    // Apply event type filters
     if (params.eventTypes && params.eventTypes.length > 0) {
       filtered = filtered.filter((event) => {
         const eventTypeDisplayName = getEventTypeDisplayName(event.eventType);
@@ -306,11 +306,11 @@ const Events = () => {
               return eventDate >= nextWeekStart && eventDate <= nextWeekEnd;
             case "This Weekend":
               const dayOfWeek = eventDate.getDay();
-              const daysUntilWeekend = 6 - now.getDay(); // Days until Saturday
+              const daysUntilWeekend = 6 - now.getDay();
               const weekendStart = new Date(now);
               weekendStart.setDate(now.getDate() + daysUntilWeekend);
               const weekendEnd = new Date(weekendStart);
-              weekendEnd.setDate(weekendStart.getDate() + 1); // Sunday
+              weekendEnd.setDate(weekendStart.getDate() + 1);
               return (dayOfWeek === 0 || dayOfWeek === 6) && 
                      eventDate >= weekendStart && eventDate <= weekendEnd;
             case "Next Weekend":
@@ -431,7 +431,7 @@ const Events = () => {
     return filtered;
   }, []);
 
-  // FIXED: performSearch with empty dependency array
+  // FIXED: Simplified performSearch function
   const performSearch = useCallback(
     async (searchParams = {}, delay = 0) => {
       // Clear any existing timer
@@ -457,43 +457,25 @@ const Events = () => {
             forceRefresh = false,
           } = searchParams;
 
-          console.log("Performing real-time search with params:", {
+          console.log("Performing search with params:", {
             term,
             locationTerm,
             eventTypes: eventTypes.length,
             locations: locations.length,
-            hasFilters: dates.length > 0 || times.length > 0 || durations.length > 0 || skillLevels.length > 0,
-            forceRefresh
+            hasFilters: dates.length > 0 || times.length > 0 || durations.length > 0 || skillLevels.length > 0
           });
 
-          let searchResult;
-
-          // Check if we have search terms or need real-time data
-          if (term || locationTerm || eventTypes.length > 0 || forceRefresh) {
-            const realTimeSearchParams = {
-              searchTerm: term,
-              location: locationTerm,
-              eventType: eventTypes.length > 0 ? eventTypes[0] : '',
-              forceRefresh: forceRefresh,
-              limit: 200 // Get more results for better filtering
-            };
-
-            console.log("Using real-time search with params:", realTimeSearchParams);
-            searchResult = await findEventsService.performRealtimeSearch(realTimeSearchParams);
-          } else {
-            // No search terms, get all events with real-time data
-            console.log("Getting all events with real-time refresh");
-            const allEventsData = await findEventsService.findAllEvents();
-            searchResult = {
-              data: allEventsData || [],
-              timestamp: new Date().toISOString(),
-              resultCount: allEventsData.length,
-              source: "all_events"
-            };
-          }
+          // Use the fixed smart search method
+          const searchResult = await findEventsService.smartSearch({
+            searchTerm: term,
+            location: locationTerm,
+            eventType: eventTypes.length > 0 ? eventTypes[0] : '',
+            forceRefresh: forceRefresh
+          });
 
           let filteredResults = searchResult.data || [];
 
+          // Apply client-side filters
           filteredResults = applyClientSideFilters(filteredResults, {
             eventTypes,
             locations,
@@ -504,7 +486,7 @@ const Events = () => {
             locationTerm
           });
 
-          console.log(`Real-time search completed: ${searchResult.resultCount} -> ${filteredResults.length} events`);
+          console.log(`Search completed: ${searchResult.resultCount} -> ${filteredResults.length} events`);
 
           setEvents(filteredResults);
           setFilteredEvents(filteredResults);
@@ -516,24 +498,12 @@ const Events = () => {
           }
 
         } catch (err) {
-          console.error("Real-time search failed:", err);
+          console.error("Search failed:", err);
           setError("Search failed. Please try again.");
-
-          // Fallback: try to get all events
-          try {
-            console.log("Attempting fallback to all events...");
-            const fallbackEvents = await findEventsService.findAllEvents();
-            const fallbackFiltered = applyClientSideFilters(fallbackEvents, searchParams);
-            
-            setEvents(fallbackFiltered);
-            setFilteredEvents(fallbackFiltered);
-            setCurrentPage(1);
-            console.log("Fallback successful");
-          } catch (fallbackErr) {
-            console.error("Fallback also failed:", fallbackErr);
-            setEvents([]);
-            setFilteredEvents([]);
-          }
+          
+          // Simple fallback - just show empty results
+          setEvents([]);
+          setFilteredEvents([]);
         } finally {
           setSearchLoading(false);
         }
@@ -549,26 +519,47 @@ const Events = () => {
         await executeSearch();
       }
     },
-    [] // FIXED: Empty dependency array
+    [searchTerm, locationSearchTerm, selectedEventTypes, selectedLocations, 
+     selectedDates, selectedTimes, selectedDurations, selectedSkillLevels,
+     searchDebounceTimer, applyClientSideFilters]
   );
 
+  const loadEvents = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      console.log("Initial load - fetching all events");
+      
+      // Use the fixed findAllEvents method
+      const eventsData = await findEventsService.findAllEvents();
+      
+      setEvents(eventsData);
+      setFilteredEvents(eventsData);
+      setLastRefresh(new Date());
+      
+      console.log(`Loaded ${eventsData.length} events successfully`);
+    } catch (err) {
+      console.error("Failed to load events:", err);
+      setError("Failed to load events. Please try again later.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleRefresh = async () => {
-    console.log("Manual real-time refresh triggered");
+    console.log("Manual refresh triggered");
     setLastRefresh(new Date());
     
     try {
       setSearchLoading(true);
       setError(null);
 
-      // Use the live data refresh method from the service
+      // Use the fixed refresh method
       const refreshResult = await findEventsService.refreshLiveData({
-        force: true,
-        maxAgeMinutes: 0, // Force fresh data
-        includeStats: true,
-        limit: 200
+        force: true
       });
 
-      console.log("Live refresh completed:", refreshResult);
+      console.log("Refresh completed:", refreshResult);
 
       if (refreshResult.success) {
         let allEvents = refreshResult.events || [];
@@ -598,18 +589,8 @@ const Events = () => {
       console.error("Manual refresh failed:", err);
       setError("Refresh failed. Please try again.");
       
-      // Fallback to regular search
-      await performSearch({
-        searchTerm,
-        locationTerm: locationSearchTerm,
-        eventTypes: selectedEventTypes,
-        locations: selectedLocations,
-        dates: selectedDates,
-        times: selectedTimes,
-        durations: selectedDurations,
-        skillLevels: selectedSkillLevels,
-        forceRefresh: true
-      });
+      // Fallback to regular load
+      await loadEvents();
     } finally {
       setSearchLoading(false);
     }
@@ -620,7 +601,7 @@ const Events = () => {
     loadEvents();
   }, []);
 
-  // FIXED: Remove performSearch from dependency array
+  // FIXED: Simplified search effect
   useEffect(() => {
     const searchParams = {
       searchTerm,
@@ -648,36 +629,12 @@ const Events = () => {
     selectedTimes,
     selectedDurations,
     selectedSkillLevels
-    // FIXED: Removed performSearch from dependencies
   ]);
 
   // Update pagination when filtered results change
   useEffect(() => {
     updatePagination();
   }, [filteredEvents, currentPage]);
-
-  const loadEvents = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      console.log("Initial load with real-time events");
-      
-      // Use smart search for initial load to get fresh data
-      const searchResult = await findEventsService.smartSearch({});
-      const eventsData = searchResult.data || [];
-      
-      setEvents(eventsData);
-      setFilteredEvents(eventsData);
-      if (searchResult.timestamp) {
-        setLastRefresh(new Date(searchResult.timestamp));
-      }
-    } catch (err) {
-      console.error("Failed to load events:", err);
-      setError("Failed to load events. Please try again later.");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const updatePagination = () => {
     const total = Math.ceil(filteredEvents.length / itemsPerPage);
@@ -1240,7 +1197,7 @@ const Events = () => {
           {(loading || searchLoading) && (
             <div className="events-loading">
               <div className="events-loading-spinner"></div>
-              <p>{loading ? "Loading events..." : "Searching real-time database..."}</p>
+              <p>{loading ? "Loading events..." : "Searching events..."}</p>
             </div>
           )}
 

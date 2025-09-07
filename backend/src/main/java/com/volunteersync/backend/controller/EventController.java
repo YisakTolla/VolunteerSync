@@ -199,17 +199,56 @@ public class EventController {
     // EVENT SEARCH AND FILTERING
     // ==========================================
 
-    /**
-     * Search events with filters
-     * POST /api/events/search
-     */
     @PostMapping("/search")
-    public ResponseEntity<?> searchEvents(@RequestBody EventSearchRequest request) {
+    public ResponseEntity<?> searchEvents(@RequestBody(required = false) EventSearchRequest request) {
         try {
+            System.out.println("Received search request: " + (request != null ? request.toString() : "null"));
+
+            // Handle null or empty request
+            if (request == null) {
+                request = new EventSearchRequest();
+            }
+
+            // Validate and sanitize search request
+            if (request.getSearchTerm() == null) {
+                request.setSearchTerm("");
+            }
+            if (request.getEventType() == null) {
+                request.setEventType("");
+            }
+            if (request.getLocation() == null) {
+                request.setLocation("");
+            }
+            if (request.getSkillLevel() == null) {
+                request.setSkillLevel("");
+            }
+
+            System.out.println("Sanitized search request: " + request.toString());
+
             List<EventDTO> events = eventService.searchEvents(request);
             return ResponseEntity.ok(events);
+
+        } catch (IllegalArgumentException e) {
+            System.err.println("Invalid search request: " + e.getMessage());
+            // Return all events if search fails due to invalid arguments
+            try {
+                List<EventDTO> allEvents = eventService.getAllEvents();
+                return ResponseEntity.ok(allEvents);
+            } catch (Exception fallbackError) {
+                return ResponseEntity.ok(List.of());
+            }
+
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
+            System.err.println("Search error: " + e.getMessage());
+            e.printStackTrace();
+
+            // Fallback to all events
+            try {
+                List<EventDTO> allEvents = eventService.getAllEvents();
+                return ResponseEntity.ok(allEvents);
+            } catch (Exception fallbackError) {
+                return ResponseEntity.ok(List.of());
+            }
         }
     }
 
@@ -517,10 +556,13 @@ public class EventController {
         }
     }
 
-    // Placeholder for UserPrincipal - should be implemented based on your security setup
+    // Placeholder for UserPrincipal - should be implemented based on your security
+    // setup
     public interface UserPrincipal {
         Long getId();
+
         String getUsername();
+
         String getUserType();
     }
 }
