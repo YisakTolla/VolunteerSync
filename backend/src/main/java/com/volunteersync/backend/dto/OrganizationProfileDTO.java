@@ -345,7 +345,7 @@ public class OrganizationProfileDTO {
         return totalVolunteersServed;
     }
 
-    public void setTotalVolunteersServed(Integer totalVolunteersServed) {
+    public void setnumberOfVolunteer(Integer totalVolunteersServed) {
         this.totalVolunteersServed = totalVolunteersServed;
     }
 

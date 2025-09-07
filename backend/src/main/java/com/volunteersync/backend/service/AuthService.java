@@ -399,7 +399,7 @@ public class AuthService {
         profile.setOrganizationName(organizationName);
         profile.setIsVerified(false);
         profile.setTotalEventsHosted(0);
-        profile.setTotalVolunteersServed(0);
+        profile.setnumberOfVolunteers(0);
         profile.setCreatedAt(LocalDateTime.now());
         profile.setUpdatedAt(LocalDateTime.now());
 
@@ -445,7 +445,7 @@ public class AuthService {
         profile.setOrganizationName(request.getOrganizationName());
         profile.setIsVerified(false);
         profile.setTotalEventsHosted(0);
-        profile.setTotalVolunteersServed(0);
+        profile.setnumberOfVolunteers(0);
         profile.setCreatedAt(LocalDateTime.now());
         profile.setUpdatedAt(LocalDateTime.now());
 

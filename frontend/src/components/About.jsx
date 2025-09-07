@@ -1,68 +1,84 @@
-import React from 'react';
-import { Heart, Users, Globe, Award, Target, Zap, Shield, ArrowRight } from 'lucide-react';
-import './About.css'; // Assuming you have a CSS file for styling
+import React from "react";
+import {
+  Heart,
+  Users,
+  Globe,
+  Award,
+  Target,
+  Zap,
+  Shield,
+  ArrowRight,
+} from "lucide-react";
+import "./About.css";
 
 const About = () => {
   const stats = [
-    { number: '10,000+', label: 'Active Volunteers', icon: Users },
-    { number: '2,500+', label: 'Partner Organizations', icon: Heart },
-    { number: '150+', label: 'Cities Worldwide', icon: Globe },
-    { number: '500K+', label: 'Volunteer Hours', icon: Award }
+    { number: "10,000+", label: "Active Volunteers", icon: Users },
+    { number: "2,500+", label: "Partner Organizations", icon: Heart },
+    { number: "150+", label: "Cities Worldwide", icon: Globe },
+    { number: "500K+", label: "Volunteer Hours", icon: Award },
   ];
 
   const values = [
     {
       icon: Heart,
-      title: 'Compassion First',
-      description: 'We believe in the power of empathy and kindness to create meaningful change in communities worldwide.'
+      title: "Compassion First",
+      description:
+        "We believe in the power of empathy and kindness to create meaningful change in communities worldwide.",
     },
     {
       icon: Users,
-      title: 'Community Driven',
-      description: 'Our platform thrives on the collective effort of volunteers, organizations, and supporters working together.'
+      title: "Community Driven",
+      description:
+        "Our platform thrives on the collective effort of volunteers, organizations, and supporters working together.",
     },
     {
       icon: Target,
-      title: 'Impact Focused',
-      description: 'Every feature we build and partnership we form is designed to maximize positive social impact.'
+      title: "Impact Focused",
+      description:
+        "Every feature we build and partnership we form is designed to maximize positive social impact.",
     },
     {
       icon: Shield,
-      title: 'Trust & Safety',
-      description: 'We maintain the highest standards of safety and verification to protect our community members.'
+      title: "Trust & Safety",
+      description:
+        "We maintain the highest standards of safety and verification to protect our community members.",
     },
     {
       icon: Zap,
-      title: 'Innovation',
-      description: 'We continuously evolve our technology to make volunteering more accessible and effective.'
+      title: "Innovation",
+      description:
+        "We continuously evolve our technology to make volunteering more accessible and effective.",
     },
     {
       icon: Globe,
-      title: 'Global Reach',
-      description: 'We connect people across borders to address local and global challenges collaboratively.'
-    }
+      title: "Global Reach",
+      description:
+        "We connect people across borders to address local and global challenges collaboratively.",
+    },
   ];
 
   const team = [
     {
-      name: 'Yisak Tolla',
-      role: 'Founder',
-      image: '/api/placeholder/150/150',
-      bio: 'George Mason University Computer Science Student. Aspiring Software Engineer.'
+      name: "Yisak Tolla",
+      role: "Founder",
+      image: "/api/placeholder/150/150",
+      bio: "George Mason University Computer Science Student. Aspiring Software Engineer.",
     },
     {
-      name: 'Mohamed Shaik',
-      role: 'Founder',
-      image: '/api/placeholder/150/150',
-      bio: 'George Mason University Computer Science Masters Student. Software Engineer and ML/AI Engineer.'
-    }
+      name: "Mohamed Shaik",
+      role: "Founder",
+      image: "/api/placeholder/150/150",
+      bio: "George Mason University Computer Science Masters Student. Software Engineer and ML/AI Engineer.",
+    },
   ];
 
   const milestones = [
     {
-      year: '2025',
-      title: 'The Beginning',
-      description: 'Founded with a vision to make volunteering more accessible and impactful for everyone.'
+      year: "2025",
+      title: "The Beginning",
+      description:
+        "Founded with a vision to make volunteering more accessible and impactful for everyone.",
     },
   ];
 
@@ -73,14 +89,21 @@ const About = () => {
         <div className="about-hero-container">
           <div className="about-hero-content">
             <h1 className="about-hero-title">
-              Building Bridges Between 
-              <span className="about-gradient-text1"> Passionate Volunteers</span> and 
-              <span className="about-gradient-text2"> Meaningful Opportunities</span>
+              Building Bridges Between
+              <span className="about-gradient-text1">
+                {" "}
+                Passionate Volunteers
+              </span>{" "}
+              and
+              <span className="about-gradient-text2">
+                {" "}
+                Meaningful Opportunities
+              </span>
             </h1>
             <p className="about-hero-description">
-              VolunteerSync is more than a platform—we're a movement dedicated to creating 
-              lasting positive change in communities worldwide through the power of connection, 
-              technology, and shared purpose.
+              VolunteerSync is more than a platform—we're a movement dedicated
+              to creating lasting positive change in communities worldwide
+              through the power of connection, technology, and shared purpose.
             </p>
             <div className="about-hero-cta">
               <button className="about-btn-primary">
@@ -92,15 +115,11 @@ const About = () => {
             </div>
           </div>
           <div className="about-hero-visual">
-            <div className="about-volunteer-network">
-              <div className="about-network-node about-primary">🤝</div>
-              <div className="about-network-node">👥</div>
-              <div className="about-network-node">🏢</div>
-              <div className="about-network-node">🌍</div>
-              <div className="about-network-node">💚</div>
-              <div className="about-network-node">⭐</div>
-              <div className="about-connecting-lines"></div>
-            </div>
+            <img 
+              src="/about_image.jpg" 
+              alt="Volunteers working together to make a positive impact"
+              className="about-hero-image"
+            />
           </div>
         </div>
       </section>
@@ -130,9 +149,10 @@ const About = () => {
             <div className="about-mission-text">
               <h2 className="about-section-title">Our Mission</h2>
               <p className="about-mission-description">
-                We exist to democratize volunteering by removing barriers, creating meaningful 
-                connections, and amplifying the impact of good intentions. Our technology-driven 
-                approach ensures that every person who wants to make a difference can find their 
+                We exist to democratize volunteering by removing barriers,
+                creating meaningful connections, and amplifying the impact of
+                good intentions. Our technology-driven approach ensures that
+                every person who wants to make a difference can find their
                 perfect opportunity to contribute to causes they care about.
               </p>
               <div className="about-mission-highlights">
@@ -140,21 +160,32 @@ const About = () => {
                   <div className="about-highlight-icon">🎯</div>
                   <div>
                     <h4>Precision Matching</h4>
-                    <p>AI-powered algorithms connect volunteers with opportunities that match their skills, interests, and availability.</p>
+                    <p>
+                      AI-powered algorithms connect volunteers with
+                      opportunities that match their skills, interests, and
+                      availability.
+                    </p>
                   </div>
                 </div>
                 <div className="about-highlight-item">
                   <div className="about-highlight-icon">📊</div>
                   <div>
                     <h4>Measurable Impact</h4>
-                    <p>Track and measure the real-world impact of volunteer efforts with comprehensive analytics and reporting.</p>
+                    <p>
+                      Track and measure the real-world impact of volunteer
+                      efforts with comprehensive analytics and reporting.
+                    </p>
                   </div>
                 </div>
                 <div className="about-highlight-item">
-                  <div className="about-highlight-icon">🌐</div>
+                  <div className="about-highlight-icon">🌍</div>
                   <div>
                     <h4>Global Community</h4>
-                    <p>Connect with like-minded individuals and organizations across the world to tackle both local and global challenges.</p>
+                    <p>
+                      Connect with like-minded individuals and organizations
+                      across the world to tackle both local and global
+                      challenges.
+                    </p>
                   </div>
                 </div>
               </div>
@@ -180,7 +211,8 @@ const About = () => {
         <div className="about-container">
           <h2 className="about-section-title">Our Core Values</h2>
           <p className="about-section-subtitle">
-            These principles guide every decision we make and every feature we build
+            These principles guide every decision we make and every feature we
+            build
           </p>
           <div className="about-values-grid">
             {values.map((value, index) => (
@@ -201,14 +233,18 @@ const About = () => {
         <div className="about-container">
           <h2 className="about-section-title">Meet Our Team</h2>
           <p className="about-section-subtitle">
-            Passionate individuals dedicated to making volunteering accessible to everyone
+            Passionate individuals dedicated to making volunteering accessible
+            to everyone
           </p>
           <div className="about-team-grid">
             {team.map((member, index) => (
               <div key={index} className="about-team-card">
                 <div className="about-team-avatar">
                   <div className="about-avatar-placeholder">
-                    {member.name.split(' ').map(n => n[0]).join('')}
+                    {member.name
+                      .split(" ")
+                      .map((n) => n[0])
+                      .join("")}
                   </div>
                 </div>
                 <h3 className="about-team-name">{member.name}</h3>
@@ -225,7 +261,8 @@ const About = () => {
         <div className="about-container">
           <h2 className="about-section-title">Our Journey</h2>
           <p className="about-section-subtitle">
-            From a simple idea to a global movement transforming how people volunteer
+            From a simple idea to a global movement transforming how people
+            volunteer
           </p>
           <div className="about-timeline">
             {milestones.map((milestone, index) => (
@@ -234,7 +271,9 @@ const About = () => {
                 <div className="about-timeline-content">
                   <div className="about-timeline-year">{milestone.year}</div>
                   <h3 className="about-timeline-title">{milestone.title}</h3>
-                  <p className="about-timeline-description">{milestone.description}</p>
+                  <p className="about-timeline-description">
+                    {milestone.description}
+                  </p>
                 </div>
               </div>
             ))}
@@ -248,8 +287,9 @@ const About = () => {
           <div className="about-cta-content">
             <h2 className="about-cta-title">Ready to Make a Difference?</h2>
             <p className="about-cta-description">
-              Join thousands of volunteers and organizations already making an impact through VolunteerSync. 
-              Whether you're looking to volunteer or need volunteers, we're here to help you succeed.
+              Join thousands of volunteers and organizations already making an
+              impact through VolunteerSync. Whether you're looking to volunteer
+              or need volunteers, we're here to help you succeed.
             </p>
             <div className="about-cta-buttons">
               <button className="about-btn-primary about-large">

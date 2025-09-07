@@ -382,7 +382,7 @@ public class DataLoader implements CommandLineRunner {
 
             // Stats
             org.setTotalEventsHosted(random.nextInt(200));
-            org.setTotalVolunteersServed(random.nextInt(5000));
+            org.setnumberOfVolunteers(random.nextInt(5000));
 
             // Additional fields
             org.setLanguagesSupported(generateLanguages());

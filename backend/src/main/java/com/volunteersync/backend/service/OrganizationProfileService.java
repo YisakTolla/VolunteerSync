@@ -875,7 +875,7 @@ public class OrganizationProfileService {
         stats.setOrganizationId(profile.getId());
         stats.setOrganizationName(profile.getOrganizationName());
         stats.setTotalEventsHosted(profile.getTotalEventsHosted());
-        stats.setTotalVolunteersServed(profile.getTotalVolunteersServed());
+        stats.setnumberOfVolunteer(profile.getnumberOfVolunteers());
         stats.setProfileViews(0L); // Implement profile view tracking
         stats.setApplicationsReceived(0L); // Calculate from applications
         stats.setVerificationLevel(profile.getVerificationLevel());
@@ -945,7 +945,7 @@ public class OrganizationProfileService {
         dto.setProfileImageUrl(profile.getProfileImageUrl());
         dto.setIsVerified(profile.getIsVerified());
         dto.setTotalEventsHosted(profile.getTotalEventsHosted());
-        dto.setTotalVolunteersServed(profile.getTotalVolunteersServed());
+        dto.setnumberOfVolunteer(profile.getnumberOfVolunteers());
         dto.setCreatedAt(profile.getCreatedAt());
         dto.setUpdatedAt(profile.getUpdatedAt());
 
@@ -1855,7 +1855,7 @@ public class OrganizationProfileService {
             return totalVolunteersServed;
         }
 
-        public void setTotalVolunteersServed(Integer totalVolunteersServed) {
+        public void setnumberOfVolunteer(Integer totalVolunteersServed) {
             this.totalVolunteersServed = totalVolunteersServed;
         }
 

@@ -117,9 +117,9 @@ public class OrganizationProfile {
 
     @Column(name = "total_events_hosted")
     private Integer totalEventsHosted = 0;
-
-    @Column(name = "total_volunteers_served")
-    private Integer totalVolunteersServed = 0;
+    
+    @Column(name = "number_of_volunteers")
+    private Integer numberOfVolunteers = 0;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
@@ -470,12 +470,12 @@ public class OrganizationProfile {
         this.totalEventsHosted = totalEventsHosted;
     }
 
-    public Integer getTotalVolunteersServed() {
-        return totalVolunteersServed;
+    public Integer getnumberOfVolunteers() {
+        return numberOfVolunteers;
     }
 
-    public void setTotalVolunteersServed(Integer totalVolunteersServed) {
-        this.totalVolunteersServed = totalVolunteersServed;
+    public void setnumberOfVolunteers(Integer numberOfVolunteers) {
+        this.numberOfVolunteers = numberOfVolunteers;
     }
 
     public LocalDateTime getCreatedAt() {

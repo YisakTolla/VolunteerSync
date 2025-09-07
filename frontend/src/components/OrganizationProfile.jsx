@@ -107,7 +107,6 @@ const OrganizationProfile = ({ userData, userType, onDataUpdate, onError }) => {
 
   const organizationTabs = [
     { id: "overview", label: "Overview", icon: Building },
-    { id: "activity", label: "Activity", icon: Clock },
     { id: "volunteers", label: "Volunteers", icon: Users },
   ];
 
@@ -401,43 +400,6 @@ const OrganizationProfile = ({ userData, userType, onDataUpdate, onError }) => {
     </div>
   );
 
-  const renderActivity = () => (
-    <div className="profile-activity">
-      <div className="profile-card">
-        <div className="profile-card-header">
-          <h3 className="profile-card-title">Recent Activity</h3>
-        </div>
-        <div className="profile-card-content">
-          <div className="profile-activity-list">
-            {userData.recentActivity && userData.recentActivity.length > 0 ? (
-              userData.recentActivity.map((activity) => (
-                <div key={activity.id} className="profile-activity-item">
-                  <div className="profile-activity-icon">
-                    {activity.type === "event" && <Calendar />}
-                    {activity.type === "volunteer" && <UserPlus />}
-                    {activity.type === "achievement" && <Award />}
-                  </div>
-                  <div className="profile-activity-content">
-                    <div className="profile-activity-title">
-                      {activity.title}
-                    </div>
-                    {activity.volunteers && (
-                      <div className="profile-activity-organization">
-                        {activity.volunteers} volunteers participated
-                      </div>
-                    )}
-                    <div className="profile-activity-date">{activity.date}</div>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <p className="no-data">No recent activity to show.</p>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
 
   const renderVolunteers = () => {
     const volunteers = userData.volunteers || [];
@@ -621,7 +583,6 @@ const OrganizationProfile = ({ userData, userType, onDataUpdate, onError }) => {
       {/* Content */}
       <div className="profile-content">
         {activeTab === "overview" && renderOverview()}
-        {activeTab === "activity" && renderActivity()}
         {activeTab === "volunteers" && renderVolunteers()}
       </div>
     </>
